@@ -1,0 +1,48 @@
+{
+  "name": "swarmer",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --proxy-config proxy.conf.json --host 0.0.0.0",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^12.2.6",
+    "@angular/cdk": "^12.2.6",
+    "@angular/common": "^12.2.6",
+    "@angular/compiler": "^12.2.6",
+    "@angular/core": "^12.2.6",
+    "@angular/forms": "^12.2.6",
+    "@angular/platform-browser": "^12.2.6",
+    "@angular/platform-browser-dynamic": "^12.2.6",
+    "@angular/router": "^12.2.6",
+    "@ngxs-labs/select-snapshot": "^3.0.0",
+    "@ngxs/storage-plugin": "^3.7.2",
+    "@ngxs/store": "^3.7.2",
+    "@taiga-ui/cdk": "^2.16.3",
+    "@taiga-ui/core": "^2.16.3",
+    "@taiga-ui/icons": "^2.16.3",
+    "@taiga-ui/kit": "^2.16.3",
+    "bootstrap": "^5.1.1",
+    "rxjs": "~6.6.7",
+    "tslib": "^2.3.1",
+    "zone.js": "~0.11.4"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^12.2.6",
+    "@angular/cli": "^12.2.6",
+    "@angular/compiler-cli": "^12.2.6",
+    "@types/jasmine": "~3.9.1",
+    "@types/node": "^16.9.2",
+    "jasmine-core": "~3.9.0",
+    "karma": "~6.3.4",
+    "karma-chrome-launcher": "~3.1.0",
+    "karma-coverage": "~2.0.3",
+    "karma-jasmine": "~4.0.1",
+    "karma-jasmine-html-reporter": "^1.7.0",
+    "typescript": "~4.2.4"
+  }
+}

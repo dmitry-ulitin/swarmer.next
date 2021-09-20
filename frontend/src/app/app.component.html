@@ -1,0 +1,18 @@
+<tui-root class="h-100">
+  <app-header class="app-navbar"></app-header>
+  <main class="h-100">
+    <router-outlet></router-outlet>
+  </main>
+  <ng-container ngProjectAs="tuiOverDialogs">
+    <!-- Content over dialogs-->
+  </ng-container>
+  <ng-container ngProjectAs="tuiOverNotifications">
+    <!-- Content over notifications -->
+  </ng-container>
+  <ng-container ngProjectAs="tuiOverPortals">
+    <!-- Content over dropdowns -->
+  </ng-container>
+  <ng-container ngProjectAs="tuiOverHints">
+    <!-- Content over hints -->
+  </ng-container>
+</tui-root>

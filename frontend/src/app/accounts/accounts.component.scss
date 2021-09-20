@@ -1,0 +1,45 @@
+@import '~@taiga-ui/core/styles/taiga-ui-local';
+
+table.table {
+    border-collapse: collapse;
+}
+
+.table td, .table th {
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+    padding: .25rem .5rem;
+}
+
+.icon {
+    @include transition(transform);
+    transform: rotate(0deg);
+    .expanded & {
+        transform: rotate(180deg);
+    }    
+}
+
+:not(.active) > div.active {
+    background-color: rgba(0,0,0,.075);
+}
+
+.group {
+    @include transition(transform);
+    opacity: 1;
+    height: auto;
+    .expanded & {
+        opacity: 0;
+        height: 0;
+        overflow: hidden;
+    }    
+}
+
+.account {
+    @include transition(transform);
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    .expanded & {
+        opacity: 1;
+        height: auto;
+    }    
+}

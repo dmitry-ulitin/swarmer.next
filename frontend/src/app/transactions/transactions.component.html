@@ -1,0 +1,16 @@
+<div class="h-100 d-flex flex-column">
+    <div class="flex-grow-1 overflow-auto">
+        <table class="table">
+            <tr *ngFor="let t of transactions$ | async" [class.active]="false" [style.background-color]="t.bg">
+                <td>
+                    <div>{{t.name}}</div>
+                    <div>{{t.opdate | date:'shortDate'}} {{t.balance?.full_name}}</div>
+                </td>
+                <td class="text-end">
+                    <div>{{t.amount.value | currency:t.amount.currency}}</div>
+                    <div class="text-black-50">{{t.balance?.balance | currency:t.balance?.currency}}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

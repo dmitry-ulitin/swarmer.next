@@ -1,0 +1,31 @@
+@import "~bootstrap/scss/bootstrap-reboot.scss";
+@import "~bootstrap/scss/bootstrap-utilities.scss";
+
+html,
+body {
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding-top: 3rem;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+a.mat-button:hover {
+  color: inherit;
+}
+
+tr.active>td, td.active {
+  background-color: rgba(0,0,0,.075);
+}
+
+tr.owner {
+  background-color: #e7f6fb;
+}
+tr.coowner {
+  background-color: #f6ddf5;
+}
+tr.shared {
+  background-color: #f6e9cf;
+}
