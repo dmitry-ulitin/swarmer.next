@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel
+from .user import User
 
 class AccountBase(BaseModel):
-    name: str
+    name: str = None
     currency: str
     deleted: bool = False
 
@@ -35,10 +36,11 @@ class AccountGroupUpdate(AccountGroupBase):
 
 class AccountGroup(AccountGroupBase):
     id: int
-    owner_id: int
+    user_id: int
+    user: User
     created: datetime
     updated: datetime
-    items: List[Account] = []
+    accounts: List[Account] = []
 
     class Config:
         orm_mode = True
