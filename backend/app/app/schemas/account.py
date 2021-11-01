@@ -36,6 +36,7 @@ class AccountGroupUpdate(AccountGroupBase):
 
 class AccountGroup(AccountGroupBase):
     id: int
+    fullname: str
     user_id: int
     user: User
     created: datetime
