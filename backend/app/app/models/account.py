@@ -16,19 +16,29 @@ class AccountGroup(Base):
     created = Column(DateTime, default=datetime.now, nullable=False)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User")
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner = relationship("User")
     accounts = relationship("Account", back_populates="group")
-    permissions = relationship("AccountUser")
+    permissions = relationship("ACL")
     @hybridproperty
     def fullname(self):
-        return self.name if self.current_user_id == self.user_id or self.current_user_id in [p.user_id for p in self.permissions if p.admin] else self.name + ' (' + self.user.name + ')'
+        return self.name if self.current_user_id == self.owner_id or self.current_user_id in [p.user_id for p in self.permissions if p.is_admin] else self.name + ' (' + self.owner.name + ')'
+    @hybridproperty
+    def is_owner(self):
+        return self.owner_id == self.current_user_id and not any([p.is_admin for p in self.permissions])
+    @hybridproperty
+    def is_coowner(self):
+        return any([p.is_admin for p in self.permissions if p.user_id == self.current_user_id or self.owner_id == self.current_user_id])
+    @hybridproperty
+    def is_shared(self):
+        return self.owner_id != self.current_user_id and any([p for p in self.permissions if p.user_id == self.current_user_id])
+
 
 @listens_for(AccountGroup.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
     print("create test account groups...")
-    db.add(AccountGroup(id=1, name='cash', user_id=1))
-    db.add(AccountGroup(id=2, name='visa ...1234', user_id=1))
+    db.add(AccountGroup(id=1, name='cash', owner_id=1))
+    db.add(AccountGroup(id=2, name='visa ...1234', owner_id=1))
     db.commit()
 
 class Account(Base):
@@ -42,6 +52,18 @@ class Account(Base):
     deleted = Column(Boolean, default=False, nullable=False)
     group_id = Column(Integer, ForeignKey("account_groups.id"))
     group = relationship("AccountGroup", back_populates="accounts")
+    @hybridproperty
+    def fullname(self):
+        fn = self.group.name
+        if self.name:
+            fn += ' ' + self.name
+        elif len(self.group.accounts) > 1:
+            fn += ' ' + self.currency
+        if self.group.owner_id != self.group.current_user_id and self.group.current_user_id not in [p.user_id for p in self.group.permissions if p.is_admin]:
+            fn += ' (' + self.group.owner.name + ')'
+        return fn
+    def __repr__(self):
+        return '<Account %r>' % self.id
 
 @listens_for(Account.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
@@ -51,8 +73,8 @@ def insert_initial_records(*args, **kwargs):
     db.add(Account(id=3, group_id=2, currency='USD', start_balance=456))
     db.commit()
 
-class AccountUser(Base):
-    __tablename__ = 'account_users'
+class ACL(Base):
+    __tablename__ = 'acl'
     group_id = Column(Integer, ForeignKey('account_groups.id'), primary_key=True)
     group = relationship("AccountGroup", back_populates="permissions")
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
@@ -60,17 +82,17 @@ class AccountUser(Base):
     created = Column(DateTime, default=datetime.now, nullable=False)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
     deleted = Column(Boolean, default = False, nullable=False)
-    write = Column(Boolean, default = False, nullable=False)
-    admin = Column(Boolean, default = False, nullable=False)
+    is_admin = Column(Boolean, default = False, nullable=False)
+    is_readonly = Column(Boolean, default = False, nullable=False)
     name = Column(String)
     order = Column(Integer, default = 0)
     def __repr__(self):
-        return '<AccountUser %r-%r, write: %s>' % (self.group.name, self.user.name, self.write)
+        return '<ACL %r-%r, is_admin: %s, is_readonly: %s>' % (self.group.name, self.user.name, self.is_admin, self.is_readonly)
 
 # for test purposes
-@listens_for(AccountUser.__table__, 'after_create')
+@listens_for(ACL.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
     print("create test permissions...")
-    db.add(AccountUser(group_id=1, user_id=2))
-    db.add(AccountUser(group_id=2, user_id=2))
+    db.add(ACL(group_id=1, user_id=2))
+    db.add(ACL(group_id=2, user_id=2))
     db.commit()

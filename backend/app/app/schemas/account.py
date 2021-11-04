@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List
 from pydantic import BaseModel
 from .user import User
@@ -6,42 +7,63 @@ from .user import User
 class AccountBase(BaseModel):
     name: str = None
     currency: str
-    deleted: bool = False
+    start_balance: Decimal
 
 class AccountCreate(AccountBase):
     pass
 
 class AccountUpdate(AccountBase):
-    pass
+    deleted: bool = False
 
 
 class Account(AccountBase):
     id: int
-    group_id: int
-    created: datetime
-    updated: datetime
+    fullname: str
+    deleted: bool
+
+    class Config:
+        orm_mode = True
+
+class ACLBase(BaseModel):
+    is_admin: bool
+    is_readonly: bool
+    name: str = None
+    order: int = 0
+
+class ACLCreate(ACLBase):
+    pass
+
+class ACLUpdate(ACLBase):
+    deleted: bool = False
+
+class ACL(ACLBase):
+    deleted: bool
+    user: User
 
     class Config:
         orm_mode = True
 
 class AccountGroupBase(BaseModel):
     name: str
-    deleted: bool = False
+    owner_id: int
 
 class AccountGroupCreate(AccountGroupBase):
     pass
 
 class AccountGroupUpdate(AccountGroupBase):
-    pass
+    deleted: bool = False
 
 class AccountGroup(AccountGroupBase):
     id: int
     fullname: str
-    user_id: int
-    user: User
-    created: datetime
-    updated: datetime
+    is_owner: bool
+    is_coowner: bool
+    is_shared: bool
+    order: int
+    deleted: bool
+    owner: User
     accounts: List[Account] = []
+    permissions: List[ACL] = []
 
     class Config:
         orm_mode = True
