@@ -1,5 +1,4 @@
 from datetime import datetime
-from fastapi.params import Depends
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.event import listens_for

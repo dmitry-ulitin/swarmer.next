@@ -8,6 +8,7 @@ class AccountBase(BaseModel):
     name: str = None
     currency: str
     start_balance: Decimal
+    balance: Decimal
 
 class AccountCreate(AccountBase):
     pass
