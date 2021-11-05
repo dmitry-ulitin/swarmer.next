@@ -1,11 +1,11 @@
 <table class="table">
     <tr *ngFor="let g of groups$ | async" (click)="toggle(g)" [class.active]="g.selected"
-        [class.expanded]="(expanded$ | async).includes(g.id)" [class.owner]="g.belong==1"
-        [class.coowner]="g.belong==2" [class.shared]="g.belong==3">
+        [class.expanded]="(expanded$ | async).includes(g.id)" [class.owner]="g.is_owner"
+        [class.coowner]="g.is_coowner" [class.shared]="g.is_shared">
         <td  [class.active]="isGroupSelected(g)">
-            <div class="group"><a tuiLink  (click)="selectGroup(g, $event)" class="foo">{{g.full_name}}</a></div>
+            <div class="group"><a tuiLink  (click)="selectGroup(g, $event)" class="foo">{{g.fullname}}</a></div>
             <div class="account" *ngFor="let a of g.accounts" [class.active]="isAccountSelected(a)">
-                <ng-template [ngIf]="!a.deleted"><a tuiLink (click)="selectAccount(a, $event)">{{a.full_name}}</a></ng-template>
+                <a tuiLink (click)="selectAccount(a, $event)">{{a.fullname}}</a>
             </div>
         </td>
         <td>
@@ -14,7 +14,7 @@
         <td class="text-end">
             <div class="group" *ngFor="let t of total(g)">{{t.value | currency:t.currency}}</div>
             <div class="account" *ngFor="let a of g.accounts">
-                <ng-template [ngIf]="!a.deleted">{{a.balance | currency:a.currency}}</ng-template>
+                {{a.balance | currency:a.currency}}
             </div>
         </td>
     </tr>

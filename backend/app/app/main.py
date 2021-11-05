@@ -20,6 +20,10 @@ def get_db():
     finally:
         db.close()
 
+@app.post("/api/login/")
+def read_root():
+    return {"access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MzYxMjQ3NjcsIm5iZiI6MTYzNjEyNDc2NywianRpIjoiMmQxMjg5ZGMtNzg5OC00MWYwLWE4MjAtYTRkMjUyZmRiMDk3IiwiaWRlbnRpdHkiOnsiZW1haWwiOiJkbWl0cnkudWxpdGluQGdtYWlsLmNvbSIsIm5hbWUiOiJEbWl0cnkiLCJpZCI6MSwiY3VycmVuY3kiOiJSVUIifSwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIn0.6TY__4KWu-Uwp8xInzMm65-WAbM0gK_CdYnO4PdiypM"}
+
 @app.get("/api/groups/", response_model=List[AccountGroup], dependencies=[Depends(get_db)])
 def read_groups(db: Session = Depends(get_db)):
     user_id = 2

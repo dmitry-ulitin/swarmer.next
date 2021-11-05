@@ -13,8 +13,8 @@
         <ng-template #accDropdown>
             <tui-data-list>
                 <button tuiOption (click)="newGroup()" [size]="'s'">New Account</button>
-                <button tuiOption *ngIf="!!group" (click)="editGroup()" [size]="'s'">Edit '{{group?.full_name}}'</button>
-                <button tuiOption *ngIf="!!group" (click)="removeGroup()" [size]="'s'">Delete '{{group?.full_name}}'</button>
+                <button tuiOption *ngIf="!!group" (click)="editGroup()" [size]="'s'">Edit '{{group?.fullname}}'</button>
+                <button tuiOption *ngIf="!!group" (click)="removeGroup()" [size]="'s'">Delete '{{group?.fullname}}'</button>
             </tui-data-list>
         </ng-template>
     </span>

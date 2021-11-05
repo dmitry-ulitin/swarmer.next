@@ -4,7 +4,7 @@
             <tr *ngFor="let t of transactions$ | async" [class.active]="false" [style.background-color]="t.bg">
                 <td>
                     <div>{{t.name}}</div>
-                    <div>{{t.opdate | date:'shortDate'}} {{t.balance?.full_name}}</div>
+                    <div>{{t.opdate | date:'shortDate'}} {{t.balance?.fullname}}</div>
                 </td>
                 <td class="text-end">
                     <div>{{t.amount.value | currency:t.amount.currency}}</div>

@@ -58,34 +58,34 @@ describe('AccState', () => {
     apiSpy.getTransactions.and.returnValue(of([
       {
         "id": 3960,
-        "account": { "id": 42, "balance": 55630, "currency": "EUR", "full_name": "modulbank EUR" },
-        "recipient": { "id": 43, "balance": 4794.5, "currency": "RUB", "full_name": "modulbank RUB" },
+        "account": { "id": 42, "balance": 55630, "currency": "EUR", "fullname": "modulbank EUR" },
+        "recipient": { "id": 43, "balance": 4794.5, "currency": "RUB", "fullname": "modulbank RUB" },
         "credit": 50,
         "currency": null,
         "debit": 4420.5,
         "opdate": "2021-03-04T13:22:53.854000",
-        "ttype": 0
+        "type": 0
       },
       {
         "id": 3959,
-        "recipient": { "id": 42, "balance": 55680, "currency": "EUR", "full_name": "modulbank EUR" },
+        "recipient": { "id": 42, "balance": 55680, "currency": "EUR", "fullname": "modulbank EUR" },
         "category": { "id": 201, "name": "Salary" },
         "credit": 8000,
         "currency": "EUR",
         "debit": 8000,
         "opdate": "2021-03-04T13:21:23.642000",
-        "ttype": 2
+        "type": 2
       },
       {
         "id": 3958,
-        "account": { "id": 43, "balance": 374, "currency": "RUB", "deleted": false, "full_name": "modulbank RUB" },
+        "account": { "id": 43, "balance": 374, "currency": "RUB", "fullname": "modulbank RUB" },
         "category": { "id": 108, "name": "Bills" },
         "credit": 1000,
         "currency": "RUB",
         "debit": 1000,
         "details": null,
         "opdate": "2021-03-04T13:21:01.313000",
-        "ttype": 1
+        "type": 1
       }
     ]));
     await store.dispatch(new GetTransactions()).toPromise();

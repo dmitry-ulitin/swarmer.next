@@ -5,11 +5,9 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     currency: str = "RUB"
-    is_active: bool = True
 
 
 class UserCreate(UserBase):
-    email: EmailStr
     password: str
 
 class UserUpdate(UserBase):
@@ -17,8 +15,6 @@ class UserUpdate(UserBase):
 
 class User(UserBase):
     id: int
-    created: datetime
-    updated: datetime
 
     class Config:
         orm_mode = True

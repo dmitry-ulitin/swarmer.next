@@ -8,19 +8,17 @@ class AccountBase(BaseModel):
     name: str = None
     currency: str
     start_balance: Decimal
-    balance: Decimal
 
 class AccountCreate(AccountBase):
     pass
 
 class AccountUpdate(AccountBase):
-    deleted: bool = False
-
+    pass
 
 class Account(AccountBase):
     id: int
     fullname: str
-    deleted: bool
+    balance: Decimal
 
     class Config:
         orm_mode = True
@@ -28,31 +26,27 @@ class Account(AccountBase):
 class ACLBase(BaseModel):
     is_admin: bool
     is_readonly: bool
-    name: str = None
-    order: int = 0
 
 class ACLCreate(ACLBase):
     pass
 
 class ACLUpdate(ACLBase):
-    deleted: bool = False
+    pass
 
 class ACL(ACLBase):
-    deleted: bool
     user: User
 
     class Config:
         orm_mode = True
 
 class AccountGroupBase(BaseModel):
-    name: str
-    owner_id: int
+    pass
 
 class AccountGroupCreate(AccountGroupBase):
     pass
 
 class AccountGroupUpdate(AccountGroupBase):
-    deleted: bool = False
+    pass
 
 class AccountGroup(AccountGroupBase):
     id: int
@@ -60,9 +54,6 @@ class AccountGroup(AccountGroupBase):
     is_owner: bool
     is_coowner: bool
     is_shared: bool
-    order: int
-    deleted: bool
-    owner: User
     accounts: List[Account] = []
     permissions: List[ACL] = []
 
