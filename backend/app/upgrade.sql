@@ -1,6 +1,7 @@
-alter table account_users rename to acl
+alter table account_users rename to acl;
 alter table acl rename column admin to is_admin;
 alter table acl rename column write to is_readonly;
+alter table users rename column password to hashed_password;
 alter table users add column is_active BOOLEAN;
 update users set is_active=1;
 alter table account_groups rename column user_id to owner_id;

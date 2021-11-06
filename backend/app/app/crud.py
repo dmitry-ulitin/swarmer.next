@@ -48,7 +48,7 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, 
         
     if not any(account_ids):
         account_ids = [a.id for a in accounts if (a.group.is_owner or a.group.is_coowner or a.group.is_shared) and (shared or not a.group.is_shared)]
-    account_balances = dict((a.id,a.start_balance) for a in accounts if a.id in account_ids)
+    
     # get transactions
     transactions = db.query(Transaction)
     if start:
@@ -66,18 +66,20 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, 
     transactions = transactions.filter(or_(Transaction.account_id.in_(account_ids), Transaction.recipient_id.in_(account_ids))) \
         .order_by(Transaction.opdate.desc(), Transaction.id.desc()) \
         .limit(limit).offset(skip).all()
-    # get balances for all previous transactions
-    balances = get_balances(db, account_ids, transactions[-1].id, transactions[-1].opdate) if len(transactions) else []
-    for id in account_balances:
-        account_balances[id] -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == id, balances)))))
-        account_balances[id] += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == id, balances)))))
-    # set balances to transactions
-    for t in transactions[::-1]:
-        if t.account and t.account.id in account_balances and not category_ids:
-            account_balances[t.account.id] -= t.credit
-            t.account.balance = account_balances[t.account.id]
-        if t.recipient and t.recipient.id in account_balances and not category_ids:
-            account_balances[t.recipient.id] += t.debit
-            t.recipient.balance = account_balances[t.recipient.id]
+    if not category_ids:
+        account_balances = dict((a.id,a.start_balance) for a in accounts if a.id in account_ids)
+        # get balances for all previous transactions
+        balances = get_balances(db, account_ids, transactions[-1].id, transactions[-1].opdate) if len(transactions) else []
+        for id in account_balances:
+            account_balances[id] -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == id, balances)))))
+            account_balances[id] += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == id, balances)))))
+        # set balances to transactions
+        for t in transactions[::-1]:
+            if t.account and t.account.id in account_balances:
+                account_balances[t.account.id] -= t.credit
+                t.account.balance = account_balances[t.account.id]
+            if t.recipient and t.recipient.id in account_balances:
+                account_balances[t.recipient.id] += t.debit
+                t.recipient.balance = account_balances[t.recipient.id]
     return transactions
 

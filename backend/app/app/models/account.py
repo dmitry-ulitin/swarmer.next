@@ -30,7 +30,7 @@ class AccountGroup(Base):
         return any([p.is_admin for p in self.permissions if p.user_id == self.current_user_id or self.owner_id == self.current_user_id])
     @hybridproperty
     def is_shared(self):
-        return self.owner_id != self.current_user_id and any([p for p in self.permissions if p.user_id == self.current_user_id])
+        return self.owner_id != self.current_user_id and any([p for p in self.permissions if not p.is_admin and p.user_id == self.current_user_id])
 
 
 @listens_for(AccountGroup.__table__, 'after_create')
