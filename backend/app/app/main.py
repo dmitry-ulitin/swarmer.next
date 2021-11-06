@@ -31,8 +31,8 @@ def read_groups(db: Session = Depends(get_db)):
     return groups
 
 @app.get("/api/transactions/", response_model=List[Transaction], dependencies=[Depends(get_db)])
-def read_transactions(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+def read_transactions(skip: int = 0, limit: int = 50, accounts: str = '', db: Session = Depends(get_db)):
     user_id = 2
-    transactions = crud.get_transactions(db, user_id, skip, limit)
+    transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a])
     return transactions
 
