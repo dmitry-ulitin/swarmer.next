@@ -11,6 +11,6 @@ export interface Transaction {
     category: Category;
     currency: string;
     details: string;
-    ttype: number;
+    type: number;
     bg: string;
 }

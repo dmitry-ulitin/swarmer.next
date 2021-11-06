@@ -1,11 +1,13 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List
 from pydantic import BaseModel
+from .user import User
 
 class AccountBase(BaseModel):
-    name: str
+    name: str = None
     currency: str
-    deleted: bool = False
+    start_balance: Decimal
 
 class AccountCreate(AccountBase):
     pass
@@ -13,19 +15,32 @@ class AccountCreate(AccountBase):
 class AccountUpdate(AccountBase):
     pass
 
-
 class Account(AccountBase):
     id: int
-    group_id: int
-    created: datetime
-    updated: datetime
+    fullname: str
+    balance: Decimal
+
+    class Config:
+        orm_mode = True
+
+class ACLBase(BaseModel):
+    is_admin: bool
+    is_readonly: bool
+
+class ACLCreate(ACLBase):
+    pass
+
+class ACLUpdate(ACLBase):
+    pass
+
+class ACL(ACLBase):
+    user: User
 
     class Config:
         orm_mode = True
 
 class AccountGroupBase(BaseModel):
-    name: str
-    deleted: bool = False
+    pass
 
 class AccountGroupCreate(AccountGroupBase):
     pass
@@ -35,10 +50,12 @@ class AccountGroupUpdate(AccountGroupBase):
 
 class AccountGroup(AccountGroupBase):
     id: int
-    owner_id: int
-    created: datetime
-    updated: datetime
-    items: List[Account] = []
+    fullname: str
+    is_owner: bool
+    is_coowner: bool
+    is_shared: bool
+    accounts: List[Account] = []
+    permissions: List[ACL] = []
 
     class Config:
         orm_mode = True

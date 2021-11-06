@@ -99,7 +99,7 @@ export class AccState {
             const transactions = await this.api.getTransactions(state.accounts).toPromise();
             const selected = Object.assign({}, ...state.accounts.map(a => ({[a]: true})));
             const tv = transactions.map(t => {
-                const name = t.account && t.recipient ? t.account.full_name + ' => ' + t.recipient.full_name : t.category?.name || "-";
+                const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
                 const amount = t.account ? { value: t.credit, currency: t.account.currency } : (t.recipient ? { value: t.debit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
                 const useRecipient = t.recipient?.balance && (!t.account?.balance || selected[t.recipient?.id] && !selected[t.account?.id]);
                 const acc = useRecipient ? t.recipient : t.account;
