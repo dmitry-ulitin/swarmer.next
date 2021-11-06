@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Store } from '@ngxs/store';
 import { Account } from '../models/account';
@@ -9,7 +9,8 @@ import { AccState, SelectAccounts, ToggleGropup } from './accounts.state';
 @Component({
   selector: 'app-accounts',
   templateUrl: './accounts.component.html',
-  styleUrls: ['./accounts.component.scss']
+  styleUrls: ['./accounts.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountsComponent {
   groups$ = this.store.select(state => state.acc.groups);
@@ -40,7 +41,7 @@ export class AccountsComponent {
     let selected = group.accounts.map(a => a.id);
     if (event.ctrlKey) {
       if (this.isGroupSelected(group)) {
-        selected = this.accounts.filter(a => selected.includes(a));
+        selected = this.accounts.filter(a => !selected.includes(a));
       } else {
         selected = [...this.accounts, ...selected];
       }

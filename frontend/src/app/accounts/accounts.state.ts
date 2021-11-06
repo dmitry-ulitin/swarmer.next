@@ -6,6 +6,7 @@ import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction } from '../models/transaction';
 import { Account } from '../models/account';
+import { firstValueFrom } from 'rxjs';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -79,11 +80,13 @@ export class AccState {
     @Action(ToggleGropup)
     toggleGropup(cxt: StateContext<AccStateModel>, action: ToggleGropup) {
         const state = cxt.getState();
-        let expanded = state.expanded.filter(id => id !== action.group);
-        if (expanded.length === state.expanded.length) {
-            expanded.push(action.group);
+        if ((state.groups.find(g => g.id === action.group)?.accounts.length || 0) > 1) {
+            let expanded = state.expanded.filter(id => id !== action.group);
+            if (expanded.length === state.expanded.length) {
+                expanded.push(action.group);
+            }
+            cxt.patchState({ expanded });
         }
-        cxt.patchState({ expanded });
     }
 
     @Action(SelectAccounts)
@@ -96,8 +99,8 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await this.api.getTransactions(state.accounts).toPromise();
-            const selected = Object.assign({}, ...state.accounts.map(a => ({[a]: true})));
+            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts));
+            const selected = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => {
                 const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
                 const amount = t.account ? { value: t.credit, currency: t.account.currency } : (t.recipient ? { value: t.debit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
