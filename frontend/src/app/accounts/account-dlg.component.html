@@ -1,0 +1,12 @@
+<form [formGroup]=form>
+    <tui-input formControlName="fullname">Name</tui-input>
+    <div class="w-100" *ngFor="let account of accounts.controls; let i = index" class="d-flex" formArrayName="accounts">
+        <ng-container [formGroupName]="i">
+            <label tuiLabel label="Name" class="flex-fill">
+                <tui-input formControlName="name" [tuiTextfieldSize]="'s'"></tui-input>
+            </label>
+            <tui-input formControlName="currency">Currency</tui-input>
+            <tui-input-number formControlName="start_balance">Start Balance</tui-input-number>
+        </ng-container>
+    </div>
+</form>

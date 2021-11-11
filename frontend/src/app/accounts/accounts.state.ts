@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, Injector } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Group } from '../models/group';
 import { Amount, Total } from '../models/balance';
@@ -7,6 +7,9 @@ import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction } from '../models/transaction';
 import { Account } from '../models/account';
 import { firstValueFrom } from 'rxjs';
+import { TuiDialogService } from '@taiga-ui/core';
+import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
+import { AccountDialogComponent } from './account-dlg.component';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -32,6 +35,10 @@ export class GetTransactions {
     static readonly type = '[Acc] Get Transactions';
 }
 
+export class GreateGroup {
+    static readonly type = '[Acc] Create Group';
+}
+
 export interface AccStateModel {
     groups: Group[];
     expanded: number[];
@@ -51,7 +58,10 @@ export interface AccStateModel {
 
 @Injectable()
 export class AccState {
-    constructor(private api: ApiService) { }
+    constructor(private api: ApiService,
+        @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
+        @Inject(Injector) private readonly injector: Injector
+    ) { }
 
     @Selector()
     static total(state: AccStateModel): Amount[] {
@@ -112,5 +122,12 @@ export class AccState {
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
+    }
+
+    @Action(GreateGroup)
+    createGroup(cxt: StateContext<AccStateModel>) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector)
+        ).subscribe();
     }
 }

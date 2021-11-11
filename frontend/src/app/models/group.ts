@@ -1,5 +1,4 @@
 import { Account } from './account';
-import { Amount } from './balance';
 import { User } from './user';
 /* eslint-disable @typescript-eslint/naming-convention */
 
