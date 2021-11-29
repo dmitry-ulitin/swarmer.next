@@ -6,7 +6,6 @@ import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction } from '../models/transaction';
 import { Account } from '../models/account';
-import { firstValueFrom } from 'rxjs';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { AccountDialogComponent } from './account-dlg.component';
@@ -35,9 +34,15 @@ export class GetTransactions {
     static readonly type = '[Acc] Get Transactions';
 }
 
-export class GreateGroup {
+export class CreateGroup {
     static readonly type = '[Acc] Create Group';
 }
+
+export class EditGroup {
+    static readonly type = '[Acc] Edit Group';
+    constructor(public group: Group) { }
+}
+
 
 export interface AccStateModel {
     groups: Group[];
@@ -109,7 +114,7 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts));
+            const transactions = await this.api.getTransactions(state.accounts).toPromise();
             const selected = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => {
                 const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
@@ -124,10 +129,17 @@ export class AccState {
         }
     }
 
-    @Action(GreateGroup)
+    @Action(CreateGroup)
     createGroup(cxt: StateContext<AccStateModel>) {
         this.dialogService.open(
             new PolymorpheusComponent(AccountDialogComponent, this.injector)
+        ).subscribe();
+    }
+
+    @Action(EditGroup)
+    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
         ).subscribe();
     }
 }

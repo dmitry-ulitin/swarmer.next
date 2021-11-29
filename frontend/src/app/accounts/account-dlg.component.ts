@@ -26,6 +26,10 @@ export class AccountDialogComponent {
   get accounts(): FormArray {
     return this.form.controls.accounts as FormArray;
   }
+  
+  getAccount(index: number): FormGroup {
+    return this.accounts.controls[index] as FormGroup;
+  }
 
   constructor(
     private store: Store,

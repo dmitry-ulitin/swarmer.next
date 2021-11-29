@@ -20,7 +20,7 @@ import localeRu from '@angular/common/locales/ru';
 import { registerLocaleData } from '@angular/common';
 import { TransactionsComponent } from './transactions/transactions.component';
 import { HomeComponent } from './home/home.component';
-import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiNotificationsModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule } from '@taiga-ui/core';
+import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiNotificationsModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule } from '@taiga-ui/core';
 import { TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule } from '@taiga-ui/kit';
 import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { AccountDialogComponent } from './accounts/account-dlg.component';
@@ -49,6 +49,7 @@ registerLocaleData(localeRu, 'ru');
     TuiInputModule,
     TuiInputPasswordModule,
     TuiInputNumberModule,
+    TuiTextfieldControllerModule,
     TuiHostedDropdownModule,
     TuiDataListModule,
     TuiSvgModule,
