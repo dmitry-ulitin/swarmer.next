@@ -9,6 +9,7 @@ import { Account } from '../models/account';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { AccountDialogComponent } from './account-dlg.component';
+import { firstValueFrom } from 'rxjs';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -114,7 +115,7 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await this.api.getTransactions(state.accounts).toPromise();
+            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts));
             const selected = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => {
                 const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
