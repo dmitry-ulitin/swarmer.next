@@ -10,6 +10,7 @@ import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { AccountDialogComponent } from './account-dlg.component';
 import { firstValueFrom } from 'rxjs';
+import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -42,6 +43,11 @@ export class CreateGroup {
 export class EditGroup {
     static readonly type = '[Acc] Edit Group';
     constructor(public group: Group) { }
+}
+
+export class EditTransaction {
+    static readonly type = '[Acc] Edit Transaction';
+    constructor(public transaction: TransactionView) { }
 }
 
 
@@ -141,6 +147,13 @@ export class AccState {
     editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
         this.dialogService.open(
             new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
+        ).subscribe();
+    }
+
+    @Action(EditTransaction)
+    editTransaction(cxt: StateContext<AccStateModel>, action: EditTransaction) {
+        this.dialogService.open(
+            new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: action.transaction }
         ).subscribe();
     }
 }

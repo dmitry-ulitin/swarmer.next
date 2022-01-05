@@ -21,9 +21,10 @@ import { registerLocaleData } from '@angular/common';
 import { TransactionsComponent } from './transactions/transactions.component';
 import { HomeComponent } from './home/home.component';
 import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiNotificationsModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule } from '@taiga-ui/core';
-import { TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule } from '@taiga-ui/kit';
+import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule } from '@taiga-ui/kit';
 import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { AccountDialogComponent } from './accounts/account-dlg.component';
+import { TransactionDlgComponent } from './transactions/transaction-dlg/transaction-dlg.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -34,7 +35,8 @@ registerLocaleData(localeRu, 'ru');
     AccountsComponent,
     AccountDialogComponent,
     TransactionsComponent,
-    HomeComponent
+    HomeComponent,
+    TransactionDlgComponent
   ],
   imports: [
     BrowserModule,
@@ -52,6 +54,7 @@ registerLocaleData(localeRu, 'ru');
     TuiTextfieldControllerModule,
     TuiHostedDropdownModule,
     TuiDataListModule,
+    TuiDataListWrapperModule,
     TuiSvgModule,
     TuiNotificationsModule,
     TuiGroupModule,

@@ -12,7 +12,6 @@ import { Group } from '../models/group';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountDialogComponent {
-
   form = new FormGroup({
     'id': new FormControl(),
     'fullname': new FormControl(''),
