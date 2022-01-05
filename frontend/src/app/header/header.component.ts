@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Select, Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { AccState, CreateGroup, EditGroup, EditTransaction, GetGroups } from '../accounts/accounts.state';
+import { AccState, CreateGroup, EditGroup, EditTransaction, GetGroups, GetTransactions } from '../accounts/accounts.state';
 import { AppLogout, AppState } from '../app.state';
 import { Group } from '../models/group';
 
@@ -29,6 +29,7 @@ export class HeaderComponent {
 
   onRefresh(): void {
     this.store.dispatch(new GetGroups());
+    this.store.dispatch(new GetTransactions());
   }
 
   newGroup(): void {

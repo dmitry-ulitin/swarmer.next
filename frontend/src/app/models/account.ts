@@ -7,4 +7,5 @@ export interface Account {
     currency: string;
     start_balance: number;
     balance?: number;
+    deleted?: boolean;
 }

@@ -19,6 +19,7 @@ class Account(AccountBase):
     id: int
     fullname: str
     balance: Decimal
+    deleted: bool
 
     class Config:
         orm_mode = True

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDialogContext, TuiDialogService } from '@taiga-ui/core';
@@ -33,7 +33,8 @@ export class AccountDialogComponent {
   constructor(
     private store: Store,
     @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
-    @Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<Group, Group>
+    @Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<Group, Group>,
+    private cdr: ChangeDetectorRef
   ) {
     this.patch(context.data);
   }
@@ -45,7 +46,32 @@ export class AccountDialogComponent {
       'id': new FormControl(a.id),
       'name': new FormControl(a.name),
       'currency': new FormControl(a.currency),
-      'start_balance': new FormControl(a.start_balance)})
+      'start_balance': new FormControl(a.start_balance),
+      'deleted': new FormControl(a.deleted)})
     ));
+  }
+
+  get canDelete(): boolean {
+    return this.accounts.controls.filter(a => !a.get('deleted')?.value).length > 1;
+  }
+
+  onAddAccount(): void {
+    this.accounts.push(new FormGroup({
+      'id': new FormControl(),
+      'name': new FormControl(''),
+      'currency': new FormControl('RUB'),
+      'start_balance': new FormControl(0),
+      'deleted': new FormControl(false)})
+    );
+  }
+
+  onRemoveAccount(index: number): void {
+    this.accounts.controls[index].get('deleted')?.setValue(true);
+  }
+
+  onCancel(): void {
+  }
+
+  onSubmit(): void {
   }
 }
