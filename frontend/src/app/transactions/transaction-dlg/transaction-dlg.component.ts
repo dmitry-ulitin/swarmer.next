@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDialogContext, TuiDialogService } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
+import { AccState } from 'src/app/accounts/accounts.state';
 import { Transaction } from 'src/app/models/transaction';
 
 @Component({
@@ -12,6 +13,8 @@ import { Transaction } from 'src/app/models/transaction';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionDlgComponent {
+  accounts$ = this.store.select(AccState.accounts);
+
   form = new FormGroup({
     'id': new FormControl(),
     'opdate': new FormControl(),

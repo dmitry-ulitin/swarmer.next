@@ -1,3 +1,7 @@
 <form [formGroup]=form>
     <tui-input-number formControlName="credit">Amount</tui-input-number>
+    <tui-select formControlName="account">
+        Account
+        <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async"></tui-data-list-wrapper>
+    </tui-select>
 </form>

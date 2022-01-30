@@ -85,6 +85,11 @@ export class AccState {
         return state.groups.filter(g => g.accounts.some(a => state.accounts.includes(a.id)));
     }
 
+    @Selector()
+    static accounts(state: AccStateModel): Account[] {
+        return state.groups.reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
+    }
+
     ngxsOnInit(ctx: StateContext<AccState>) {
         ctx.dispatch([new GetGroups(), new GetTransactions()]);
     }
