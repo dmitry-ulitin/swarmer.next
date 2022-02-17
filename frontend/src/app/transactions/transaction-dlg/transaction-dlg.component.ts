@@ -14,6 +14,7 @@ import { Transaction } from 'src/app/models/transaction';
 })
 export class TransactionDlgComponent {
   accounts$ = this.store.select(AccState.accounts);
+  currencies = this.store.selectSnapshot(AccState.currencies);
 
   form = new FormGroup({
     'id': new FormControl(),

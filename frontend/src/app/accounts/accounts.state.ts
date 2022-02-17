@@ -90,6 +90,11 @@ export class AccState {
         return state.groups.reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
     }
 
+    @Selector()
+    static currencies(state: AccStateModel): string[] {
+        return state.groups.reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted).map(a => a.currency).filter((v, i, a) => a.indexOf(v) === i);
+    }
+
     ngxsOnInit(ctx: StateContext<AccState>) {
         ctx.dispatch([new GetGroups(), new GetTransactions()]);
     }
