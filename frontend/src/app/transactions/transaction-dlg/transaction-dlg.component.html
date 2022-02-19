@@ -1,19 +1,23 @@
 <form [formGroup]=form>
-    <div class="">
-        <tui-input-number formControlName="credit" [tuiTextfieldSize]="'s'" class="tui-space_right-2">Amount</tui-input-number>
-        <tui-combo-box [tuiTextfieldSize]="'s'">
+    <div class="d-flex">
+        <tui-input-number formControlName="credit" [tuiTextfieldSize]="'s'" class="tui-space_right-2 flex-fill">0,00
+        </tui-input-number>
+        <tui-combo-box formControlName="currency" [tuiTextfieldSize]="'s'" class="currency">
             Currency
-            <input tuiTextfield formControlName="currency"/>
+            <input tuiTextfield formControlName="currency" />
             <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput"></tui-data-list-wrapper>
         </tui-combo-box>
     </div>
     <tui-select formControlName="account" [valueContent]="accountContent" [tuiTextfieldSize]="'s'"
         class="tui-space_top-2">
         Account
-        <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async"
-            [itemContent]="accountContent"></tui-data-list-wrapper>
+        <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async" [itemContent]="accountContent">
+        </tui-data-list-wrapper>
     </tui-select>
     <ng-template #accountContent let-account>
         {{account.fullname}}
     </ng-template>
+    <tui-input-date formControlName="opdate" [tuiTextfieldSize]="'s'" class="tui-space_top-2">
+        <input tuiTextfield />
+    </tui-input-date>
 </form>
