@@ -25,11 +25,17 @@ class Category(Base):
     def root(self):
         return self.parent.root if self.parent_id else self
     @hybridproperty
+    def root_id(self):
+        return self.root.id
+    @hybridproperty
     def level(self):
         return self.parent.level + 1 if self.parent_id else 0
     @hybridproperty
     def fullname(self):
-        return self.parent.fullname + self.name if self.parent_id else self.name
+        return self.parent.fullname + ' / ' + self.name if self.parent_id and self.parent.parent_id else self.name
+    @hybridproperty
+    def fullpath(self):
+        return self.parent.fullname + ' / ' + self.name if self.parent_id else self.name
     @hybridproperty
     def bgc(self):
         return self.bg if self.bg else self.parent.bgc if self.parent else None

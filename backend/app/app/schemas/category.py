@@ -12,6 +12,9 @@ class CategoryUpdate(CategoryBase):
 
 class Category(CategoryBase):
     id: int
+    fullname: str
+    level: int
+    root_id: int
 
     class Config:
         orm_mode = True

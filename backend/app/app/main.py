@@ -7,6 +7,7 @@ from . import crud
 from .database import SessionLocal, engine, Base
 from .schemas.account import AccountGroup
 from .schemas.transaction import Transaction
+from .schemas.category import Category
 
 Base.metadata.create_all(bind=engine)
 
@@ -36,3 +37,8 @@ def read_transactions(skip: int = 0, limit: int = 50, accounts: str = '', db: Se
     transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a])
     return transactions
 
+@app.get("/api/categories/", response_model=List[Category], dependencies=[Depends(get_db)])
+def read_categories(db: Session = Depends(get_db)):
+    user_id = 2
+    categories = crud.get_user_categories(db, user_id)
+    return categories

@@ -11,6 +11,7 @@ import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { AccountDialogComponent } from './account-dlg.component';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
+import { Category } from '../models/category';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -50,12 +51,16 @@ export class EditTransaction {
     constructor(public transaction: TransactionView) { }
 }
 
+export class GetCategories {
+    static readonly type = '[Acc] Get Categories';
+}
 
 export interface AccStateModel {
     groups: Group[];
     expanded: number[];
     accounts: number[];
     transactions: TransactionView[];
+    categories: Category[];
 }
 
 @State<AccStateModel>({
@@ -65,6 +70,7 @@ export interface AccStateModel {
         expanded: [],
         accounts: [],
         transactions: [],
+        categories: []
     }
 })
 
@@ -96,13 +102,13 @@ export class AccState {
     }
 
     ngxsOnInit(ctx: StateContext<AccState>) {
-        ctx.dispatch([new GetGroups(), new GetTransactions()]);
+        ctx.dispatch([new GetGroups(), new GetTransactions(), new GetCategories()]);
     }
 
     @Action([AppLoginSuccess, GetGroups], { cancelUncompleted: true })
     async getGroups(cxt: StateContext<AccStateModel>) {
         try {
-            const groups = await this.api.getGroups().toPromise();
+            const groups = await firstValueFrom(this.api.getGroups());
             cxt.patchState({ groups });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -165,5 +171,15 @@ export class AccState {
         this.dialogService.open(
             new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: action.transaction }
         ).subscribe();
+    }
+
+    @Action([AppLoginSuccess, GetCategories], { cancelUncompleted: true })
+    async getCategories(cxt: StateContext<AccStateModel>) {
+        try {
+            const categories = await firstValueFrom(this.api.getCategories());
+            cxt.patchState({ categories });
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
     }
 }

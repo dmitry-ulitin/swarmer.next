@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import label, expression
 
 from .models.transaction import Transaction
+from .models.category import Category
 from .models.account import Account, AccountGroup, ACL
 
 def get_balances(db: Session, ai, tid = None, opdate = None):
@@ -82,4 +83,21 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, 
                 account_balances[t.recipient.id] += t.debit
                 t.recipient.balance = account_balances[t.recipient.id]
     return transactions
+
+def get_user_categories(db: Session, user_id: int):
+    a_au = [au.group.owner_id for au in db.query(ACL).filter(ACL.user_id == user_id).all()]
+    a_au += [au.user_id for au in db.query(ACL).join(ACL.group).filter(AccountGroup.owner_id == user_id).all()]
+    a_au.append(user_id)
+    all_categories = db.query(Category).filter(Category.owner_id.in_(a_au)).all()
+    all_categories = sorted(all_categories, key = lambda c: c.fullpath)
+    categories = []
+    p = None
+    for c in all_categories:
+        if p and p.fullpath == c.fullpath:
+            if c.owner_id == user_id:
+                categories[len(categories) - 1] = c
+            continue
+        categories.append(c)
+        p = c
+    return categories
 
