@@ -35,7 +35,7 @@ class Category(Base):
         return self.parent.fullname + ' / ' + self.name if self.parent_id and self.parent.parent_id else self.name
     @hybridproperty
     def fullpath(self):
-        return self.parent.fullname + ' / ' + self.name if self.parent_id else self.name
+        return self.parent.fullpath + ' / ' + self.name if self.parent_id else self.name
     @hybridproperty
     def bgc(self):
         return self.bg if self.bg else self.parent.bgc if self.parent else None

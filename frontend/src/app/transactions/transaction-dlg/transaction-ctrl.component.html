@@ -1,0 +1,42 @@
+<form [formGroup]=form>
+    <div class="d-flex">
+        <tui-input-number formControlName="credit" [tuiTextfieldSize]="'s'" class="tui-space_right-2 flex-fill">0,00
+        </tui-input-number>
+        <tui-combo-box formControlName="currency" [tuiTextfieldSize]="'s'" class="currency">
+            <input tuiTextfield />
+            <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
+            </tui-data-list-wrapper>
+        </tui-combo-box>
+    </div>
+    <tui-select formControlName="account" [valueContent]="accountContent" [tuiTextfieldSize]="'s'"
+        class="tui-space_top-2">
+        Account
+        <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async" [itemContent]="accountContent" [size]="'s'">
+        </tui-data-list-wrapper>
+    </tui-select>
+    <ng-template #accountContent let-account>
+        {{account.fullname}}
+    </ng-template>
+    <tui-select formControlName="category" [valueContent]="categoryValue" [tuiTextfieldSize]="'s'"
+        [tuiTextfieldCleaner]="true" class="tui-space_top-2">
+        no category
+        <tui-data-list-wrapper *tuiDataList [items]="categories$ | async" [itemContent]="categoryContent" [size]="'s'">
+        </tui-data-list-wrapper>
+    </tui-select>
+    <ng-template #categoryValue let-category>
+        {{category.fullname}}
+    </ng-template>
+    <ng-template #categoryContent let-category>
+        <div [class]="'category-level-' + category.level">{{category.name}}</div>
+    </ng-template>
+    <div class="d-flex tui-space_top-2">
+        <tui-input-date formControlName="opdate" [tuiTextfieldSize]="'s'" class="flex-fill">
+            <input tuiTextfield />
+        </tui-input-date>
+        <button tuiIconButton type="button" icon="tuiIconChevronLeft" [size]="'s'" [appearance]="'icon'" (click)="onYesterday()" class="tui-space_left-1"></button>
+        <button tuiIconButton type="button" icon="tuiIconToggleOff" [size]="'s'" [appearance]="'icon'" (click)="onToday()" class="tui-space_left-1"></button>
+        <button tuiIconButton type="button" icon="tuiIconChevronRight" [size]="'s'" [appearance]="'icon'" (click)="onTomorrow()" class="tui-space_left-1"></button>
+    </div>
+    <tui-text-area formControlName="details" class=" tui-space_top-2" [tuiTextfieldSize]="'m'"
+        [tuiTextfieldLabelOutside]="true"></tui-text-area>
+</form>
