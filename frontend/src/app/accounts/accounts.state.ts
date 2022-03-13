@@ -16,7 +16,7 @@ import { Category } from '../models/category';
 export interface TransactionView extends Transaction {
     name: string;
     amount: Amount;
-    balance: Account;
+    balance: { fullname?: string; currency?: string; balance?: number; };
 }
 
 export class GetGroups {
@@ -142,9 +142,9 @@ export class AccState {
             const tv = transactions.map(t => {
                 const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
                 const amount = t.account ? { value: t.credit, currency: t.account.currency } : (t.recipient ? { value: t.debit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
-                const useRecipient = t.recipient?.balance && (!t.account?.balance || selected[t.recipient?.id] && !selected[t.account?.id]);
+                const useRecipient = !t.account_balance || t.recipient && t.recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]);
                 const acc = useRecipient ? t.recipient : t.account;
-                return { ...t, name: name, amount: amount, balance: acc };
+                return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
             });
             cxt.patchState({ transactions: tv });
         } catch (err) {

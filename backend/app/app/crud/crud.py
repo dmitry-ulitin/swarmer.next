@@ -77,9 +77,11 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, 
             if t.account and t.account.id in account_balances:
                 account_balances[t.account.id] -= t.credit
                 t.account.balance = account_balances[t.account.id]
+                t.account_balance = account_balances[t.account.id]
             if t.recipient and t.recipient.id in account_balances:
                 account_balances[t.recipient.id] += t.debit
                 t.recipient.balance = account_balances[t.recipient.id]
+                t.recipient_balance = account_balances[t.recipient.id]
     return transactions
 
 def get_transaction(db: Session, user_id: int, id: int):
@@ -90,11 +92,13 @@ def get_transaction(db: Session, user_id: int, id: int):
         transaction.account.balance = transaction.account.start_balance
         transaction.account.balance -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == transaction.account.id, balances)))))
         transaction.account.balance += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == transaction.account.id, balances)))))
+        transaction.account_balance = transaction.account.balance
     if transaction.recipient:
         transaction.recipient.group.current_user_id = user_id
         transaction.recipient.balance = transaction.recipient.start_balance
         transaction.recipient.balance -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == transaction.recipient.id, balances)))))
         transaction.recipient.balance += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == transaction.recipient.id, balances)))))
+        transaction.recipient_balance = transaction.recipient.balance
     return transaction
 
 def transaction_add(db: Session, user_id: int, transaction: models.Transaction):

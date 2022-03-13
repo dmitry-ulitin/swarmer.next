@@ -9,8 +9,10 @@ class TransactionBase(BaseModel):
     opdate: datetime
     category: Category = None
     account: Account = None
+    account_balance: Decimal = None
     credit: Decimal
     recipient: Account = None
+    recipient_balance: Decimal = None
     debit: Decimal
     currency: str = None
     details: str = None
