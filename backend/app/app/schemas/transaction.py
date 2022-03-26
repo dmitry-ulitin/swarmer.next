@@ -9,10 +9,8 @@ class TransactionBase(BaseModel):
     opdate: datetime
     category: Category = None
     account: Account = None
-    account_balance: Decimal = None
     credit: Decimal
     recipient: Account = None
-    recipient_balance: Decimal = None
     debit: Decimal
     currency: str = None
     details: str = None
@@ -21,12 +19,14 @@ class TransactionCreate(TransactionBase):
     pass
 
 class TransactionUpdate(TransactionBase):
-    pass
+    id: int
 
 
 class Transaction(TransactionBase):
     id: int
     type: int
+    account_balance: Decimal = None
+    recipient_balance: Decimal = None
     bg: str
 
     class Config:

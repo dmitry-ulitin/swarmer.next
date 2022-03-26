@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import label
 
 from .. import models
+from .. import schemas
 
 def get_balances(db: Session, ai, tid = None, opdate = None):
     query = db.query(models.Transaction.account_id, models.Transaction.recipient_id, \
@@ -101,16 +102,17 @@ def get_transaction(db: Session, user_id: int, id: int):
         transaction.recipient_balance = transaction.recipient.balance
     return transaction
 
-def transaction_add(db: Session, user_id: int, transaction: models.Transaction):
-    if transaction.account:
-        transaction.account_id = transaction.account.id
-    if transaction.recipient:
-        transaction.recipient_id = transaction.recipient.id
-    transaction.user_id = user_id
-    db.add(transaction)
-    db.session.commit()
-    db.refresh(transaction)
-    return transaction
+def add_transaction(db: Session, user_id: int, transaction: schemas.TransactionCreate):
+    db_transaction = models.Transaction(owner_id = user_id, opdate = transaction.opdate, \
+        description = transaction.description, \
+        category_id = transaction.category.id if transaction.category else None, \
+        account_id = transaction.account.id if transaction.account else None, \
+        recipient_id = transaction.recipient.id if transaction.recipient else None, \
+        credit = transaction.credit, debit = transaction.debit)
+    db.add(db_transaction)
+    db.commit()
+    db.refresh(db_transaction)
+    return get_transaction(db, user_id, db_transaction.id)
 
 def get_user_categories(db: Session, user_id: int):
     a_au = [au.group.owner_id for au in db.query(models.ACL).filter(models.ACL.user_id == user_id).all()]
