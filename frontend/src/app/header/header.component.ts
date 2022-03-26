@@ -1,16 +1,31 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Select, Store } from '@ngxs/store';
+import { TUI_ICONS_PATH } from '@taiga-ui/core';
 import { Observable } from 'rxjs';
 import { AccState, CreateGroup, EditGroup, EditTransaction, GetGroups, GetTransactions } from '../accounts/accounts.state';
 import { AppLogout, AppState } from '../app.state';
 import { Group } from '../models/group';
 
+const MAPPER: Record<string, string> = {
+  tuiIconCollapse: 'swap_horiz_24'
+};
+
+export function iconsPath(name: string): string {
+  return MAPPER[name] ? `assets/icons/${MAPPER[name]}.svg#${MAPPER[name]}` : `assets/taiga-ui/icons/${name}.svg#${name}`;
+}
+
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: TUI_ICONS_PATH,
+      useValue: iconsPath,
+    },
+  ]
 })
 export class HeaderComponent {
   @Select(AppState.isAuthenticated) isAuthenticated$!: Observable<boolean>;
@@ -42,7 +57,7 @@ export class HeaderComponent {
 
   removeGroup(): void { }
 
-  onIncome(): void { 
+  onIncome(): void {
     this.store.dispatch(new EditTransaction({} as any));
   }
 }
