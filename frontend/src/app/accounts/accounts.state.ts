@@ -201,7 +201,7 @@ export class AccState {
             details: ''
         };
         this.dialogService.open(
-            new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction }
+            new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
         ).subscribe();
     }
 

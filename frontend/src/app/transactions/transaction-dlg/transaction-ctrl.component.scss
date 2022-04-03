@@ -23,3 +23,27 @@
     align-items: stretch;
     gap: 0.5rem;
 }
+
+.account {
+    order: 0;
+}
+
+div.debit {
+    order: 1;
+}
+
+.recipient {
+    order: 2;
+}
+
+div.credit {
+    order: 3;
+}
+
+div.expense div.debit {
+    order: 4;
+}
+
+div.income .recipient {
+    order: -1;
+}

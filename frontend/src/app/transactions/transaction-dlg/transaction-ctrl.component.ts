@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, forwardRef } from '@angular/core';
 import { ControlValueAccessor, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDay, TuiDestroyService } from '@taiga-ui/cdk';
-import { map, startWith, takeUntil, withLatestFrom } from 'rxjs';
+import { map, takeUntil } from 'rxjs';
 import { AccState } from 'src/app/accounts/accounts.state';
 import { Category } from 'src/app/models/category';
 import { TransactionType } from 'src/app/models/transaction';
@@ -36,8 +36,14 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     'type': new FormControl()
   });
 
-  type: TransactionType = TransactionType.Transfer;
-  
+  get type(): TransactionType {
+    return this.form.controls['type'].value;
+  }
+
+  get typeString(): string {
+    return this.type === TransactionType.Expense ? 'expense' : (this.type === TransactionType.Income ? 'income' : 'transfer');
+  }
+
   accounts$ = this.store.select(AccState.accounts);
   categories$ = this.store.select(state => state.acc.categories).pipe(map(categories => categories.filter((c: Category) => c.root_id === this.type)));
   currencies = this.store.selectSnapshot(AccState.currencies);
@@ -47,11 +53,11 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   get showCredit(): boolean {
-    return this.convertation || this.type !== TransactionType.Income;
+    return this.convertation || this.type === TransactionType.Expense;
   }
 
   get showDebit(): boolean {
-    return this.convertation || this.type === TransactionType.Income;
+    return this.convertation || this.type !== TransactionType.Expense;
   }
 
   get showAccount(): boolean {
@@ -60,6 +66,10 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   get showRecipient(): boolean {
     return this.type !== TransactionType.Expense;
+  }
+
+  get showCategory(): boolean {
+    return this.type !== TransactionType.Transfer;
   }
 
   constructor(private store: Store, destroy$: TuiDestroyService) {
@@ -80,7 +90,6 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       }
     });
     this.form.controls['type'].valueChanges.pipe(takeUntil(destroy$)).subscribe(type => {
-      this.type = type;
       if (type === TransactionType.Expense) {
         this.form.controls['ccurrency'].enable();
         this.form.controls['dcurrency'].disable();
@@ -101,12 +110,17 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   onYesterday(): void {
+    const opdate: TuiDay = this.form.controls['opdate'].value;
+    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, true));
   }
 
   onToday(): void {
+    this.form.controls['opdate'].setValue(TuiDay.currentLocal());
   }
 
   onTomorrow(): void {
+    const opdate: TuiDay = this.form.controls['opdate'].value;
+    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
   }
 
   onChange: any = () => { };
