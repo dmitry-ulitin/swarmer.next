@@ -5,4 +5,5 @@ export interface Category {
     name: string;
     fullname: string;
     level: number;
+    root_id: number;
 }

@@ -9,3 +9,17 @@
 .category-level-3 {
     margin-left: 2rem;
 }
+
+.transaction {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.amounts {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}

@@ -4,7 +4,7 @@ import { Group } from '../models/group';
 import { Amount, Total } from '../models/balance';
 import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
-import { Transaction } from '../models/transaction';
+import { Transaction, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
@@ -49,6 +49,11 @@ export class EditGroup {
 export class EditTransaction {
     static readonly type = '[Acc] Edit Transaction';
     constructor(public transaction: TransactionView) { }
+}
+
+export class AddTransaction {
+    static readonly type = '[Acc] Add Transaction';
+    constructor(public type: TransactionType) { }
 }
 
 export class GetCategories {
@@ -173,6 +178,33 @@ export class AccState {
         ).subscribe();
     }
 
+    @Action(AddTransaction)
+    addTransaction(cxt: StateContext<AccStateModel>, action: AddTransaction) {
+        const state = cxt.getState();
+        let account: Account | undefined = state.accounts.length > 0 ? getAccount(state.groups, state.accounts[0]) : state.groups[0]?.accounts[0];
+        let recipient: Account | undefined = undefined;
+        if (action.type === TransactionType.Transfer) {
+            recipient = AccState.accounts(state).find(a => a.id !== account?.id && a.currency === account?.currency);
+        } else if (action.type === TransactionType.Income) {
+            recipient = account;
+            account = undefined;
+        }
+        let transaction: Transaction = {
+            type: action.type,
+            opdate: new Date(),
+            account: account,
+            recipient: recipient,
+            category: null,
+            currency: account?.currency || recipient?.currency || 'EUR',
+            debit: 0,
+            credit: 0,
+            details: ''
+        };
+        this.dialogService.open(
+            new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction }
+        ).subscribe();
+    }
+
     @Action([AppLoginSuccess, GetCategories], { cancelUncompleted: true })
     async getCategories(cxt: StateContext<AccStateModel>) {
         try {
@@ -182,4 +214,8 @@ export class AccState {
             cxt.dispatch(new AppPrintError(err));
         }
     }
+}
+
+function getAccount(groups: Group[], id: number): Account | undefined {
+    return groups.reduce((acc, g) => (acc || g.accounts.find(a => a.id === id)), undefined as Account | undefined);
 }
