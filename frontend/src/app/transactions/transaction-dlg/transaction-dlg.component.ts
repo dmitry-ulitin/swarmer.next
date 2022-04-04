@@ -25,11 +25,13 @@ export class TransactionDlgComponent {
   }
 
   async onSubmit() {
+    console.log(this.transaction.value);
+    console.log(this.transaction.value.opdate);
     try {
-      const transaction = await firstValueFrom(this.api.createTransaction(this.transaction.value));
-      this.context.completeWith(transaction);
+       const transaction = await firstValueFrom(this.api.createTransaction(this.transaction.value));      
+       this.context.completeWith(transaction);
     } catch (err) {
-      this.store.dispatch(new AppPrintError(err));
+       this.store.dispatch(new AppPrintError(err));
     }
   }
 

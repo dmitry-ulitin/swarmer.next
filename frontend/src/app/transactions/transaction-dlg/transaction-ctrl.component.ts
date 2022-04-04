@@ -101,35 +101,45 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['dcurrency'].disable();
       }
     });
+    this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
+      if (!value.ccurrency || !value.dcurrency || value.ccurrency === value.dcurrency) {
+        value.credit = value.debit = value.debit || value.credit;
+      }
+      value.currency = !value.recipient ? value.dcurrency : (!value.account ? value.ccurrency : null);
+      const now = new Date();
+      value.opdate = value.opdate ? value.opdate.toLocalNativeDate() : now;
+      value.opdate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      this.onChange(value);
+    });
   }
 
   writeValue(value: any): void {
-    this.form.reset({}, { emitEvent: false });
-    const opdate = new TuiDay(value.opdate.getFullYear(), value.opdate.getMonth(), value.opdate.getDate());
-    this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate });
-  }
+      this.form.reset({}, { emitEvent: false });
+      const opdate = new TuiDay(value.opdate.getFullYear(), value.opdate.getMonth(), value.opdate.getDate());
+      this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate });
+    }
 
   onYesterday(): void {
-    const opdate: TuiDay = this.form.controls['opdate'].value;
-    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, true));
-  }
+      const opdate: TuiDay = this.form.controls['opdate'].value;
+      this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, true));
+    }
 
   onToday(): void {
-    this.form.controls['opdate'].setValue(TuiDay.currentLocal());
-  }
+      this.form.controls['opdate'].setValue(TuiDay.currentLocal());
+    }
 
   onTomorrow(): void {
-    const opdate: TuiDay = this.form.controls['opdate'].value;
-    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
-  }
+      const opdate: TuiDay = this.form.controls['opdate'].value;
+      this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
+    }
 
   onChange: any = () => { };
-  registerOnChange(fn: any): void {
-    this.onChange = fn;
-  }
+    registerOnChange(fn: any): void {
+      this.onChange = fn;
+    }
 
-  onTouched: any = () => { };
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
+    onTouched: any = () => { };
+    registerOnTouched(fn: any): void {
+      this.onTouched = fn;
+    }
   }
-}

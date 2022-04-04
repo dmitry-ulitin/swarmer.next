@@ -104,7 +104,8 @@ def get_transaction(db: Session, user_id: int, id: int):
 
 def add_transaction(db: Session, user_id: int, transaction: schemas.TransactionCreate):
     db_transaction = models.Transaction(owner_id = user_id, opdate = transaction.opdate, \
-        description = transaction.description, \
+        details = transaction.details, \
+        currency = transaction.currency, \
         category_id = transaction.category.id if transaction.category else None, \
         account_id = transaction.account.id if transaction.account else None, \
         recipient_id = transaction.recipient.id if transaction.recipient else None, \
