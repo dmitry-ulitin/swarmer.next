@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { SelectTransaction } from '../accounts/accounts.state';
 
 @Component({
   selector: 'app-transactions',
@@ -8,7 +9,12 @@ import { Store } from '@ngxs/store';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsComponent {
-  transactions$ = this.store.select(state => state.acc.transactions);;
+  transactions$ = this.store.select(state => state.acc.transactions);
+  transactions_id$ = this.store.select(state => state.acc.transaction_id);
 
   constructor(private store: Store) { }
+
+  selectTransaction(id: number) {
+    this.store.dispatch(new SelectTransaction(id));
+  }
 }

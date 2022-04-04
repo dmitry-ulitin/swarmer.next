@@ -23,20 +23,6 @@ export class GetGroups {
     static readonly type = '[Acc] Get Groups';
 }
 
-export class ToggleGropup {
-    static readonly type = '[Acc] Toggle Group';
-    constructor(public group: number) { }
-}
-
-export class SelectAccounts {
-    static readonly type = '[Acc] Select Accounts';
-    constructor(public accounts: number[]) { }
-}
-
-export class GetTransactions {
-    static readonly type = '[Acc] Get Transactions';
-}
-
 export class CreateGroup {
     static readonly type = '[Acc] Create Group';
 }
@@ -44,6 +30,25 @@ export class CreateGroup {
 export class EditGroup {
     static readonly type = '[Acc] Edit Group';
     constructor(public group: Group) { }
+}
+
+export class ToggleGropup {
+    static readonly type = '[Acc] Toggle Group';
+    constructor(public group: number) { }
+}
+
+export class SelectTransaction {
+    static readonly type = '[Acc] Select Transaction';
+    constructor(public id: number) { }
+}
+
+export class GetTransactions {
+    static readonly type = '[Acc] Get Transactions';
+}
+
+export class SelectAccounts {
+    static readonly type = '[Acc] Select Accounts';
+    constructor(public accounts: number[]) { }
 }
 
 export class EditTransaction {
@@ -65,6 +70,7 @@ export interface AccStateModel {
     expanded: number[];
     accounts: number[];
     transactions: TransactionView[];
+    transaction_id: number | null;
     categories: Category[];
 }
 
@@ -75,6 +81,7 @@ export interface AccStateModel {
         expanded: [],
         accounts: [],
         transactions: [],
+        transaction_id: null,
         categories: []
     }
 })
@@ -120,6 +127,20 @@ export class AccState {
         }
     }
 
+    @Action(CreateGroup)
+    createGroup(cxt: StateContext<AccStateModel>) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector)
+        ).subscribe();
+    }
+
+    @Action(EditGroup)
+    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
+        ).subscribe();
+    }
+
     @Action(ToggleGropup)
     toggleGropup(cxt: StateContext<AccStateModel>, action: ToggleGropup) {
         const state = cxt.getState();
@@ -132,10 +153,9 @@ export class AccState {
         }
     }
 
-    @Action(SelectAccounts)
-    selectAccounts(cxt: StateContext<AccStateModel>, action: SelectAccounts) {
-        cxt.patchState({ accounts: action.accounts });
-        cxt.dispatch(new GetTransactions());
+    @Action(SelectTransaction)
+    selectTransaction(cxt: StateContext<AccStateModel>, action: SelectTransaction) {
+        cxt.patchState({ transaction_id: action.id });
     }
 
     @Action([AppLoginSuccess, GetTransactions], { cancelUncompleted: true })
@@ -157,18 +177,10 @@ export class AccState {
         }
     }
 
-    @Action(CreateGroup)
-    createGroup(cxt: StateContext<AccStateModel>) {
-        this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector)
-        ).subscribe();
-    }
-
-    @Action(EditGroup)
-    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
-        this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
-        ).subscribe();
+    @Action(SelectAccounts)
+    selectAccounts(cxt: StateContext<AccStateModel>, action: SelectAccounts) {
+        cxt.patchState({ accounts: action.accounts });
+        cxt.dispatch(new GetTransactions());
     }
 
     @Action(EditTransaction)

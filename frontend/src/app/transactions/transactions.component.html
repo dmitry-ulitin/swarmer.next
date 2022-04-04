@@ -1,7 +1,8 @@
 <div class="h-100 d-flex flex-column">
     <div class="flex-grow-1 overflow-auto">
         <table class="table">
-            <tr *ngFor="let t of transactions$ | async" [class.active]="false" [style.background-color]="t.bg">
+            <tr *ngFor="let t of transactions$ | async" [class.active]="(transactions_id$ | async) === t.id"
+             [style.background-color]="t.bg"  (click)="selectTransaction(t.id)">
                 <td>
                     <div>{{t.name}}</div>
                     <div>{{t.opdate | date:'shortDate'}} {{t.balance?.fullname}}</div>
