@@ -32,6 +32,7 @@ export class HeaderComponent {
   @Select(AppState.isAuthenticated) isAuthenticated$!: Observable<boolean>;
   @Select(AppState.claims) claims$!: Observable<any>;
   @ViewSelectSnapshot(AccState.selectedGroups) groups!: Group[];
+  transactions_id$ = this.store.select(state => state.acc.transaction_id);
 
   get group(): Group | undefined {
     return this.groups.length === 1 ? this.groups[0] : undefined;
@@ -68,5 +69,9 @@ export class HeaderComponent {
 
   onIncome(): void {
     this.store.dispatch(new AddTransaction(TransactionType.Income));
+  }
+
+  editTransaction(): void {
+    this.store.dispatch(new EditTransaction());
   }
 }

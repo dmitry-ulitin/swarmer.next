@@ -1,4 +1,4 @@
-import { Inject, Injectable, Injector } from '@angular/core';
+import { Inject, Injectable, Injector, NgZone } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Group } from '../models/group';
 import { Amount, Total } from '../models/balance';
@@ -23,6 +23,16 @@ export class GetGroups {
     static readonly type = '[Acc] Get Groups';
 }
 
+export class SelectAccounts {
+    static readonly type = '[Acc] Select Accounts';
+    constructor(public accounts: number[]) { }
+}
+
+export class ToggleGropup {
+    static readonly type = '[Acc] Toggle Group';
+    constructor(public group: number) { }
+}
+
 export class CreateGroup {
     static readonly type = '[Acc] Create Group';
 }
@@ -32,9 +42,8 @@ export class EditGroup {
     constructor(public group: Group) { }
 }
 
-export class ToggleGropup {
-    static readonly type = '[Acc] Toggle Group';
-    constructor(public group: number) { }
+export class GetTransactions {
+    static readonly type = '[Acc] Get Transactions';
 }
 
 export class SelectTransaction {
@@ -42,18 +51,9 @@ export class SelectTransaction {
     constructor(public id: number) { }
 }
 
-export class GetTransactions {
-    static readonly type = '[Acc] Get Transactions';
-}
-
-export class SelectAccounts {
-    static readonly type = '[Acc] Select Accounts';
-    constructor(public accounts: number[]) { }
-}
-
 export class EditTransaction {
     static readonly type = '[Acc] Edit Transaction';
-    constructor(public transaction: TransactionView) { }
+    constructor(public id?: number) { }
 }
 
 export class AddTransaction {
@@ -90,7 +90,8 @@ export interface AccStateModel {
 export class AccState {
     constructor(private api: ApiService,
         @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
-        @Inject(Injector) private readonly injector: Injector
+        @Inject(Injector) private readonly injector: Injector,
+        private _zone: NgZone
     ) { }
 
     @Selector()
@@ -184,10 +185,20 @@ export class AccState {
     }
 
     @Action(EditTransaction)
-    editTransaction(cxt: StateContext<AccStateModel>, action: EditTransaction) {
-        this.dialogService.open(
-            new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: action.transaction }
-        ).subscribe();
+    async editTransaction(cxt: StateContext<AccStateModel>, action: EditTransaction) {
+        try {
+            const transaction_id = action.id || cxt.getState().transaction_id;
+            if (transaction_id) {
+                const transaction = await firstValueFrom(this.api.getTransaction(transaction_id));
+                this._zone.run(() => {
+                    this.dialogService.open(
+                        new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
+                    ).subscribe();
+                });
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
     }
 
     @Action(AddTransaction)

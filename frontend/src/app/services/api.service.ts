@@ -22,6 +22,10 @@ export class ApiService {
     return this.http.get<Transaction[]>('/api/transactions/', {params: params});
   }
 
+  getTransaction(id: number): Observable<Transaction> {
+    return this.http.get<Transaction>(`/api/transactions/${id}`);
+  }
+
   createTransaction(transaction: Transaction): Observable<Transaction> {
     return this.http.post<Transaction>('/api/transactions/', transaction);
   }

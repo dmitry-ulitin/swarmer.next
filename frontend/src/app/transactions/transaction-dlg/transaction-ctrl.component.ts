@@ -115,8 +115,10 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   writeValue(value: any): void {
       this.form.reset({}, { emitEvent: false });
-      const opdate = new TuiDay(value.opdate.getFullYear(), value.opdate.getMonth(), value.opdate.getDate());
-      this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate });
+      const opdate = typeof value.opdate === 'string' ? new Date(value.opdate) : (value.opdate || new Date());
+      const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
+      const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
+      this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency});
     }
 
   onYesterday(): void {
