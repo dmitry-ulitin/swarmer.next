@@ -26,8 +26,12 @@ export class ApiService {
     return this.http.get<Transaction>(`/api/transactions/${id}`);
   }
 
-  createTransaction(transaction: Transaction): Observable<Transaction> {
-    return this.http.post<Transaction>('/api/transactions/', transaction);
+  saveTransaction(transaction: Transaction): Observable<Transaction> {
+    return !!transaction.id ? this.http.put<Transaction>('/api/transactions/', transaction) : this.http.post<Transaction>('/api/transactions/', transaction);
+  }
+
+  deleteTransaction(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/transactions/${id}`);
   }
 
   getCategories(): Observable<Category[]> {

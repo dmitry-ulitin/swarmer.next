@@ -41,9 +41,19 @@ def read_transaction(id: int, db: Session = Depends(get_db)):
     return crud.get_transaction(db, user_id, id)
 
 @app.post("/api/transactions/", response_model=schemas.Transaction)
-def create_item_for_user(transaction: schemas.TransactionCreate, db: Session = Depends(get_db)):
+def create_transaction(transaction: schemas.TransactionCreate, db: Session = Depends(get_db)):
     user_id = 2
-    return crud.add_transaction(db=db, user_id=user_id, transaction=transaction)
+    return crud.create_transaction(db=db, user_id=user_id, transaction=transaction)
+
+@app.put("/api/transactions/", response_model=schemas.Transaction)
+def update_transaction(transaction: schemas.TransactionUpdate, db: Session = Depends(get_db)):
+    user_id = 2
+    return crud.update_transaction(db=db, user_id=user_id, transaction=transaction)
+
+@app.delete("/api/transactions/{id}", status_code=204, dependencies=[Depends(get_db)])
+def read_transaction(id: int, db: Session = Depends(get_db)):
+    user_id = 2
+    crud.delete_transaction(db, user_id, id)
 
 @app.get("/api/categories/", response_model=List[schemas.Category], dependencies=[Depends(get_db)])
 def read_categories(db: Session = Depends(get_db)):

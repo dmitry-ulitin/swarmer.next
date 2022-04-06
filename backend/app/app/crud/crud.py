@@ -102,7 +102,7 @@ def get_transaction(db: Session, user_id: int, id: int):
         transaction.recipient_balance = transaction.recipient.balance
     return transaction
 
-def add_transaction(db: Session, user_id: int, transaction: schemas.TransactionCreate):
+def create_transaction(db: Session, user_id: int, transaction: schemas.TransactionCreate):
     db_transaction = models.Transaction(owner_id = user_id, opdate = transaction.opdate, \
         details = transaction.details, \
         currency = transaction.currency, \
@@ -114,6 +114,26 @@ def add_transaction(db: Session, user_id: int, transaction: schemas.TransactionC
     db.commit()
     db.refresh(db_transaction)
     return get_transaction(db, user_id, db_transaction.id)
+
+def update_transaction(db: Session, user_id: int, transaction: schemas.TransactionUpdate):
+    db_transaction = models.Transaction( \
+        id = transaction.id, owner_id = user_id, \
+        opdate = transaction.opdate, \
+        details = transaction.details, \
+        currency = transaction.currency, \
+        category_id = transaction.category.id if transaction.category else None, \
+        account_id = transaction.account.id if transaction.account else None, \
+        recipient_id = transaction.recipient.id if transaction.recipient else None, \
+        credit = transaction.credit, debit = transaction.debit)
+    db.merge(db_transaction)
+    db.commit()
+    return get_transaction(db, user_id, db_transaction.id)
+
+def delete_transaction(db: Session, user_id: int, transaction_id: int):
+    db_transaction = db.query(models.Transaction).filter(models.Transaction.id == transaction_id)
+    db_transaction.delete()
+#    db.delete(db_transaction)
+    db.commit()
 
 def get_user_categories(db: Session, user_id: int):
     a_au = [au.group.owner_id for au in db.query(models.ACL).filter(models.ACL.user_id == user_id).all()]

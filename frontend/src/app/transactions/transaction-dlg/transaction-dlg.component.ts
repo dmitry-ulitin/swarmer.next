@@ -28,7 +28,7 @@ export class TransactionDlgComponent {
     console.log(this.transaction.value);
     console.log(this.transaction.value.opdate);
     try {
-       const transaction = await firstValueFrom(this.api.createTransaction(this.transaction.value));      
+       const transaction = await firstValueFrom(this.api.saveTransaction(this.transaction.value));      
        this.context.completeWith(transaction);
     } catch (err) {
        this.store.dispatch(new AppPrintError(err));

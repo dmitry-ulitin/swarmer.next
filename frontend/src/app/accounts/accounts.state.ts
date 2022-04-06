@@ -3,7 +3,7 @@ import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Group } from '../models/group';
 import { Amount, Total } from '../models/balance';
 import { ApiService } from '../services/api.service';
-import { AppLoginSuccess, AppPrintError } from '../app.state';
+import { AppLoginSuccess, AppPrintError, AppPrintSuccess } from '../app.state';
 import { Transaction, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
 import { TuiDialogService } from '@taiga-ui/core';
@@ -51,14 +51,19 @@ export class SelectTransaction {
     constructor(public id: number) { }
 }
 
+export class AddTransaction {
+    static readonly type = '[Acc] Add Transaction';
+    constructor(public type: TransactionType) { }
+}
+
 export class EditTransaction {
     static readonly type = '[Acc] Edit Transaction';
     constructor(public id?: number) { }
 }
 
-export class AddTransaction {
-    static readonly type = '[Acc] Add Transaction';
-    constructor(public type: TransactionType) { }
+export class DeleteTransaction {
+    static readonly type = '[Acc] Delete Transaction';
+    constructor(public id?: number) { }
 }
 
 export class GetCategories {
@@ -195,6 +200,19 @@ export class AccState {
                         new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
                     ).subscribe();
                 });
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action(DeleteTransaction)
+    async deleteTransaction(cxt: StateContext<AccStateModel>, action: DeleteTransaction) {
+        try {
+            const transaction_id = action.id || cxt.getState().transaction_id;
+            if (transaction_id) {
+                await firstValueFrom(this.api.deleteTransaction(transaction_id));
+                cxt.dispatch(new AppPrintSuccess('Transaction deleted'));
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));

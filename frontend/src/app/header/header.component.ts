@@ -3,7 +3,7 @@ import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Select, Store } from '@ngxs/store';
 import { TUI_ICONS_PATH } from '@taiga-ui/core';
 import { Observable } from 'rxjs';
-import { AccState, AddTransaction, CreateGroup, EditGroup, EditTransaction, GetGroups, GetTransactions } from '../accounts/accounts.state';
+import { AccState, AddTransaction, CreateGroup, DeleteTransaction, EditGroup, EditTransaction, GetGroups, GetTransactions } from '../accounts/accounts.state';
 import { AppLogout, AppState } from '../app.state';
 import { Group } from '../models/group';
 import { TransactionType } from '../models/transaction';
@@ -73,5 +73,9 @@ export class HeaderComponent {
 
   editTransaction(): void {
     this.store.dispatch(new EditTransaction());
+  }
+
+  deleteTransaction(): void {
+    this.store.dispatch(new DeleteTransaction());
   }
 }
