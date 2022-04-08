@@ -130,9 +130,8 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
     return get_transaction(db, user_id, db_transaction.id)
 
 def delete_transaction(db: Session, user_id: int, transaction_id: int):
-    db_transaction = db.query(models.Transaction).filter(models.Transaction.id == transaction_id)
-    db_transaction.delete()
-#    db.delete(db_transaction)
+    db_transaction = db.query(models.Transaction).get(transaction_id)
+    db.delete(db_transaction)
     db.commit()
 
 def get_user_categories(db: Session, user_id: int):
