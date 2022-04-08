@@ -193,7 +193,14 @@ export class AccState {
                 this.zone.run(() => {
                     this.dialogService.open(
                         new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
-                    ).subscribe();
+                    ).subscribe({
+                        next: (data: any) => {
+                            if (data) {
+                                deleteTransactionFromState(transaction, cxt);
+                                addTransactionToState(data, cxt);
+                            }
+                        }
+                    });
                 });
             }
         } catch (err) {
@@ -211,9 +218,9 @@ export class AccState {
                 if (!trx) {
                     trx = await firstValueFrom(this.api.getTransaction(transaction_id));
                 }
-                await firstValueFrom(this.api.deleteTransaction(transaction_id));                
+                await firstValueFrom(this.api.deleteTransaction(transaction_id));
                 this.zone.run(() => this.notificationsService.show('Transaction deleted').subscribe());
-                this.deleteTransactionFromState(trx, cxt);
+                deleteTransactionFromState(trx, cxt);
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -244,7 +251,7 @@ export class AccState {
         };
         this.dialogService.open(
             new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
-        ).subscribe();
+        ).subscribe({ next: (data: any) => { if (data) addTransactionToState(data, cxt); } });
     }
 
     @Action([AppLoginSuccess, GetCategories], { cancelUncompleted: true })
@@ -256,51 +263,18 @@ export class AccState {
             cxt.dispatch(new AppPrintError(err));
         }
     }
+}
 
-    deleteTransactionFromState(transaction: Transaction, cxt: StateContext<AccStateModel>) {
-        const state = cxt.getState();
-        const index = state.transactions.findIndex(t => t.id === transaction.id);
-        if (index >= 0) {
-            // patch transactions balances
-            const transactions = state.transactions.slice();
-            const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
-            for (let i = index - 1; i >= 0; i--) {
-                const trx = transactions[i];
-                if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                    trx.account_balance += transaction.credit;
-                }
-                if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                    trx.recipient_balance -= transaction.debit;
-                }
-                transactions[i] = transaction2View(trx, selected);
+function patchGroupBalance(groups: Group[], account: Account | null | undefined, amount: number) {
+    if (account) {
+        const gindex = groups.findIndex(g => g.accounts.find(a => a.id === account.id));
+        if (gindex >= 0) {
+            groups[gindex] = { ...groups[gindex], accounts: groups[gindex].accounts.slice() };
+            const aindex = groups[gindex].accounts.findIndex(a => a.id === account.id);
+            const acc = groups[gindex].accounts[aindex];
+            if (typeof acc.balance === 'number') {
+                acc.balance += amount;
             }
-            transactions.splice(index, 1);
-            // patch group balances
-            const groups = state.groups.slice();
-            if (transaction.account) {
-                const gindex = groups.findIndex(g => g.accounts.find(a => a.id === transaction.account?.id));
-                if (gindex >= 0) {
-                    groups[gindex] = { ...groups[gindex], accounts: groups[gindex].accounts.slice() };
-                    const aindex = groups[gindex].accounts.findIndex(a => a.id === transaction.account?.id);
-                    const account = groups[gindex].accounts[aindex];
-                    if (typeof account.balance === 'number') {
-                        account.balance += transaction.credit;
-                    }
-                }
-            }
-            if (transaction.recipient) {
-                const gindex = groups.findIndex(g => g.accounts.find(a => a.id === transaction.recipient?.id));
-                if (gindex >= 0) {
-                    groups[gindex] = { ...groups[gindex], accounts: groups[gindex].accounts.slice() };
-                    const rindex = groups[gindex].accounts.findIndex(a => a.id === transaction.recipient?.id);
-                    const recipient = groups[gindex].accounts[rindex];
-                    if (typeof recipient.balance === 'number') {
-                        recipient.balance -= transaction.debit;
-                    }
-                }
-            }
-            const transaction_id = transaction.id === state.transaction_id ? null : state.transaction_id;
-            cxt.patchState({ transactions, groups, transaction_id });
         }
     }
 }
@@ -311,6 +285,60 @@ function transaction2View(t: Transaction, selected: { [key: number]: boolean }):
     const useRecipient = !t.account_balance || t.recipient && t.recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]);
     const acc = useRecipient ? t.recipient : t.account;
     return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
+}
+
+function deleteTransactionFromState(transaction: Transaction, cxt: StateContext<AccStateModel>) {
+    const state = cxt.getState();
+    const transactions = state.transactions.slice();
+    const index = transactions.findIndex(t => t.id === transaction.id);
+    if (index >= 0) {
+        // patch transactions balances
+        const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
+        for (let i = index - 1; i >= 0; i--) {
+            const trx = transactions[i];
+            if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
+                trx.account_balance += transaction.credit;
+            }
+            if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
+                trx.recipient_balance -= transaction.debit;
+            }
+            transactions[i] = transaction2View(trx, selected);
+        }
+        transactions.splice(index, 1);
+    }
+    // patch group balances
+    const groups = state.groups.slice();
+    patchGroupBalance(groups, transaction.account, transaction.debit);
+    patchGroupBalance(groups, transaction.recipient, -transaction.credit);
+    const transaction_id = transaction.id === state.transaction_id ? null : state.transaction_id;
+    cxt.patchState({ transactions, groups, transaction_id });
+}
+
+function addTransactionToState(transaction: Transaction, cxt: StateContext<AccStateModel>) {
+    const state = cxt.getState();
+    const transactions = state.transactions.slice();
+    const index = transactions.findIndex(t => transaction.opdate > t.opdate);
+    if (index >= 0) {
+        // patch transactions balances
+        const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
+        for (let i = index - 1; i >= 0; i--) {
+            const trx = transactions[i];
+            if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
+                trx.account_balance += transaction.credit;
+            }
+            if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
+                trx.recipient_balance += transaction.debit;
+            }
+            transactions[i] = transaction2View(trx, selected);
+        }
+        transactions.splice(index, 0, transaction2View(transaction, selected));
+    }
+    // patch group balances
+    const groups = state.groups.slice();
+    patchGroupBalance(groups, transaction.account, -transaction.debit);
+    patchGroupBalance(groups, transaction.recipient, transaction.credit);
+    const transaction_id = transaction.id;
+    cxt.patchState({ transactions, groups, transaction_id });
 }
 
 function getAccount(groups: Group[], id: number): Account | undefined {

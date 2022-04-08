@@ -93,12 +93,14 @@ def get_transaction(db: Session, user_id: int, id: int):
         transaction.account.balance = transaction.account.start_balance
         transaction.account.balance -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == transaction.account.id, balances)))))
         transaction.account.balance += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == transaction.account.id, balances)))))
+        transaction.account.balance -= transaction.debit
         transaction.account_balance = transaction.account.balance
     if transaction.recipient:
         transaction.recipient.group.current_user_id = user_id
         transaction.recipient.balance = transaction.recipient.start_balance
         transaction.recipient.balance -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == transaction.recipient.id, balances)))))
         transaction.recipient.balance += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == transaction.recipient.id, balances)))))
+        transaction.recipient.balance += transaction.credit
         transaction.recipient_balance = transaction.recipient.balance
     return transaction
 
