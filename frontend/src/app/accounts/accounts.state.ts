@@ -6,7 +6,7 @@ import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
-import { TuiDialogService, TuiNotificationsService } from '@taiga-ui/core';
+import { TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { AccountDialogComponent } from './account-dlg.component';
 import { firstValueFrom } from 'rxjs';
@@ -196,6 +196,7 @@ export class AccState {
                     ).subscribe({
                         next: (data: any) => {
                             if (data) {
+                                this.zone.run(() => this.notificationsService.show('Transaction updated', { status: TuiNotification.Success }).subscribe());
                                 deleteTransactionFromState(transaction, cxt);
                                 addTransactionToState(data, cxt);
                             }
@@ -251,7 +252,14 @@ export class AccState {
         };
         this.dialogService.open(
             new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
-        ).subscribe({ next: (data: any) => { if (data) addTransactionToState(data, cxt); } });
+        ).subscribe({
+            next: (data: any) => {
+                if (data) {
+                    this.zone.run(() => this.notificationsService.show('Transaction created', { status: TuiNotification.Success}).subscribe());
+                    addTransactionToState(data, cxt);
+                }
+            }
+        });
     }
 
     @Action([AppLoginSuccess, GetCategories], { cancelUncompleted: true })
