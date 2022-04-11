@@ -12,6 +12,7 @@ import { AccountDialogComponent } from './account-dlg.component';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
 import { Category } from '../models/category';
+import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.component';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -215,13 +216,19 @@ export class AccState {
             const state = cxt.getState();
             const transaction_id = action.id || state.transaction_id;
             if (transaction_id) {
-                let trx = state.transactions.find(t => t.id === transaction_id) as Transaction;
-                if (!trx) {
-                    trx = await firstValueFrom(this.api.getTransaction(transaction_id));
+                const answer = await firstValueFrom(
+                    this.dialogService.open(new PolymorpheusComponent(ConfirmationDlgComponent, this.injector), { data: 'Are you sure you want to delete this transaction?', dismissible: false, size: 's' }),
+                    { defaultValue: false }
+                );
+                if (answer) {
+                    let trx = state.transactions.find(t => t.id === transaction_id) as Transaction;
+                    if (!trx) {
+                        trx = await firstValueFrom(this.api.getTransaction(transaction_id));
+                    }
+                    await firstValueFrom(this.api.deleteTransaction(transaction_id));
+                    this.zone.run(() => this.notificationsService.show('Transaction deleted').subscribe());
+                    deleteTransactionFromState(trx, cxt);
                 }
-                await firstValueFrom(this.api.deleteTransaction(transaction_id));
-                this.zone.run(() => this.notificationsService.show('Transaction deleted').subscribe());
-                deleteTransactionFromState(trx, cxt);
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -255,7 +262,7 @@ export class AccState {
         ).subscribe({
             next: (data: any) => {
                 if (data) {
-                    this.zone.run(() => this.notificationsService.show('Transaction created', { status: TuiNotification.Success}).subscribe());
+                    this.zone.run(() => this.notificationsService.show('Transaction created', { status: TuiNotification.Success }).subscribe());
                     addTransactionToState(data, cxt);
                 }
             }

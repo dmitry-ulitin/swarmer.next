@@ -26,6 +26,7 @@ import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { AccountDialogComponent } from './accounts/account-dlg.component';
 import { TransactionDlgComponent } from './transactions/transaction-dlg/transaction-dlg.component';
 import { TransactionCtrlComponent } from './transactions/transaction-dlg/transaction-ctrl.component';
+import { ConfirmationDlgComponent } from './confirmation/confirmation-dlg.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -38,7 +39,8 @@ registerLocaleData(localeRu, 'ru');
     TransactionsComponent,
     HomeComponent,
     TransactionCtrlComponent,
-    TransactionDlgComponent
+    TransactionDlgComponent,
+    ConfirmationDlgComponent
   ],
   imports: [
     BrowserModule,
