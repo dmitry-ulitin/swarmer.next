@@ -114,34 +114,34 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   writeValue(value: any): void {
-      this.form.reset({}, { emitEvent: false });
-      const opdate = typeof value.opdate === 'string' ? new Date(value.opdate) : (value.opdate || new Date());
-      const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
-      const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
-      this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency});
-    }
+    this.form.reset({}, { emitEvent: false });
+    const opdate = typeof value.opdate === 'string' ? new Date(value.opdate) : (value.opdate || new Date());
+    const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
+    const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
+    this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency });
+  }
 
   onYesterday(): void {
-      const opdate: TuiDay = this.form.controls['opdate'].value;
-      this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, true));
-    }
+    const opdate: TuiDay = this.form.controls['opdate'].value;
+    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, true));
+  }
 
   onToday(): void {
-      this.form.controls['opdate'].setValue(TuiDay.currentLocal());
-    }
+    this.form.controls['opdate'].setValue(TuiDay.currentLocal());
+  }
 
   onTomorrow(): void {
-      const opdate: TuiDay = this.form.controls['opdate'].value;
-      this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
-    }
+    const opdate: TuiDay = this.form.controls['opdate'].value;
+    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
+  }
 
   onChange: any = () => { };
-    registerOnChange(fn: any): void {
-      this.onChange = fn;
-    }
-
-    onTouched: any = () => { };
-    registerOnTouched(fn: any): void {
-      this.onTouched = fn;
-    }
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
   }
+
+  onTouched: any = () => { };
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+}

@@ -8,11 +8,11 @@ import { Transaction, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
 import { TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
-import { AccountDialogComponent } from './account-dlg.component';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
 import { Category } from '../models/category';
 import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.component';
+import { AccountDialogComponent } from './account-dlg/account-dlg.component';
 
 export interface TransactionView extends Transaction {
     name: string;

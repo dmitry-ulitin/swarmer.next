@@ -1,17 +1,24 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject } from '@angular/core';
-import { FormArray, FormControl, FormGroup } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngxs/store';
-import { TuiDialogContext, TuiDialogService } from '@taiga-ui/core';
-import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
-import { Group } from '../models/group';
+import { TuiDestroyService } from '@taiga-ui/cdk';
+import { Group } from '../../models/group';
 
 @Component({
-  selector: 'app-account-dlg',
-  templateUrl: './account-dlg.component.html',
-  styleUrls: ['./account-dlg.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-account-ctrl',
+  templateUrl: './account-ctrl.component.html',
+  styleUrls: ['./account-ctrl.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => AccountCtrlComponent),
+      multi: true,
+    },
+    TuiDestroyService
+  ]
 })
-export class AccountDialogComponent {
+export class AccountCtrlComponent implements ControlValueAccessor {
   form = new FormGroup({
     'id': new FormControl(),
     'fullname': new FormControl(''),
@@ -25,29 +32,26 @@ export class AccountDialogComponent {
   get accounts(): FormArray {
     return this.form.controls.accounts as FormArray;
   }
-  
+
   getAccount(index: number): FormGroup {
     return this.accounts.controls[index] as FormGroup;
   }
 
   constructor(
-    private store: Store,
-    @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
-    @Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<Group, Group>,
-    private cdr: ChangeDetectorRef
-  ) {
-    this.patch(context.data);
+    private store: Store, destroy$: TuiDestroyService) {
   }
 
   patch(value: Group): void {
+    this.form.reset({}, { emitEvent: false });
     this.form.patchValue(value || {});
     this.accounts.clear();
-    (value?.accounts || [{name: '', currency: 'RUB', start_balance: 0}]).forEach(a => this.accounts.push(new FormGroup({
+    (value?.accounts || [{ name: '', currency: 'RUB', start_balance: 0 }]).forEach(a => this.accounts.push(new FormGroup({
       'id': new FormControl(a.id),
       'name': new FormControl(a.name),
       'currency': new FormControl(a.currency),
       'start_balance': new FormControl(a.start_balance),
-      'deleted': new FormControl(a.deleted)})
+      'deleted': new FormControl(a.deleted)
+    })
     ));
   }
 
@@ -61,7 +65,8 @@ export class AccountDialogComponent {
       'name': new FormControl(''),
       'currency': new FormControl('RUB'),
       'start_balance': new FormControl(0),
-      'deleted': new FormControl(false)})
+      'deleted': new FormControl(false)
+    })
     );
   }
 
@@ -69,9 +74,17 @@ export class AccountDialogComponent {
     this.accounts.controls[index].get('deleted')?.setValue(true);
   }
 
-  onCancel(): void {
+  writeValue(value: any): void {
+    this.patch(value);
   }
 
-  onSubmit(): void {
+  onChange: any = () => { };
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  onTouched: any = () => { };
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
   }
 }
