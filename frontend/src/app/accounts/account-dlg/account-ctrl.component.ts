@@ -3,6 +3,7 @@ import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCES
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
 import { Group } from '../../models/group';
+import { AccState } from '../accounts.state';
 
 @Component({
   selector: 'app-account-ctrl',
@@ -19,6 +20,8 @@ import { Group } from '../../models/group';
   ]
 })
 export class AccountCtrlComponent implements ControlValueAccessor {
+  currencies = this.store.selectSnapshot(AccState.currencies);
+
   form = new FormGroup({
     'id': new FormControl(),
     'fullname': new FormControl(''),

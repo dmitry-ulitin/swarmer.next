@@ -3,7 +3,7 @@
         <div class="credit d-flex" *ngIf="showCredit">
             <tui-input-number formControlName="credit" [tuiTextfieldSize]="'s'" class="tui-space_right-2 flex-fill">0,00
             </tui-input-number>
-            <tui-combo-box formControlName="ccurrency" [tuiTextfieldSize]="'s'" class="currency">
+            <tui-combo-box formControlName="ccurrency" [tuiTextfieldSize]="'s'" class="currency" [strict]="false">
                 <input tuiTextfield />
                 <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
                 </tui-data-list-wrapper>
@@ -12,7 +12,7 @@
         <div class="debit d-flex" *ngIf="showDebit">
             <tui-input-number formControlName="debit" [tuiTextfieldSize]="'s'" class="tui-space_right-2 flex-fill">0,00
             </tui-input-number>
-            <tui-combo-box formControlName="dcurrency" [tuiTextfieldSize]="'s'" class="currency">
+            <tui-combo-box formControlName="dcurrency" [tuiTextfieldSize]="'s'" class="currency" [strict]="false">
                 <input tuiTextfield />
                 <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
                 </tui-data-list-wrapper>

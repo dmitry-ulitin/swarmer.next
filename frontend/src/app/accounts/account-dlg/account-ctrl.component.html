@@ -2,23 +2,29 @@
     <tui-input formControlName="fullname" [tuiTextfieldSize]="'s'">Name</tui-input>
     <div class="d-flex mt-3">
         <span class="flex-fill">Initial Balances</span>
-        <button tuiIconButton type="button" [icon]="'tuiIconPlus'" [size]="'s'" [appearance]="'flat'" (click)="onAddAccount()"></button>
+        <button tuiIconButton type="button" [icon]="'tuiIconPlus'" [size]="'s'" [appearance]="'flat'"
+            (click)="onAddAccount()"></button>
     </div>
     <table class="w-100">
         <tr *ngFor="let account of accounts.controls; let i = index" formArrayName="accounts">
             <ng-template [formGroupName]="i" [ngIf]="!account.value.deleted">
-                <td>
+                <td *ngIf="canDelete">
                     <tui-input formControlName="name" [tuiTextfieldSize]="'s'">{{account.value.currency}}</tui-input>
                 </td>
                 <td>
-                    <tui-input formControlName="currency" [tuiTextfieldSize]="'s'">Currency</tui-input>
-                </td>
-                <td>
-                    <tui-input-number formControlName="start_balance" [tuiTextfieldSize]="'s'">Start Balance
+                    <tui-input-number formControlName="start_balance" [tuiTextfieldSize]="'s'">0,00
                     </tui-input-number>
                 </td>
                 <td>
-                    <button tuiIconButton type="button" [icon]="'tuiIconTrash'" [size]="'s'" [appearance]="'flat'" [disabled]="!canDelete" (click)="onRemoveAccount(i)"></button>
+                    <tui-combo-box formControlName="currency" [tuiTextfieldSize]="'s'" class="currency" [strict]="false">
+                        <input tuiTextfield />
+                        <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
+                        </tui-data-list-wrapper>
+                    </tui-combo-box>
+                </td>
+                <td>
+                    <button tuiIconButton type="button" [icon]="'tuiIconTrash'" [size]="'s'" [appearance]="'flat'"
+                        [disabled]="!canDelete" (click)="onRemoveAccount(i)"></button>
                 </td>
             </ng-template>
         </tr>
