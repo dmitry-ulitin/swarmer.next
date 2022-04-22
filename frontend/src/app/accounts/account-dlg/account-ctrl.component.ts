@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
 import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
+import { Account } from 'src/app/models/account';
 import { Group } from '../../models/group';
 import { AccState } from '../accounts.state';
 
@@ -48,33 +49,32 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     this.form.reset({}, { emitEvent: false });
     this.form.patchValue(value || {});
     this.accounts.clear();
-    (value?.accounts || [{ name: '', currency: 'RUB', start_balance: 0 }]).forEach(a => this.accounts.push(new FormGroup({
-      'id': new FormControl(a.id),
-      'name': new FormControl(a.name),
-      'currency': new FormControl(a.currency),
-      'start_balance': new FormControl(a.start_balance),
-      'deleted': new FormControl(a.deleted)
-    })
-    ));
+    (value?.accounts || [null]).forEach(a => this.onAddAccount(a));
+    if (!this.canDelete) {
+      this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.disable();
+    }
   }
 
   get canDelete(): boolean {
     return this.accounts.controls.filter(a => !a.get('deleted')?.value).length > 1;
   }
 
-  onAddAccount(): void {
+  onAddAccount(a: any): void {
     this.accounts.push(new FormGroup({
-      'id': new FormControl(),
-      'name': new FormControl(''),
-      'currency': new FormControl('RUB'),
-      'start_balance': new FormControl(0),
-      'deleted': new FormControl(false)
-    })
-    );
+      'id': new FormControl(a?.id),
+      'name': new FormControl(a?.name || ''),
+      'currency': new FormControl(a?.currency || 'RUB'),
+      'start_balance': new FormControl(a?.start_balance),
+      'deleted': new FormControl(a?.deleted)
+    }));
+    this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.enable();
   }
 
   onRemoveAccount(index: number): void {
     this.accounts.controls[index].get('deleted')?.setValue(true);
+    if (!this.canDelete) {
+      this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.disable();
+    }
   }
 
   writeValue(value: any): void {

@@ -138,7 +138,7 @@ export class AccState {
     @Action(CreateGroup)
     createGroup(cxt: StateContext<AccStateModel>) {
         this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector)
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { dismissible: false, size: 's' }
         ).subscribe();
     }
 
@@ -173,7 +173,8 @@ export class AccState {
             const transactions = await firstValueFrom(this.api.getTransactions(state.accounts));
             const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => transaction2View(t, selected));
-            cxt.patchState({ transactions: tv });
+            const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
+            cxt.patchState({ transactions: tv, transaction_id });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
