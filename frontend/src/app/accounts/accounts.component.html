@@ -1,28 +1,30 @@
-<table class="table">
-    <tr *ngFor="let g of groups$ | async" (click)="toggle(g)" [class.active]="g.selected"
-        [class.expanded]="(expanded$ | async).includes(g.id)" [class.owner]="g.is_owner"
-        [class.coowner]="g.is_coowner" [class.shared]="g.is_shared">
-        <td  [class.active]="isGroupSelected(g)">
-            <div class="group"><a tuiLink  (click)="selectGroup(g, $event)" class="foo">{{g.fullname}}</a></div>
-            <div class="account" *ngFor="let a of g.accounts" [class.active]="isAccountSelected(a)">
-                <a tuiLink (click)="selectAccount(a, $event)">{{a.fullname}}</a>
-            </div>
-        </td>
-        <td>
-            <tui-svg *ngIf="g.accounts.length > 1" src="tuiIconChevronDown" class="icon"></tui-svg>
-        </td>
-        <td class="text-end">
-            <div class="group" *ngFor="let t of total(g)">{{t.value | currency:t.currency}}</div>
-            <div class="account" *ngFor="let a of g.accounts">
-                {{a.balance | currency:a.currency}}
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td class="text-end">
-            <div *ngFor="let t of total$ | async">{{t.value | currency:t.currency}}</div>
-        </td>
-    </tr>
-</table>
+<div class="h-100 overflow-auto">
+    <table class="table">
+        <tr *ngFor="let g of groups$ | async" (click)="toggle(g)" [class.active]="g.selected"
+            [class.expanded]="(expanded$ | async).includes(g.id)" [class.owner]="g.is_owner"
+            [class.coowner]="g.is_coowner" [class.shared]="g.is_shared">
+            <td [class.active]="isGroupSelected(g)">
+                <div class="group"><a tuiLink (click)="selectGroup(g, $event)">{{g.fullname}}</a></div>
+                <div class="account" *ngFor="let a of g.accounts" [class.active]="isAccountSelected(a)">
+                    <a tuiLink (click)="selectAccount(a, $event)">{{a.fullname}}</a>
+                </div>
+            </td>
+            <td>
+                <tui-svg *ngIf="g.accounts.length > 1" src="tuiIconChevronDown" class="icon"></tui-svg>
+            </td>
+            <td class="text-end">
+                <div class="group" *ngFor="let t of total(g)">{{t.value | currency:t.currency}}</div>
+                <div class="account" *ngFor="let a of g.accounts">
+                    {{a.balance | currency:a.currency}}
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td class="text-end">
+                <div *ngFor="let t of total$ | async">{{t.value | currency:t.currency}}</div>
+            </td>
+        </tr>
+    </table>
+</div>

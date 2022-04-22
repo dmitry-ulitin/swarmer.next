@@ -5,8 +5,6 @@ from sqlalchemy.event import listens_for
 from app.database import Base, SessionLocal
 from sqlalchemy.util.langhelpers import hybridproperty
 
-db = SessionLocal()
-
 class AccountGroup(Base):
     __tablename__ = "account_groups"
     id = Column(Integer, primary_key=True, index=True)
@@ -35,10 +33,14 @@ class AccountGroup(Base):
 
 @listens_for(AccountGroup.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
-    print("create test account groups...")
-    db.add(AccountGroup(id=1, name='cash', owner_id=1))
-    db.add(AccountGroup(id=2, name='visa ...1234', owner_id=1))
-    db.commit()
+    try:
+        db = SessionLocal()
+        print("create test account groups...")
+        db.add(AccountGroup(id=1, name='cash', owner_id=1))
+        db.add(AccountGroup(id=2, name='visa ...1234', owner_id=1))
+        db.commit()
+    finally:
+        db.close()
 
 class Account(Base):
     __tablename__ = "accounts"
@@ -66,11 +68,15 @@ class Account(Base):
 
 @listens_for(Account.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
-    print("create test accounts...")
-    db.add(Account(id=1, group_id=1, currency='RUB', start_balance=5450))
-    db.add(Account(id=2, group_id=2, currency='RUB', start_balance=56432.28))
-    db.add(Account(id=3, group_id=2, currency='USD', start_balance=456))
-    db.commit()
+    try:
+        db = SessionLocal()
+        print("create test accounts...")
+        db.add(Account(id=1, group_id=1, currency='RUB', start_balance=5450))
+        db.add(Account(id=2, group_id=2, currency='RUB', start_balance=56432.28))
+        db.add(Account(id=3, group_id=2, currency='USD', start_balance=456))
+        db.commit()
+    finally:
+        db.close()
 
 class ACL(Base):
     __tablename__ = 'acl'
@@ -91,7 +97,11 @@ class ACL(Base):
 # for test purposes
 @listens_for(ACL.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
-    print("create test permissions...")
-    db.add(ACL(group_id=1, user_id=2))
-    db.add(ACL(group_id=2, user_id=2))
-    db.commit()
+    try:
+        db = SessionLocal()
+        print("create test permissions...")
+        db.add(ACL(group_id=1, user_id=2))
+        db.add(ACL(group_id=2, user_id=2))
+        db.commit()
+    finally:
+        db.close()

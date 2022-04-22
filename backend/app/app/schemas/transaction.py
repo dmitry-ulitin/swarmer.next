@@ -19,12 +19,14 @@ class TransactionCreate(TransactionBase):
     pass
 
 class TransactionUpdate(TransactionBase):
-    pass
+    id: int
 
 
 class Transaction(TransactionBase):
     id: int
     type: int
+    account_balance: Decimal = None
+    recipient_balance: Decimal = None
     bg: str
 
     class Config:

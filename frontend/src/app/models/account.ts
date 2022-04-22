@@ -6,5 +6,6 @@ export interface Account {
     fullname: string;
     currency: string;
     start_balance: number;
-    balance: number;
+    balance?: number;
+    deleted?: boolean;
 }

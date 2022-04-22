@@ -7,8 +7,6 @@ from sqlalchemy.util.langhelpers import hybridproperty
 
 from .category import Category
 
-db = SessionLocal()
-
 class Transaction(Base):
     __tablename__ = 'transactions'
     id = Column(Integer, primary_key=True)
@@ -37,7 +35,11 @@ class Transaction(Base):
 
 @listens_for(Transaction.__table__, 'after_create')
 def insert_initial_records(*args, **kwargs):
-    db.add(Transaction(id=1, user_id=1, opdate=datetime.datetime.utcnow(), account_id=2, credit=4900, recipient_id=1, debit=4900))
-    db.add(Transaction(id=2, user_id=1, opdate=datetime.datetime.utcnow(), account_id=1, credit=260, debit=260, category_id=1022, currency='RUB', details='lunch'))
-    db.add(Transaction(id=3, user_id=1, opdate=datetime.datetime.utcnow(), account_id=2, credit=465, debit=260, category_id=108, currency='RUB', details='telephony'))
-    db.commit()
+    try:
+        db = SessionLocal()
+        db.add(Transaction(id=1, owner_id=1, opdate=datetime.now(), account_id=2, credit=4900, recipient_id=1, debit=4900))
+        db.add(Transaction(id=2, owner_id=1, opdate=datetime.now(), account_id=1, credit=260, debit=260, category_id=1022, currency='RUB', details='lunch'))
+        db.add(Transaction(id=3, owner_id=1, opdate=datetime.now(), account_id=2, credit=465, debit=260, category_id=108, currency='RUB', details='telephony'))
+        db.commit()
+    finally:
+        db.close()

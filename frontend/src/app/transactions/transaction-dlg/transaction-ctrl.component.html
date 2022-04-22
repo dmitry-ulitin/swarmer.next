@@ -1,0 +1,59 @@
+<form [formGroup]=form class="transaction">
+    <div class="amounts" [class]="typeString">
+        <div class="credit d-flex" *ngIf="showCredit">
+            <tui-input-number formControlName="credit" [tuiTextfieldSize]="'s'" class="tui-space_right-2 flex-fill">0,00
+            </tui-input-number>
+            <tui-combo-box formControlName="ccurrency" [tuiTextfieldSize]="'s'" class="currency" [strict]="false">
+                <input tuiTextfield />
+                <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
+                </tui-data-list-wrapper>
+            </tui-combo-box>
+        </div>
+        <div class="debit d-flex" *ngIf="showDebit">
+            <tui-input-number formControlName="debit" [tuiTextfieldSize]="'s'" class="tui-space_right-2 flex-fill">0,00
+            </tui-input-number>
+            <tui-combo-box formControlName="dcurrency" [tuiTextfieldSize]="'s'" class="currency" [strict]="false">
+                <input tuiTextfield />
+                <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
+                </tui-data-list-wrapper>
+            </tui-combo-box>
+        </div>
+        <tui-select class="account" formControlName="account" [valueContent]="accountContent" [tuiTextfieldSize]="'m'" *ngIf="showAccount">
+            Account
+            <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async" [itemContent]="accountContent" [size]="'m'">
+            </tui-data-list-wrapper>
+        </tui-select>
+        <tui-select class="recipient" formControlName="recipient" [valueContent]="accountContent" [tuiTextfieldSize]="'m'" *ngIf="showRecipient">
+            Recipient
+            <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async" [itemContent]="accountContent" [size]="'m'">
+            </tui-data-list-wrapper>
+        </tui-select>
+        <ng-template #accountContent let-account>
+            {{account.fullname}}
+        </ng-template>
+    </div>
+    <tui-select formControlName="category" [valueContent]="categoryValue" [tuiTextfieldSize]="'s'"
+        [tuiTextfieldCleaner]="true" *ngIf="showCategory">
+        no category
+        <tui-data-list-wrapper *tuiDataList [items]="categories$ | async" [itemContent]="categoryContent" [size]="'s'">
+        </tui-data-list-wrapper>
+    </tui-select>
+    <ng-template #categoryValue let-category>
+        {{category.fullname}}
+    </ng-template>
+    <ng-template #categoryContent let-category>
+        <div [class]="'category-level-' + category.level">{{category.name}}</div>
+    </ng-template>
+    <div class="d-flex">
+        <tui-input-date formControlName="opdate" [tuiTextfieldSize]="'s'" class="flex-fill">
+            <input tuiTextfield />
+        </tui-input-date>
+        <button tuiIconButton type="button" icon="tuiIconChevronLeft" [size]="'s'" [appearance]="'icon'"
+            (click)="onYesterday()" class="tui-space_left-1"></button>
+        <button tuiIconButton type="button" icon="tuiIconToggleOff" [size]="'s'" [appearance]="'icon'"
+            (click)="onToday()" class="tui-space_left-1"></button>
+        <button tuiIconButton type="button" icon="tuiIconChevronRight" [size]="'s'" [appearance]="'icon'"
+            (click)="onTomorrow()" class="tui-space_left-1"></button>
+    </div>
+    <tui-text-area formControlName="details" [tuiTextfieldSize]="'m'" [tuiTextfieldLabelOutside]="true"></tui-text-area>
+</form>

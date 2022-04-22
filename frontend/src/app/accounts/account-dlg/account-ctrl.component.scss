@@ -1,0 +1,30 @@
+@import '~@taiga-ui/core/styles/taiga-ui-local';
+
+:host {
+    display: block;
+}
+
+td {
+    padding: 0 0.1rem 0.5rem 0.1rem;
+}
+
+table td:first-child {
+    padding-left: 0;
+    width: 50%;
+}
+
+table td:nth-child(2n) {
+    width: 25%;
+}
+
+table td:nth-child(3n) {
+    width: 25%;
+}
+
+table td:last-child {
+    padding-right: 0;
+}
+
+.tui-form__buttons {
+    margin-top: 1rem;
+}
