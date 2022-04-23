@@ -138,7 +138,7 @@ export class AccState {
     @Action(CreateGroup)
     createGroup(cxt: StateContext<AccStateModel>) {
         this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector), { dismissible: false, size: 's' }
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: 'New Account', dismissible: false, size: 's' }
         ).subscribe();
     }
 

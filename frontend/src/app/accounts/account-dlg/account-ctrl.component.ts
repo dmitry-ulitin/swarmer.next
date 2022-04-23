@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
 import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
-import { Account } from 'src/app/models/account';
+import { AppState } from 'src/app/app.state';
 import { Group } from '../../models/group';
 import { AccState } from '../accounts.state';
 
@@ -22,6 +22,7 @@ import { AccState } from '../accounts.state';
 })
 export class AccountCtrlComponent implements ControlValueAccessor {
   currencies = this.store.selectSnapshot(AccState.currencies);
+  userCurrency = this.store.selectSnapshot(AppState.claims)?.currency || 'RUB';
 
   form = new FormGroup({
     'id': new FormControl(),
@@ -63,7 +64,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     this.accounts.push(new FormGroup({
       'id': new FormControl(a?.id),
       'name': new FormControl(a?.name || ''),
-      'currency': new FormControl(a?.currency || 'RUB'),
+      'currency': new FormControl(a?.currency || this.userCurrency),
       'start_balance': new FormControl(a?.start_balance),
       'deleted': new FormControl(a?.deleted)
     }));
