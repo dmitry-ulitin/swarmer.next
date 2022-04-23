@@ -32,8 +32,13 @@ export class AccountDialogComponent {
 
   async onSubmit() {
     try {
-      const transaction = await firstValueFrom(this.api.saveGroup(this.group.value));
-      this.context.completeWith(transaction);
+      let group = this.group.value;
+      if (!group?.fullname) {
+        this.store.dispatch(new AppPrintError("Group name is required"));
+        return;
+      }
+      group = await firstValueFrom(this.api.saveGroup(group));
+      this.context.completeWith(group);
     } catch (err) {
       this.store.dispatch(new AppPrintError(err));
     }

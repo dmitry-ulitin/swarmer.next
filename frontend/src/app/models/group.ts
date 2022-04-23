@@ -4,7 +4,7 @@ import { User } from './user';
 
 export interface Group {
     id: number;
-    fullname?: string;
+    fullname: string;
     is_owner: boolean;
     is_coowner: boolean;
     is_shared: boolean;

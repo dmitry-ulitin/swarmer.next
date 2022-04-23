@@ -135,20 +135,6 @@ export class AccState {
         }
     }
 
-    @Action(CreateGroup)
-    createGroup(cxt: StateContext<AccStateModel>) {
-        this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: 'New Account', dismissible: false, size: 's' }
-        ).subscribe();
-    }
-
-    @Action(EditGroup)
-    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
-        this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
-        ).subscribe();
-    }
-
     @Action(ToggleGropup)
     toggleGropup(cxt: StateContext<AccStateModel>, action: ToggleGropup) {
         const state = cxt.getState();
@@ -159,6 +145,31 @@ export class AccState {
             }
             cxt.patchState({ expanded });
         }
+    }
+
+    @Action(CreateGroup)
+    createGroup(cxt: StateContext<AccStateModel>) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: 'New Account', dismissible: false, size: 's' }
+        ).subscribe({
+            next: (data: any) => {
+                if (data) {
+                    this.zone.run(() => this.notificationsService.show('Account created', { status: TuiNotification.Success }).subscribe());
+                    const state = cxt.getState();
+                    const groups = state.groups.slice();
+                    const index = groups.findIndex(g => !g.is_owner);
+                    groups.splice(index < 0 ? groups.length : index, 0, data);
+                    cxt.patchState({ groups, accounts: data.accounts.map((a: Account) => a.id) });
+                }
+            }
+        });
+    }
+
+    @Action(EditGroup)
+    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
+        ).subscribe();
     }
 
     @Action(SelectTransaction)
