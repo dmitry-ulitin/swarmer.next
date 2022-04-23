@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
-import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
+import { takeUntil } from 'rxjs';
 import { AppState } from 'src/app/app.state';
 import { Group } from '../../models/group';
 import { AccState } from '../accounts.state';
@@ -26,7 +27,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
 
   form = new FormGroup({
     'id': new FormControl(),
-    'fullname': new FormControl(''),
+    'fullname': new FormControl('', Validators.required),
     'is_owner': new FormControl(true),
     'is_coowner': new FormControl(false),
     'is_shared': new FormControl(false),
@@ -42,8 +43,8 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     return this.accounts.controls[index] as FormGroup;
   }
 
-  constructor(
-    private store: Store, destroy$: TuiDestroyService) {
+  constructor(private store: Store, destroy$: TuiDestroyService) {
+    this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => this.onChange(value));
   }
 
   patch(value: Group): void {

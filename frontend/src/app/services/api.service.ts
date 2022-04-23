@@ -16,6 +16,18 @@ export class ApiService {
     return this.http.get<Group[]>('/api/groups/');
   }
 
+  getGroup(id: number): Observable<Group> {
+    return this.http.get<Group>(`/api/groups/${id}`);
+  }
+
+  saveGroup(group: Group): Observable<Group> {
+    return !!group.id ? this.http.put<Group>('/api/groups/', group) : this.http.post<Group>('/api/groups/', group);
+  }
+
+  deleteGroup(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/groups/${id}`);
+  }
+
   getTransactions(accounts: number[]): Observable<Transaction[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));

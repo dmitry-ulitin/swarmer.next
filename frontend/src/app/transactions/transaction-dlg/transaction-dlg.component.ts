@@ -25,8 +25,6 @@ export class TransactionDlgComponent {
   }
 
   async onSubmit() {
-    console.log(this.transaction.value);
-    console.log(this.transaction.value.opdate);
     try {
        const transaction = await firstValueFrom(this.api.saveTransaction(this.transaction.value));      
        this.context.completeWith(transaction);
