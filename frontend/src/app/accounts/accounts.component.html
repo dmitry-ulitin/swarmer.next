@@ -6,7 +6,7 @@
             <td [class.active]="isGroupSelected(g)">
                 <div class="group"><a tuiLink (click)="selectGroup(g, $event)">{{g.fullname}}</a></div>
                 <div class="account" *ngFor="let a of g.accounts" [class.active]="isAccountSelected(a)">
-                    <a tuiLink (click)="selectAccount(a, $event)">{{a.fullname}}</a>
+                    <a tuiLink (click)="selectAccount(a, $event)" *ngIf="!a.deleted">{{a.fullname}}</a>
                 </div>
             </td>
             <td>
@@ -15,7 +15,7 @@
             <td class="text-end">
                 <div class="group" *ngFor="let t of total(g)">{{t.value | currency:t.currency}}</div>
                 <div class="account" *ngFor="let a of g.accounts">
-                    {{a.balance | currency:a.currency}}
+                    <ng-container *ngIf="!a.deleted">{{a.balance | currency:a.currency}}</ng-container>
                 </div>
             </td>
         </tr>

@@ -157,7 +157,7 @@ export class AccState {
                     this.zone.run(() => this.notificationsService.show('Account created', { status: TuiNotification.Success }).subscribe());
                     const state = cxt.getState();
                     const groups = state.groups.slice();
-                    const index = groups.findIndex(g => !g.is_owner);
+                    const index = groups.findIndex(g => data.is_owner && !g.is_owner || data.is_coowner && !g.is_coowner);
                     groups.splice(index < 0 ? groups.length : index, 0, data);
                     cxt.patchState({ groups, accounts: data.accounts.map((a: Account) => a.id) });
                 }
