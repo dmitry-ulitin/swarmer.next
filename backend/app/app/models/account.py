@@ -9,7 +9,6 @@ class AccountGroup(Base):
     __tablename__ = "account_groups"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    order = Column(Integer, default = 0, nullable=False)
     created = Column(DateTime, default=datetime.now, nullable=False)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
@@ -90,7 +89,6 @@ class ACL(Base):
     is_admin = Column(Boolean, default = False, nullable=False)
     is_readonly = Column(Boolean, default = False, nullable=False)
     name = Column(String)
-    order = Column(Integer, default = 0)
     def __repr__(self):
         return '<ACL %r-%r, is_admin: %s, is_readonly: %s>' % (self.group.name, self.user.name, self.is_admin, self.is_readonly)
 
