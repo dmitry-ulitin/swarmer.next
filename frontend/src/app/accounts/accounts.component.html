@@ -1,6 +1,6 @@
 <div class="h-100 overflow-auto">
     <table class="table">
-        <tr *ngFor="let g of groups$ | async" (click)="toggle(g)" [class.active]="g.selected"
+        <tr *ngFor="let g of groups$ | async" (click)="toggle(g)"
             [class.expanded]="(expanded$ | async).includes(g.id)" [class.owner]="g.is_owner"
             [class.coowner]="g.is_coowner" [class.shared]="g.is_shared">
             <td [class.active]="isGroupSelected(g)">

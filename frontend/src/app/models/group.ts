@@ -10,6 +10,7 @@ export interface Group {
     is_shared: boolean;
     accounts: Account[];
     permissions?: Permission[];
+    deleted?: boolean;
 }
 
 export interface Permission {

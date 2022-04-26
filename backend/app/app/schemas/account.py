@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from .user import User
 
 class AccountBase(BaseModel):
-    fullname: str = None
+    name: str = None
     currency: str
     start_balance: Decimal = None
     deleted: bool = None
@@ -19,6 +19,7 @@ class AccountUpdate(AccountBase):
 class Account(AccountBase):
     id: int
     balance: Decimal
+    fullname: str
 
     class Config:
         orm_mode = True

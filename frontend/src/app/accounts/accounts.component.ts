@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Store } from '@ngxs/store';
+import { map } from 'rxjs';
 import { Account } from '../models/account';
 import { Amount, Total } from '../models/balance';
 import { Group } from '../models/group';
@@ -13,7 +14,7 @@ import { AccState, SelectAccounts, ToggleGropup } from './accounts.state';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountsComponent {
-  groups$ = this.store.select(state => state.acc.groups);
+  groups$ = this.store.select(state => state.acc.groups).pipe(map((groups: Group[]) => groups.filter(g => !g.deleted)));
   expanded$ = this.store.select(state => state.acc.expanded);
   total$ = this.store.select(AccState.total);
   @ViewSelectSnapshot((state: any) => state.acc.accounts) accounts!: number[];

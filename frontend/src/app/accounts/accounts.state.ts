@@ -43,6 +43,11 @@ export class EditGroup {
     constructor(public group: Group) { }
 }
 
+export class DeleteGroup {
+    static readonly type = '[Acc] Delete Group';
+    constructor(public id?: number) { }
+}
+
 export class GetTransactions {
     static readonly type = '[Acc] Get Transactions';
 }
@@ -113,7 +118,7 @@ export class AccState {
 
     @Selector()
     static accounts(state: AccStateModel): Account[] {
-        return state.groups.reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
+        return state.groups.filter(g => !g.deleted).reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
     }
 
     @Selector()
@@ -170,6 +175,34 @@ export class AccState {
         this.dialogService.open(
             new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
         ).subscribe();
+    }
+
+    @Action(DeleteGroup)
+    async deleteGroup(cxt: StateContext<AccStateModel>, action: DeleteGroup) {
+        try {
+            const state = cxt.getState();
+            const id = action.id || AccState.selectedGroups(state)[0]?.id;
+            if (id) {
+                let grp = state.groups.find(g => g.id === id);
+                if (!grp) {
+                    throw new Error('Account not found');
+                }                    
+                const answer = await firstValueFrom(
+                    this.dialogService.open(new PolymorpheusComponent(ConfirmationDlgComponent, this.injector), { data: `Are you sure you want to delete account '${grp.fullname}'?`, dismissible: false, size: 's' }),
+                    { defaultValue: false }
+                );
+                if (answer) {
+                    await firstValueFrom(this.api.deleteGroup(id));
+                    this.zone.run(() => this.notificationsService.show('Account deleted').subscribe());
+                    const groups = state.groups.slice().map(g => g.id !== id ? g : { ...g, deleted: true });
+                    const accounts = state.accounts.filter(id => groups.some(g => !g.deleted && g.accounts.some(a => a.id === id)));
+                    cxt.patchState({ groups, accounts });
+                    cxt.dispatch(new GetTransactions());
+                }
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
     }
 
     @Action(SelectTransaction)

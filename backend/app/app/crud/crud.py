@@ -51,7 +51,7 @@ def create_group(db: Session, user_id: int, group: schemas.AccountGroupCreate):
     # add accounts
     for account in group.accounts:
         if not account.deleted:
-            db_account = models.Account(name = account.fullname, currency = account.currency, \
+            db_account = models.Account(name = account.name, currency = account.currency, \
                 start_balance = account.start_balance if account.start_balance else 0)
             db_group.accounts.append(db_account)
     # add ACL
@@ -76,9 +76,7 @@ def delete_group(db: Session, user_id: int, id: int):
     db_group = db.query(models.AccountGroup).get(id)
     if db_group.owner_id != user_id:
         return False
-    db.query(models.ACL).filter(models.ACL.group_id == id).delete()
-    db.query(models.Account).filter(models.Account.group_id == id).delete()
-    db.query(models.AccountGroup).filter(models.AccountGroup.id == id).delete()
+    db.query(models.AccountGroup).filter(models.AccountGroup.id == id).update({'deleted': True})
     db.commit()
     return True
 
