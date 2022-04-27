@@ -69,6 +69,16 @@ def update_group(db: Session, user_id: int, group: schemas.AccountGroupUpdate):
     if db_group.owner_id != user_id:
         return False
     db_group.name = group.fullname
+    for account in group.accounts:
+        if account.id:
+            #db_account = db.query(models.Account).get(account.id)
+            db_account = next(acc for acc in db_group.accounts if acc.id==account.id)
+            db_account.name = account.name
+            db_account.deleted = account.deleted
+        elif not account.deleted:
+            db_account = models.Account(name = account.name, currency = account.currency, \
+                start_balance = account.start_balance if account.start_balance else 0)
+            db_group.accounts.append(db_account)
     db.commit()
     return get_group(db, user_id, group.id)
 

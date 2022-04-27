@@ -34,7 +34,11 @@ export class AccountsComponent {
   }
 
   isGroupSelected(group: Group): boolean {
-    return !group.accounts.some(a => !this.accounts.includes(a.id));
+    return !group.accounts.filter(a => !a.deleted).some(a => !this.accounts.includes(a.id));
+  }
+
+  isGroupExpandable(group: Group): boolean {
+    return group.accounts.filter(a => !a.deleted).length > 1;
   }
 
   selectGroup(group: Group, event: MouseEvent): void {
@@ -52,6 +56,7 @@ export class AccountsComponent {
 
   selectAccount(account: Account, event: MouseEvent): void {
     event.stopPropagation();
-    this.store.dispatch(new SelectAccounts(event.ctrlKey ? (this.isAccountSelected(account) ? this.accounts.filter(a => a !== account.id) : [...this.accounts, account.id]) : [account.id]));
+    const accounts = event.ctrlKey ? (this.isAccountSelected(account) ? this.accounts.filter(a => a !== account.id) : [...this.accounts, account.id]) : [account.id];
+    this.store.dispatch(new SelectAccounts(accounts));
   }
 }

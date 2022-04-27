@@ -65,16 +65,16 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     return this.accounts.controls.filter(a => !a.get('deleted')?.value).length > 1;
   }
 
-  onAddAccount(a: any): void {
+  onAddAccount(acc: any): void {
     this.accounts.push(new FormGroup({
-      'id': new FormControl(a?.id),
-      'name': new FormControl(a?.name || ''),
-      'currency': new FormControl(a?.currency || this.userCurrency),
-      'start_balance': new FormControl(a?.start_balance),
-      'balance': new FormControl(a?.balance),
-      'deleted': new FormControl(a?.deleted)
+      'id': new FormControl(acc?.id),
+      'name': new FormControl(acc?.name || ''),
+      'currency': new FormControl(acc?.currency || this.userCurrency),
+      'start_balance': new FormControl(acc?.start_balance),
+      'balance': new FormControl(acc?.balance),
+      'deleted': new FormControl(acc?.deleted)
     }));
-    this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.enable();
+    this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
   }
 
   onRemoveAccount(index: number): void {

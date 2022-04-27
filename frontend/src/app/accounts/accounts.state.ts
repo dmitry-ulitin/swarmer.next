@@ -164,7 +164,7 @@ export class AccState {
                     const groups = state.groups.slice();
                     const index = groups.findIndex(g => data.is_owner && !g.is_owner || data.is_coowner && !g.is_coowner);
                     groups.splice(index < 0 ? groups.length : index, 0, data);
-                    cxt.patchState({ groups, accounts: data.accounts.map((a: Account) => a.id) });
+                    cxt.patchState({ groups, accounts: data.accounts.map((a: Account) => a.id), transactions: [], transaction_id: null });
                 }
             }
         });
@@ -174,7 +174,24 @@ export class AccState {
     editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
         this.dialogService.open(
             new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: `Account #${action.group.id}`, dismissible: false, size: 's', data: action.group }
-        ).subscribe();
+        ).subscribe({
+            next: (data: any) => {
+                if (data) {
+                    const state = cxt.getState();
+                    this.zone.run(() => this.notificationsService.show('Account updated', { status: TuiNotification.Success }).subscribe());
+                    const groups = state.groups.slice().map(g => g.id === data.id ? data as Group : g);
+                    let accounts = state.accounts;
+                    const groupSelected = !action.group.accounts.some(a => !accounts.includes(a.id));
+                    if (groupSelected) {
+                        accounts = [...accounts.filter(id => !data.accounts.some((a: Account) => a.id === id)), ...data.accounts.map((a: Account) => a.id)];
+                    } else {
+                        accounts = accounts.filter(id => !data.accounts.some((a: Account) => a.id === id) || data.accounts.some((a: Account) => a.id === id && !a.deleted));
+                    }
+                    cxt.patchState({ groups, accounts });
+                    cxt.dispatch(new GetTransactions());
+                }
+            }
+        });
     }
 
     @Action(DeleteGroup)

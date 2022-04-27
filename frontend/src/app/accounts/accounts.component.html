@@ -12,7 +12,7 @@
                 </div>
             </td>
             <td (click)="toggle(g)">
-                <tui-svg *ngIf="g.accounts.length > 1" src="tuiIconChevronDown" class="icon"></tui-svg>
+                <tui-svg *ngIf="isGroupExpandable(g)" src="tuiIconChevronDown" class="icon"></tui-svg>
             </td>
             <td class="text-end" (click)="toggle(g)">
                 <div class="group" *ngFor="let t of total(g)">{{t.value | currency:t.currency}}</div>
