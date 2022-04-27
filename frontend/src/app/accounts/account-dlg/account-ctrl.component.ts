@@ -55,6 +55,10 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     if (!this.canDelete) {
       this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.disable();
     }
+    if (!!value?.id) {
+      this.accounts.controls.forEach(c => c.get('start_balance')?.disable());
+      this.accounts.controls.forEach(c => c.get('currency')?.disable());
+    }
   }
 
   get canDelete(): boolean {
@@ -67,6 +71,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       'name': new FormControl(a?.name || ''),
       'currency': new FormControl(a?.currency || this.userCurrency),
       'start_balance': new FormControl(a?.start_balance),
+      'balance': new FormControl(a?.balance),
       'deleted': new FormControl(a?.deleted)
     }));
     this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.enable();

@@ -173,7 +173,7 @@ export class AccState {
     @Action(EditGroup)
     editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
         this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: `Account #${action.group.id}`, dismissible: false, size: 's', data: action.group }
         ).subscribe();
     }
 

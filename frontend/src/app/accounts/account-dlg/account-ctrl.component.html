@@ -12,7 +12,7 @@
         <tr *ngFor="let account of accounts.controls; let i = index" formArrayName="accounts">
             <ng-template [formGroupName]="i" [ngIf]="!account.value.deleted">
                 <td>
-                    <tui-input formControlName="name" [tuiTextfieldSize]="'s'">{{account.value.currency}}</tui-input>
+                    <tui-input formControlName="name" [tuiTextfieldSize]="'s'">{{getAccount(i).getRawValue().currency}}</tui-input>
                 </td>
                 <td>
                     <tui-input-number formControlName="start_balance" [tuiTextfieldSize]="'s'">0,00
@@ -27,7 +27,7 @@
                 </td>
                 <td>
                     <button tuiIconButton type="button" [icon]="'tuiIconTrash'" [size]="'s'" [appearance]="'flat'"
-                        [disabled]="!canDelete" (click)="onRemoveAccount(i)"></button>
+                        [disabled]="!canDelete || !!account.value.balance" (click)="onRemoveAccount(i)"></button>
                 </td>
             </ng-template>
         </tr>
