@@ -1,4 +1,5 @@
 from datetime import datetime
+from locale import currency
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import label
@@ -33,6 +34,61 @@ def get_groups(db: Session, user_id: int):
             account.balance -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == account.id, balances)))))
             account.balance += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == account.id, balances)))))
     return all_groups
+
+def get_group(db: Session, user_id: int, id: int):
+    group = db.query(models.AccountGroup).get(id)
+    group.current_user_id = user_id
+    balances = get_balances(db, [a.id for a in group.accounts])
+    for account in group.accounts:
+        account.balance = account.start_balance
+        account.balance -= sum(list(map(lambda b: b.credit, list(filter(lambda b: b.account_id == account.id, balances)))))
+        account.balance += sum(list(map(lambda b: b.debit, list(filter(lambda b: b.recipient_id == account.id, balances)))))
+    return group
+
+def create_group(db: Session, user_id: int, group: schemas.AccountGroupCreate):
+    # add new group
+    db_group = models.AccountGroup(owner_id = user_id, name = group.fullname)
+    # add accounts
+    for account in group.accounts:
+        if not account.deleted:
+            db_account = models.Account(name = account.name, currency = account.currency, \
+                start_balance = account.start_balance if account.start_balance else 0)
+            db_group.accounts.append(db_account)
+    # add ACL
+    for acl in group.permissions:
+        db_acl = models.ACL(user_id = acl.user.id, is_readonly = acl.is_readonly, is_admin = acl.is_admin)
+        db_group.permissions.append(db_acl)
+
+    db.add(db_group)
+    db.commit()
+    db.refresh(db_group)
+    return get_group(db, user_id, db_group.id)
+
+def update_group(db: Session, user_id: int, group: schemas.AccountGroupUpdate):
+    db_group = db.query(models.AccountGroup).get(group.id)
+    if db_group.owner_id != user_id:
+        return False
+    db_group.name = group.fullname
+    for account in group.accounts:
+        if account.id:
+            #db_account = db.query(models.Account).get(account.id)
+            db_account = next(acc for acc in db_group.accounts if acc.id==account.id)
+            db_account.name = account.name
+            db_account.deleted = account.deleted
+        elif not account.deleted:
+            db_account = models.Account(name = account.name, currency = account.currency, \
+                start_balance = account.start_balance if account.start_balance else 0)
+            db_group.accounts.append(db_account)
+    db.commit()
+    return get_group(db, user_id, group.id)
+
+def delete_group(db: Session, user_id: int, id: int):
+    db_group = db.query(models.AccountGroup).get(id)
+    if db_group.owner_id != user_id:
+        return False
+    db.query(models.AccountGroup).filter(models.AccountGroup.id == id).update({'deleted': True})
+    db.commit()
+    return True
 
 def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, \
         account_ids = [], category_ids = [], \
@@ -132,8 +188,7 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
     return get_transaction(db, user_id, db_transaction.id)
 
 def delete_transaction(db: Session, user_id: int, transaction_id: int):
-    db_transaction = db.query(models.Transaction).get(transaction_id)
-    db.delete(db_transaction)
+    db.query(models.Transaction).filter(models.Transaction.id == transaction_id).delete()
     db.commit()
 
 def get_user_categories(db: Session, user_id: int):

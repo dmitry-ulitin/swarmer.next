@@ -3,6 +3,9 @@ import { FormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDialogContext, TuiDialogService } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
+import { firstValueFrom } from 'rxjs';
+import { AppPrintError } from 'src/app/app.state';
+import { ApiService } from 'src/app/services/api.service';
 import { Group } from '../../models/group';
 
 @Component({
@@ -12,20 +15,32 @@ import { Group } from '../../models/group';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountDialogComponent {
-  account = new FormControl();
+  group = new FormControl();
 
   constructor(
+    private api: ApiService,
     private store: Store,
     @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
     @Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<Group | undefined, Group>
   ) {
-    this.account.setValue(this.context.data);
+    this.group.setValue(this.context.data);
   }
-  
+
   onCancel(): void {
     this.context.completeWith(undefined);
   }
 
-  onSubmit(): void {
+  async onSubmit() {
+    try {
+      let group = this.group.value;
+      if (!group?.fullname) {
+        this.store.dispatch(new AppPrintError("Group name is required"));
+        return;
+      }
+      group = await firstValueFrom(this.api.saveGroup(group));
+      this.context.completeWith(group);
+    } catch (err) {
+      this.store.dispatch(new AppPrintError(err));
+    }
   }
 }

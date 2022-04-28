@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Store } from '@ngxs/store';
+import { map } from 'rxjs';
 import { Account } from '../models/account';
 import { Amount, Total } from '../models/balance';
 import { Group } from '../models/group';
@@ -13,7 +14,7 @@ import { AccState, SelectAccounts, ToggleGropup } from './accounts.state';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountsComponent {
-  groups$ = this.store.select(state => state.acc.groups);
+  groups$ = this.store.select(state => state.acc.groups).pipe(map((groups: Group[]) => groups.filter(g => !g.deleted)));
   expanded$ = this.store.select(state => state.acc.expanded);
   total$ = this.store.select(AccState.total);
   @ViewSelectSnapshot((state: any) => state.acc.accounts) accounts!: number[];
@@ -33,7 +34,11 @@ export class AccountsComponent {
   }
 
   isGroupSelected(group: Group): boolean {
-    return !group.accounts.some(a => !this.accounts.includes(a.id));
+    return !group.accounts.filter(a => !a.deleted).some(a => !this.accounts.includes(a.id));
+  }
+
+  isGroupExpandable(group: Group): boolean {
+    return group.accounts.filter(a => !a.deleted).length > 1;
   }
 
   selectGroup(group: Group, event: MouseEvent): void {
@@ -51,6 +56,7 @@ export class AccountsComponent {
 
   selectAccount(account: Account, event: MouseEvent): void {
     event.stopPropagation();
-    this.store.dispatch(new SelectAccounts(event.ctrlKey ? (this.isAccountSelected(account) ? this.accounts.filter(a => a !== account.id) : [...this.accounts, account.id]) : [account.id]));
+    const accounts = event.ctrlKey ? (this.isAccountSelected(account) ? this.accounts.filter(a => a !== account.id) : [...this.accounts, account.id]) : [account.id];
+    this.store.dispatch(new SelectAccounts(accounts));
   }
 }

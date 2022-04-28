@@ -9,6 +9,9 @@ export abstract class Total {
     }
 
     static add(balance: Balance, amount: any): Balance {
+        if (!!amount.deleted) {
+            return balance;
+        }
         if (amount instanceof Array) {
             for (const a of amount) {
                 Total.add(balance, a);

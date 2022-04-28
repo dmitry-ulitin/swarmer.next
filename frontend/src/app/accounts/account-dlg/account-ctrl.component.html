@@ -1,15 +1,18 @@
 <form [formGroup]=form>
-    <tui-input formControlName="fullname" [tuiTextfieldSize]="'s'">Name</tui-input>
+    <tui-input formControlName="fullname" [tuiTextfieldSize]="'s'">
+        Name
+        <input  tuiTextfield autocomplete="off"/>
+    </tui-input>
     <div class="d-flex mt-3">
         <span class="flex-fill">Initial Balances</span>
         <button tuiIconButton type="button" [icon]="'tuiIconPlus'" [size]="'s'" [appearance]="'flat'"
-            (click)="onAddAccount()"></button>
+            (click)="onAddAccount(null)"></button>
     </div>
     <table class="w-100">
         <tr *ngFor="let account of accounts.controls; let i = index" formArrayName="accounts">
             <ng-template [formGroupName]="i" [ngIf]="!account.value.deleted">
-                <td *ngIf="canDelete">
-                    <tui-input formControlName="name" [tuiTextfieldSize]="'s'">{{account.value.currency}}</tui-input>
+                <td>
+                    <tui-input formControlName="name" [tuiTextfieldSize]="'s'">{{getAccount(i).getRawValue().currency}}</tui-input>
                 </td>
                 <td>
                     <tui-input-number formControlName="start_balance" [tuiTextfieldSize]="'s'">0,00
@@ -24,7 +27,7 @@
                 </td>
                 <td>
                     <button tuiIconButton type="button" [icon]="'tuiIconTrash'" [size]="'s'" [appearance]="'flat'"
-                        [disabled]="!canDelete" (click)="onRemoveAccount(i)"></button>
+                        [disabled]="!canDelete || !!account.value.balance" (click)="onRemoveAccount(i)"></button>
                 </td>
             </ng-template>
         </tr>

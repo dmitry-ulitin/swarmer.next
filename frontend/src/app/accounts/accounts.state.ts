@@ -43,6 +43,11 @@ export class EditGroup {
     constructor(public group: Group) { }
 }
 
+export class DeleteGroup {
+    static readonly type = '[Acc] Delete Group';
+    constructor(public id?: number) { }
+}
+
 export class GetTransactions {
     static readonly type = '[Acc] Get Transactions';
 }
@@ -113,7 +118,7 @@ export class AccState {
 
     @Selector()
     static accounts(state: AccStateModel): Account[] {
-        return state.groups.reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
+        return state.groups.filter(g => !g.deleted).reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
     }
 
     @Selector()
@@ -135,20 +140,6 @@ export class AccState {
         }
     }
 
-    @Action(CreateGroup)
-    createGroup(cxt: StateContext<AccStateModel>) {
-        this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector)
-        ).subscribe();
-    }
-
-    @Action(EditGroup)
-    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
-        this.dialogService.open(
-            new PolymorpheusComponent(AccountDialogComponent, this.injector), { data: action.group }
-        ).subscribe();
-    }
-
     @Action(ToggleGropup)
     toggleGropup(cxt: StateContext<AccStateModel>, action: ToggleGropup) {
         const state = cxt.getState();
@@ -158,6 +149,76 @@ export class AccState {
                 expanded.push(action.group);
             }
             cxt.patchState({ expanded });
+        }
+    }
+
+    @Action(CreateGroup)
+    createGroup(cxt: StateContext<AccStateModel>) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: 'New Account', dismissible: false, size: 's' }
+        ).subscribe({
+            next: (data: any) => {
+                if (data) {
+                    this.zone.run(() => this.notificationsService.show('Account created', { status: TuiNotification.Success }).subscribe());
+                    const state = cxt.getState();
+                    const groups = state.groups.slice();
+                    const index = groups.findIndex(g => data.is_owner && !g.is_owner || data.is_coowner && !g.is_coowner);
+                    groups.splice(index < 0 ? groups.length : index, 0, data);
+                    cxt.patchState({ groups, accounts: data.accounts.map((a: Account) => a.id), transactions: [], transaction_id: null });
+                }
+            }
+        });
+    }
+
+    @Action(EditGroup)
+    editGroup(cxt: StateContext<AccStateModel>, action: EditGroup) {
+        this.dialogService.open(
+            new PolymorpheusComponent(AccountDialogComponent, this.injector), { header: `Account #${action.group.id}`, dismissible: false, size: 's', data: action.group }
+        ).subscribe({
+            next: (data: any) => {
+                if (data) {
+                    const state = cxt.getState();
+                    this.zone.run(() => this.notificationsService.show('Account updated', { status: TuiNotification.Success }).subscribe());
+                    const groups = state.groups.slice().map(g => g.id === data.id ? data as Group : g);
+                    let accounts = state.accounts;
+                    const groupSelected = !action.group.accounts.some(a => !accounts.includes(a.id));
+                    if (groupSelected) {
+                        accounts = [...accounts.filter(id => !data.accounts.some((a: Account) => a.id === id)), ...data.accounts.map((a: Account) => a.id)];
+                    } else {
+                        accounts = accounts.filter(id => !data.accounts.some((a: Account) => a.id === id) || data.accounts.some((a: Account) => a.id === id && !a.deleted));
+                    }
+                    cxt.patchState({ groups, accounts });
+                    cxt.dispatch(new GetTransactions());
+                }
+            }
+        });
+    }
+
+    @Action(DeleteGroup)
+    async deleteGroup(cxt: StateContext<AccStateModel>, action: DeleteGroup) {
+        try {
+            const state = cxt.getState();
+            const id = action.id || AccState.selectedGroups(state)[0]?.id;
+            if (id) {
+                let grp = state.groups.find(g => g.id === id);
+                if (!grp) {
+                    throw new Error('Account not found');
+                }                    
+                const answer = await firstValueFrom(
+                    this.dialogService.open(new PolymorpheusComponent(ConfirmationDlgComponent, this.injector), { data: `Are you sure you want to delete account '${grp.fullname}'?`, dismissible: false, size: 's' }),
+                    { defaultValue: false }
+                );
+                if (answer) {
+                    await firstValueFrom(this.api.deleteGroup(id));
+                    this.zone.run(() => this.notificationsService.show('Account deleted').subscribe());
+                    const groups = state.groups.slice().map(g => g.id !== id ? g : { ...g, deleted: true });
+                    const accounts = state.accounts.filter(id => groups.some(g => !g.deleted && g.accounts.some(a => a.id === id)));
+                    cxt.patchState({ groups, accounts });
+                    cxt.dispatch(new GetTransactions());
+                }
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
         }
     }
 
@@ -173,7 +234,8 @@ export class AccState {
             const transactions = await firstValueFrom(this.api.getTransactions(state.accounts));
             const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => transaction2View(t, selected));
-            cxt.patchState({ transactions: tv });
+            const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
+            cxt.patchState({ transactions: tv, transaction_id });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }

@@ -11,7 +11,7 @@ table.table {
 }
 
 .icon {
-    @include transition(transform);
+    @include transition(transform, 300ms);
     transform: rotate(0deg);
     .expanded & {
         transform: rotate(180deg);
@@ -23,7 +23,7 @@ table.table {
 }
 
 .group {
-    @include transition(transform);
+    @include transition(opacity, 300ms);
     opacity: 1;
     height: auto;
     .expanded & {
@@ -34,7 +34,7 @@ table.table {
 }
 
 .account {
-    @include transition(transform);
+    @include transition(opacity, 300ms);
     opacity: 0;
     height: 0;
     overflow: hidden;
@@ -42,4 +42,8 @@ table.table {
         opacity: 1;
         height: auto;
     }    
+}
+
+a, a:hover, a:focus {
+    color: inherit;
 }

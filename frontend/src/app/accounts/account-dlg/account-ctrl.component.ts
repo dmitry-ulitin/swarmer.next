@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
-import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
+import { takeUntil } from 'rxjs';
+import { AppState } from 'src/app/app.state';
 import { Group } from '../../models/group';
 import { AccState } from '../accounts.state';
 
@@ -21,10 +23,11 @@ import { AccState } from '../accounts.state';
 })
 export class AccountCtrlComponent implements ControlValueAccessor {
   currencies = this.store.selectSnapshot(AccState.currencies);
+  userCurrency = this.store.selectSnapshot(AppState.claims)?.currency || 'RUB';
 
   form = new FormGroup({
     'id': new FormControl(),
-    'fullname': new FormControl(''),
+    'fullname': new FormControl('', Validators.required),
     'is_owner': new FormControl(true),
     'is_coowner': new FormControl(false),
     'is_shared': new FormControl(false),
@@ -40,41 +43,45 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     return this.accounts.controls[index] as FormGroup;
   }
 
-  constructor(
-    private store: Store, destroy$: TuiDestroyService) {
+  constructor(private store: Store, destroy$: TuiDestroyService) {
+    this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => this.onChange(value));
   }
 
   patch(value: Group): void {
     this.form.reset({}, { emitEvent: false });
     this.form.patchValue(value || {});
     this.accounts.clear();
-    (value?.accounts || [{ name: '', currency: 'RUB', start_balance: 0 }]).forEach(a => this.accounts.push(new FormGroup({
-      'id': new FormControl(a.id),
-      'name': new FormControl(a.name),
-      'currency': new FormControl(a.currency),
-      'start_balance': new FormControl(a.start_balance),
-      'deleted': new FormControl(a.deleted)
-    })
-    ));
+    (value?.accounts || [null]).forEach(a => this.onAddAccount(a));
+    if (!this.canDelete) {
+      this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.disable();
+    }
+    if (!!value?.id) {
+      this.accounts.controls.forEach(c => c.get('start_balance')?.disable());
+      this.accounts.controls.forEach(c => c.get('currency')?.disable());
+    }
   }
 
   get canDelete(): boolean {
     return this.accounts.controls.filter(a => !a.get('deleted')?.value).length > 1;
   }
 
-  onAddAccount(): void {
+  onAddAccount(acc: any): void {
     this.accounts.push(new FormGroup({
-      'id': new FormControl(),
-      'name': new FormControl(''),
-      'currency': new FormControl('RUB'),
-      'start_balance': new FormControl(0),
-      'deleted': new FormControl(false)
-    })
-    );
+      'id': new FormControl(acc?.id),
+      'name': new FormControl(acc?.name || ''),
+      'currency': new FormControl(acc?.currency || this.userCurrency),
+      'start_balance': new FormControl(acc?.start_balance),
+      'balance': new FormControl(acc?.balance),
+      'deleted': new FormControl(acc?.deleted)
+    }));
+    this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
   }
 
   onRemoveAccount(index: number): void {
     this.accounts.controls[index].get('deleted')?.setValue(true);
+    if (!this.canDelete) {
+      this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.disable();
+    }
   }
 
   writeValue(value: any): void {

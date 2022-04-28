@@ -6,25 +6,27 @@ from .user import User
 
 class AccountBase(BaseModel):
     name: str = None
-    currency: str
-    start_balance: Decimal
+    start_balance: Decimal = None
+    deleted: bool = None
 
 class AccountCreate(AccountBase):
-    pass
+    currency: str
 
-class AccountUpdate(AccountBase):
-    pass
+class AccountCreateOrUpdate(AccountBase):
+    id: int = None
+    currency: str = None
 
 class Account(AccountBase):
     id: int
     fullname: str
+    currency: str
     balance: Decimal
-    deleted: bool
 
     class Config:
         orm_mode = True
 
 class ACLBase(BaseModel):
+    user: User
     is_admin: bool
     is_readonly: bool
 
@@ -35,23 +37,24 @@ class ACLUpdate(ACLBase):
     pass
 
 class ACL(ACLBase):
-    user: User
-
     class Config:
         orm_mode = True
 
 class AccountGroupBase(BaseModel):
-    pass
+    fullname: str
+    deleted: bool = None
 
 class AccountGroupCreate(AccountGroupBase):
-    pass
+    accounts: List[AccountCreate] = []
+    permissions: List[ACLCreate] = []
 
 class AccountGroupUpdate(AccountGroupBase):
-    pass
+    id: int
+    accounts: List[AccountCreateOrUpdate] = []
+    permissions: List[ACLUpdate] = []
 
 class AccountGroup(AccountGroupBase):
     id: int
-    fullname: str
     is_owner: bool
     is_coowner: bool
     is_shared: bool
