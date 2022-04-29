@@ -57,8 +57,8 @@ export class SelectTransaction {
     constructor(public id: number) { }
 }
 
-export class AddTransaction {
-    static readonly type = '[Acc] Add Transaction';
+export class CreateTransaction {
+    static readonly type = '[Acc] Create Transaction';
     constructor(public type: TransactionType) { }
 }
 
@@ -297,8 +297,8 @@ export class AccState {
         }
     }
 
-    @Action(AddTransaction)
-    addTransaction(cxt: StateContext<AccStateModel>, action: AddTransaction) {
+    @Action(CreateTransaction)
+    addTransaction(cxt: StateContext<AccStateModel>, action: CreateTransaction) {
         const state = cxt.getState();
         let account: Account | undefined = state.accounts.length > 0 ? getAccount(state.groups, state.accounts[0]) : state.groups[0]?.accounts[0];
         let recipient: Account | undefined = undefined;

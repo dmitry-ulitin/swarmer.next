@@ -1,6 +1,8 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { NgxsModule } from '@ngxs/store';
 import { TransactionDlgComponent } from './transaction-dlg.component';
+import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 
 describe('TransactionDlgComponent', () => {
   let component: TransactionDlgComponent;
@@ -8,7 +10,11 @@ describe('TransactionDlgComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ TransactionDlgComponent ]
+      imports: [HttpClientTestingModule, NgxsModule.forRoot([])],
+      declarations: [ TransactionDlgComponent ],
+      providers: [
+        { provide: POLYMORPHEUS_CONTEXT, useValue: {} }
+      ]
     })
     .compileComponents();
   });
