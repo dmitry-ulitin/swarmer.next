@@ -1,6 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
-from locale import currency
 from fastapi import UploadFile
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session
@@ -197,9 +195,10 @@ def delete_transaction(db: Session, user_id: int, transaction_id: int):
 def import_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
     data = pd.read_csv(file.file)
     data = data.iloc[:,[2,8,13,7,11,4]]
-    data.columns = ['opdate','amount','currency','type','details','party']
+    data.columns = ['opdate','debit','currency','type','details','party']
     data['opdate'] = pd.to_datetime(data['opdate'], format='%Y-%m-%d')
-    data['amount'] = data['amount'].abs()
+    data['debit'] = data['debit'].abs()
+    data['credit'] = data['debit']
     data['type'] = data['type'].apply(lambda x: models.Category.EXPENSE if x == 'D' else models.Category.INCOME)
     print(data)
     return reconcile_transactions(db, user_id, account_id, data)    
@@ -210,13 +209,25 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
     acc_db.group.current_user_id = user_id
     acc = schemas.Account(id = acc_db.id, fullname = acc_db.fullname, currency = acc_db.currency, balance = acc_db.start_balance)
     # load transactions
+    query = db.query(models.Transaction).filter(or_(models.Transaction.account_id == account_id, models.Transaction.recipient_id == account_id)) \
+        .filter(models.Transaction.opdate >= df.iloc[0]['opdate']) \
+        .order_by(models.Transaction.opdate.desc(), models.Transaction.id.desc())
+    db_trx = pd.read_sql(query.statement, db.bind)
+    db_trx['opdate'] = db_trx['opdate'].apply(lambda opdate: opdate.date())
+    print(db_trx)
     # transform dataframe to list of transactions
+    df['id'] = None
+    df['account'] = None
+    df['recipient'] = None
     transactions = []
     for i, row in df.iterrows():
-        account = acc if row['type'] == models.Category.EXPENSE else None
-        recipient = acc if row['type'] == models.Category.INCOME else None
-        transactions.append(schemas.TransactionImport(opdate = row['opdate'], details = row['details'], currency = row['currency'], \
-            account = account, recipient = recipient, credit = row['amount'], debit = row['amount'], party = row['party'], type = row['type']))
+        row['account'] = acc if row['type'] == models.Category.EXPENSE else None
+        row['recipient'] = acc if row['type'] == models.Category.INCOME else None
+        stored = db_trx.loc[(not db_trx['id'].empty) & (db_trx['opdate'] == row['opdate']) & ((db_trx['account_id'] == account_id) & (db_trx['debit'] == row['debit']) | (db_trx['recipient_id'] == account_id) & (db_trx['credit'] == row['credit']))]
+        if not stored.empty:
+            row['id'] = stored.iloc[0]['id']
+            stored.iloc[0]['id'] = None
+        transactions.append(schemas.TransactionImport(**row))
     return transactions
 
 def get_user_categories(db: Session, user_id: int):
