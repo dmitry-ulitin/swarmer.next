@@ -1,6 +1,6 @@
 <tui-input-files
     *ngIf="!control.value"
-    accept="image/*"
+    accept=".csv, .txt"
     [formControl]="control"
     (reject)="onReject($event)"
 ></tui-input-files>
@@ -20,6 +20,6 @@
     ></tui-file>
 </tui-files>
 <div class="footer">
-    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()">Yes</button>
-    <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">No</button>
+    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()" [disabled]="!control.value">Next</button>
+    <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
 </div>

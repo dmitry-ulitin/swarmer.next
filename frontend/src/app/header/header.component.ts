@@ -3,8 +3,9 @@ import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Select, Store } from '@ngxs/store';
 import { TUI_ICONS_PATH } from '@taiga-ui/core';
 import { Observable } from 'rxjs';
-import { AccState, CreateTransaction, CreateGroup, DeleteGroup, DeleteTransaction, EditGroup, EditTransaction, GetGroups, GetTransactions } from '../accounts/accounts.state';
+import { AccState, CreateTransaction, CreateGroup, DeleteGroup, DeleteTransaction, EditGroup, EditTransaction, GetGroups, GetTransactions, ImportTransactions } from '../accounts/accounts.state';
 import { AppLogout, AppState } from '../app.state';
+import { Account } from '../models/account';
 import { Group } from '../models/group';
 import { TransactionType } from '../models/transaction';
 
@@ -31,13 +32,10 @@ export function iconsPath(name: string): string {
 export class HeaderComponent {
   @Select(AppState.isAuthenticated) isAuthenticated$!: Observable<boolean>;
   @Select(AppState.claims) claims$!: Observable<any>;
-  @ViewSelectSnapshot(AccState.selectedGroups) groups!: Group[];
+  @ViewSelectSnapshot(AccState.selectedGroup) group!: Group | undefined;
+  account$ = this.store.select(AccState.selectedAccount);
   transactions_id$ = this.store.select(state => state.acc.transaction_id);
-
-  get group(): Group | undefined {
-    return this.groups.length === 1 ? this.groups[0] : undefined;
-  }
-
+  
   constructor(private store: Store) { }
 
   logout(): void {
@@ -79,5 +77,9 @@ export class HeaderComponent {
 
   deleteTransaction(): void {
     this.store.dispatch(new DeleteTransaction());
+  }
+
+  onImport(account: Account): void {
+    this.store.dispatch(new ImportTransactions(account.id));
   }
 }

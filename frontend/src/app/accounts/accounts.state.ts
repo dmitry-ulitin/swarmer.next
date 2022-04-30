@@ -13,6 +13,8 @@ import { TransactionDlgComponent } from '../transactions/transaction-dlg/transac
 import { Category } from '../models/category';
 import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.component';
 import { AccountDialogComponent } from './account-dlg/account-dlg.component';
+import { InputFileDlgComponent } from '../import/input-file-dlg.component';
+import { TuiFileLike } from '@taiga-ui/kit';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -72,6 +74,11 @@ export class DeleteTransaction {
     constructor(public id?: number) { }
 }
 
+export class ImportTransactions {
+    static readonly type = '[Acc] Import Transactions';
+    constructor(public id?: number) { }
+}
+
 export class GetCategories {
     static readonly type = '[Acc] Get Categories';
 }
@@ -117,8 +124,26 @@ export class AccState {
     }
 
     @Selector()
+    static selectedGroup(state: AccStateModel): Group | undefined {
+        const groups = AccState.selectedGroups(state);
+        return groups.length === 1 ? groups[0] : undefined;
+    }
+
+    @Selector()
     static accounts(state: AccStateModel): Account[] {
         return state.groups.filter(g => !g.deleted).reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
+    }
+
+    @Selector()
+    static selectedAccounts(state: AccStateModel): Account[] {
+        const accounts = AccState.accounts(state);
+        return accounts.filter(a => state.accounts.includes(a.id));
+    }
+
+    @Selector()
+    static selectedAccount(state: AccStateModel): Account | undefined {
+        const accounts = AccState.selectedAccounts(state);
+        return accounts.length === 1 ? accounts[0] : undefined;
     }
 
     @Selector()
@@ -329,6 +354,20 @@ export class AccState {
                 }
             }
         });
+    }
+
+    @Action(ImportTransactions)
+    async importTransactions(cxt: StateContext<AccStateModel>, action: ImportTransactions) {
+        try {
+            const state = cxt.getState();
+            const id = action.id || state.accounts[0];
+            const file = await firstValueFrom(this.dialogService.open<File>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
+            if (!!file) {
+                await firstValueFrom(this.api.importTransactions(id, file));
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
     }
 
     @Action([AppLoginSuccess, GetCategories], { cancelUncompleted: true })

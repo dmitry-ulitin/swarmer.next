@@ -1,8 +1,11 @@
 from datetime import datetime
+from decimal import Decimal
 from locale import currency
+from fastapi import UploadFile
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import label
+import pandas as pd
 
 from .. import models
 from .. import schemas
@@ -190,6 +193,31 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
 def delete_transaction(db: Session, user_id: int, transaction_id: int):
     db.query(models.Transaction).filter(models.Transaction.id == transaction_id).delete()
     db.commit()
+
+def import_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
+    data = pd.read_csv(file.file)
+    data = data.iloc[:,[2,8,13,7,11,4]]
+    data.columns = ['opdate','amount','currency','type','details','party']
+    data['opdate'] = pd.to_datetime(data['opdate'], format='%Y-%m-%d')
+    data['amount'] = data['amount'].abs()
+    data['type'] = data['type'].apply(lambda x: models.Category.EXPENSE if x == 'D' else models.Category.INCOME)
+    print(data)
+    return reconcile_transactions(db, user_id, account_id, data)    
+
+def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.DataFrame):
+    # load account
+    acc_db = db.query(models.Account).join(models.Account.group).filter(models.Account.id == account_id).first()
+    acc_db.group.current_user_id = user_id
+    acc = schemas.Account(id = acc_db.id, fullname = acc_db.fullname, currency = acc_db.currency, balance = acc_db.start_balance)
+    # load transactions
+    # transform dataframe to list of transactions
+    transactions = []
+    for i, row in df.iterrows():
+        account = acc if row['type'] == models.Category.EXPENSE else None
+        recipient = acc if row['type'] == models.Category.INCOME else None
+        transactions.append(schemas.TransactionImport(opdate = row['opdate'], details = row['details'], currency = row['currency'], \
+            account = account, recipient = recipient, credit = row['amount'], debit = row['amount'], party = row['party'], type = row['type']))
+    return transactions
 
 def get_user_categories(db: Session, user_id: int):
     a_au = [au.group.owner_id for au in db.query(models.ACL).filter(models.ACL.user_id == user_id).all()]

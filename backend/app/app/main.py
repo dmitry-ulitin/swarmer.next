@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi import FastAPI, Depends, Form, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -73,6 +73,11 @@ def update_transaction(transaction: schemas.TransactionUpdate, db: Session = Dep
 def delete_transaction(id: int, db: Session = Depends(get_db)):
     user_id = 2
     crud.delete_transaction(db, user_id, id)
+
+@app.post("/api/import", response_model=List[schemas.TransactionImport])
+def import_transactions(file: UploadFile, id: int = Form(...), db: Session = Depends(get_db)):
+    user_id = 2
+    return crud.import_transactions(db, user_id, id, file)
 
 @app.get("/api/categories/", response_model=List[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):

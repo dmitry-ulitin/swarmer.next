@@ -21,6 +21,10 @@ class TransactionCreate(TransactionBase):
 class TransactionUpdate(TransactionBase):
     id: int
 
+class TransactionImport(TransactionBase):
+    id: int = None
+    type: int
+    party: str = None
 
 class Transaction(TransactionBase):
     id: int
