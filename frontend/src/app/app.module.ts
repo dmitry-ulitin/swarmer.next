@@ -29,6 +29,8 @@ import { ConfirmationDlgComponent } from './confirmation/confirmation-dlg.compon
 import { AccountCtrlComponent } from './accounts/account-dlg/account-ctrl.component';
 import { AccountDialogComponent } from './accounts/account-dlg/account-dlg.component';
 import { InputFileDlgComponent } from './import/input-file-dlg.component';
+import { ImportDlgComponent } from './import/import-dlg.component';
+import { TuiTableModule } from '@taiga-ui/addon-table';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -44,7 +46,8 @@ registerLocaleData(localeRu, 'ru');
     TransactionCtrlComponent,
     TransactionDlgComponent,
     ConfirmationDlgComponent,
-    InputFileDlgComponent
+    InputFileDlgComponent,
+    ImportDlgComponent
   ],
   imports: [
     BrowserModule,
@@ -75,6 +78,9 @@ registerLocaleData(localeRu, 'ru');
     TuiLinkModule,
     TuiDialogModule,
     TuiFilterByInputPipeModule,
+
+    TuiTableModule,
+    
     NgxsModule.forRoot([AppState, AccState]),
     NgxsStoragePluginModule.forRoot({ key: 'app.token' }),
     NgxsSelectSnapshotModule.forRoot()

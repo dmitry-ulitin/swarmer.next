@@ -46,11 +46,11 @@ export class ApiService {
     return this.http.delete<void>(`/api/transactions/${id}`);
   }
 
-  importTransactions(id: number, file: File): Observable<void> {
+  importTransactions(id: number, file: File): Observable<Transaction[]> {
     const formData: FormData = new FormData();
     formData.append('file', file, file.name);
     formData.append('id', id.toString());
-    return this.http.post<void>('/api/import', formData);
+    return this.http.post<Transaction[]>('/api/import', formData);
   }
 
   getCategories(): Observable<Category[]> {

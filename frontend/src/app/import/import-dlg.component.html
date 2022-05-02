@@ -1,0 +1,28 @@
+<div class="container">
+    <div class="table">
+        <table tuiTable [columns]="columns">
+            <thead>
+                <tr tuiThGroup>
+                    <th *tuiHead="'date'" tuiTh>Date</th>
+                    <th *tuiHead="'amount'" tuiTh>Amount</th>
+                    <th *tuiHead="'category'" tuiTh>Category</th>
+                    <th *tuiHead="'party'" tuiTh>Sender/Reciever</th>
+                    <th *tuiHead="'details'" tuiTh>Details</th>
+                </tr>
+            </thead>
+            <tbody tuiTbody [data]="data">
+                <tr *tuiRow="let item of data; let index = index" tuiTr>
+                    <td *tuiCell="'date'" tuiTd>{{item.opdate | date: 'dd/MM/yyyy'}}</td>
+                    <td *tuiCell="'amount'" tuiTd>{{item.debit | currency: item.currency}}</td>
+                    <td *tuiCell="'category'" tuiTd>{{item.category}}</td>
+                    <td *tuiCell="'party'" tuiTd>{{item.party}}</td>
+                    <td *tuiCell="'details'" tuiTd>{{item.details}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="footer">
+        <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()">Next</button>
+        <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
+    </div>
+</div>

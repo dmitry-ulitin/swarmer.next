@@ -1,0 +1,21 @@
+.container {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+.table {
+    width: 100%;
+    flex-grow: 1;
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+}
+
+.footer {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

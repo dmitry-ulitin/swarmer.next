@@ -18,6 +18,7 @@ export interface Transaction {
     debit: number;
     category?: Category | null;
     currency: string;
+    party?: string;
     details: string;
     type: TransactionType;
     bg?: string;

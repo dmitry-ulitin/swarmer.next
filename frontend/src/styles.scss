@@ -35,3 +35,7 @@ tr.shared {
   background-color: #2196f3;
   padding: 0.1rem 1rem;
 }
+
+tui-dialog[data-size='l'] {
+  width: 90vw !important;
+}

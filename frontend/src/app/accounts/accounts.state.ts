@@ -14,7 +14,7 @@ import { Category } from '../models/category';
 import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.component';
 import { AccountDialogComponent } from './account-dlg/account-dlg.component';
 import { InputFileDlgComponent } from '../import/input-file-dlg.component';
-import { TuiFileLike } from '@taiga-ui/kit';
+import { ImportDlgComponent } from '../import/import-dlg.component';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -362,9 +362,11 @@ export class AccState {
             const state = cxt.getState();
             const id = action.id || state.accounts[0];
             const file = await firstValueFrom(this.dialogService.open<File>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
-            if (!!file) {
-                await firstValueFrom(this.api.importTransactions(id, file));
+            if (!file) {
+                return;
             }
+            let transactions = await firstValueFrom(this.api.importTransactions(id, file));
+            transactions = await firstValueFrom(this.dialogService.open<Transaction[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), {data: transactions, dismissible: false, size: 'l' }));
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
