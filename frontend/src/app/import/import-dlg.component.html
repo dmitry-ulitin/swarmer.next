@@ -3,6 +3,7 @@
         <table tuiTable [columns]="columns">
             <thead>
                 <tr tuiThGroup>
+                    <th *tuiHead="'selected'" tuiTh></th>
                     <th *tuiHead="'date'" tuiTh>Date</th>
                     <th *tuiHead="'amount'" tuiTh>Amount</th>
                     <th *tuiHead="'category'" tuiTh>Category</th>
@@ -11,9 +12,10 @@
                 </tr>
             </thead>
             <tbody tuiTbody [data]="data">
-                <tr *tuiRow="let item of data; let index = index" tuiTr>
+                <tr *tuiRow="let item of data; let index = index" tuiTr [class.credit]="item.type == 1" [class.debit]="item.type == 2">
+                    <td *tuiCell="'selected'" tuiTd><input type="checkbox" [checked]="item.selected"></td>
                     <td *tuiCell="'date'" tuiTd>{{item.opdate | date: 'dd/MM/yyyy'}}</td>
-                    <td *tuiCell="'amount'" tuiTd>{{item.debit | currency: item.currency}}</td>
+                    <td *tuiCell="'amount'" tuiTd class="number">{{item.debit | currency: item.currency}}</td>
                     <td *tuiCell="'category'" tuiTd>{{item.category}}</td>
                     <td *tuiCell="'party'" tuiTd>{{item.party}}</td>
                     <td *tuiCell="'details'" tuiTd>{{item.details}}</td>
