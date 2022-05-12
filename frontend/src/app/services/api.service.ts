@@ -53,6 +53,10 @@ export class ApiService {
     return this.http.post<Transaction[]>('/api/import', formData);
   }
 
+  saveTransactions(transactions: Transaction[]): Observable<void> {
+    return this.http.patch<void>('/api/import', transactions);
+  }
+
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories/');
   }

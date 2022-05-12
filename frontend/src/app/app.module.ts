@@ -31,6 +31,7 @@ import { AccountDialogComponent } from './accounts/account-dlg/account-dlg.compo
 import { InputFileDlgComponent } from './import/input-file-dlg.component';
 import { ImportDlgComponent } from './import/import-dlg.component';
 import { TuiTableModule } from '@taiga-ui/addon-table';
+import { TuiFilterPipeModule } from '@taiga-ui/cdk';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -78,6 +79,7 @@ registerLocaleData(localeRu, 'ru');
     TuiLinkModule,
     TuiDialogModule,
     TuiFilterByInputPipeModule,
+    TuiFilterPipeModule,
 
     TuiTableModule,
     

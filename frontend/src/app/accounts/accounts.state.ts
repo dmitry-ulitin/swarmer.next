@@ -228,7 +228,7 @@ export class AccState {
                 let grp = state.groups.find(g => g.id === id);
                 if (!grp) {
                     throw new Error('Account not found');
-                }                    
+                }
                 const answer = await firstValueFrom(
                     this.dialogService.open(new PolymorpheusComponent(ConfirmationDlgComponent, this.injector), { data: `Are you sure you want to delete account '${grp.fullname}'?`, dismissible: false, size: 's' }),
                     { defaultValue: false }
@@ -366,7 +366,12 @@ export class AccState {
                 return;
             }
             let transactions = await firstValueFrom(this.api.importTransactions(id, file));
-            transactions = await firstValueFrom(this.dialogService.open<Transaction[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), {data: transactions, dismissible: false, size: 'l' }));
+            transactions = await firstValueFrom(this.dialogService.open<Transaction[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
+            if (transactions) {
+                await firstValueFrom(this.api.saveTransactions(transactions));
+                cxt.dispatch(new GetGroups());
+                cxt.dispatch(new GetTransactions());
+            }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }

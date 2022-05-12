@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from fastapi import UploadFile
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session
@@ -8,7 +9,7 @@ import pandas as pd
 from .. import models
 from .. import schemas
 
-def get_balances(db: Session, ai, tid = None, opdate = None):
+def get_balances(db: Session, ai: List[int], tid = None, opdate = None):
     query = db.query(models.Transaction.account_id, models.Transaction.recipient_id, \
             label('debit', func.sum(models.Transaction.debit)), label('credit', func.sum(models.Transaction.credit))) \
             .filter(or_(models.Transaction.account_id.in_(ai), models.Transaction.recipient_id.in_(ai)))
@@ -164,6 +165,7 @@ def get_transaction(db: Session, user_id: int, id: int):
 def create_transaction(db: Session, user_id: int, transaction: schemas.TransactionCreate):
     db_transaction = models.Transaction(owner_id = user_id, opdate = transaction.opdate, \
         details = transaction.details, \
+        party = transaction.party, \
         currency = transaction.currency, \
         category_id = transaction.category.id if transaction.category else None, \
         account_id = transaction.account.id if transaction.account else None, \
@@ -179,6 +181,7 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
         id = transaction.id, owner_id = user_id, \
         opdate = transaction.opdate, \
         details = transaction.details, \
+        party = transaction.party, \
         currency = transaction.currency, \
         category_id = transaction.category.id if transaction.category else None, \
         account_id = transaction.account.id if transaction.account else None, \
@@ -229,6 +232,19 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
             stored.iloc[0]['id'] = None
         transactions.append(schemas.TransactionImport(**row))
     return transactions
+
+def create_transactions(db: Session, user_id: int, transactions: List[schemas.TransactionImport]):
+    for transaction in transactions:
+        db_transaction = models.Transaction(owner_id = user_id, opdate = transaction.opdate, \
+            details = transaction.details, \
+            party = transaction.party, \
+            currency = transaction.currency, \
+            category_id = transaction.category.id if transaction.category else None, \
+            account_id = transaction.account.id if transaction.account else None, \
+            recipient_id = transaction.recipient.id if transaction.recipient else None, \
+            credit = transaction.credit, debit = transaction.debit)
+        db.add(db_transaction)
+    db.commit()
 
 def get_user_categories(db: Session, user_id: int):
     a_au = [au.group.owner_id for au in db.query(models.ACL).filter(models.ACL.user_id == user_id).all()]

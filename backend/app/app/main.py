@@ -79,6 +79,11 @@ def import_transactions(file: UploadFile, id: int = Form(...), db: Session = Dep
     user_id = 2
     return crud.import_transactions(db, user_id, id, file)
 
+@app.patch("/api/import", status_code=204, response_class=Response)
+def create_transactions(transactions: List[schemas.TransactionImport], db: Session = Depends(get_db)):
+    user_id = 2
+    crud.create_transactions(db=db, user_id=user_id, transactions=transactions)
+
 @app.get("/api/categories/", response_model=List[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):
     user_id = 2

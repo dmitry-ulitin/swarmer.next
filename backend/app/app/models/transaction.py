@@ -23,6 +23,7 @@ class Transaction(Base):
     category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     category = relationship("Category")
     currency = Column(String, nullable=True)
+    party = Column(String, nullable=True)
     details = Column(String, nullable=True)
     mcc = Column(Integer, nullable=True)
     @hybridproperty

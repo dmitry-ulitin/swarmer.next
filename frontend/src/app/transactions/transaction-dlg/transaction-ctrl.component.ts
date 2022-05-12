@@ -32,6 +32,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     'debit': new FormControl(),
     'dcurrency': new FormControl(),
     'category': new FormControl(),
+    'party': new FormControl(''),
     'details': new FormControl(''),
     'type': new FormControl()
   });

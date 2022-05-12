@@ -24,10 +24,22 @@ table {
     text-align: right;
 }
 
+.category {
+    min-width: 20rem;
+}
+
 .credit {
     color: brown;
 }
 
 .debit {
     color: green;
+}
+
+.category-level-2 {
+    margin-left: 1rem;
+}
+
+.category-level-3 {
+    margin-left: 2rem;
 }
