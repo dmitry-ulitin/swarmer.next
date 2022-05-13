@@ -23,3 +23,8 @@ export interface Transaction {
     type: TransactionType;
     bg?: string;
 }
+
+export interface TransactionImport extends Transaction {
+    selected: boolean;
+}
+

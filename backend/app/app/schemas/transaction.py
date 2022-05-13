@@ -25,6 +25,7 @@ class TransactionUpdate(TransactionBase):
 class TransactionImport(TransactionBase):
     id: int = None
     type: int
+    selected: bool
 
 class Transaction(TransactionBase):
     id: int

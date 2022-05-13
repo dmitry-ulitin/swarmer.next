@@ -92,7 +92,7 @@ def delete_group(db: Session, user_id: int, id: int):
     db.commit()
     return True
 
-def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, \
+def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0, \
         account_ids = [], category_ids = [], \
         start: datetime = None, finish: datetime = None, shared: bool = False):
     # select accounts
@@ -108,22 +108,27 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 50, 
         account_ids = [a.id for a in accounts if (a.group.is_owner or a.group.is_coowner or a.group.is_shared) and (shared or not a.group.is_shared)]
     
     # get transactions
-    transactions = db.query(models.Transaction)
+    query = db.query(models.Transaction)
     if start:
-        transactions = transactions.filter(models.Transaction.opdate>=start)
+        query = query.filter(models.Transaction.opdate>=start)
     if finish:
-        transactions = transactions.filter(models.Transaction.opdate<=finish)
+        query = query.filter(models.Transaction.opdate<=finish)
     if category_ids == [0]:
-        transactions = transactions.filter(models.Transaction.account_id.isnot(None)).filter(models.Transaction.recipient_id.isnot(None))
+        query = query.filter(models.Transaction.account_id.isnot(None)).filter(models.Transaction.recipient_id.isnot(None))
     elif category_ids == [1]:
-        transactions = transactions.filter(models.Transaction.account_id.isnot(None)).filter(models.Transaction.recipient_id.is_(None))
+        query = query.filter(models.Transaction.account_id.isnot(None)).filter(models.Transaction.recipient_id.is_(None))
     elif category_ids == [2]:
-        transactions = transactions.filter(models.Transaction.account_id.is_(None)).filter(models.Transaction.recipient_id.isnot(None))
+        query = query.filter(models.Transaction.account_id.is_(None)).filter(models.Transaction.recipient_id.isnot(None))
     elif category_ids:
-        transactions = transactions.filter(models.Transaction.category_id.in_(category_ids))
-    transactions = transactions.filter(or_(models.Transaction.account_id.in_(account_ids), models.Transaction.recipient_id.in_(account_ids))) \
-        .order_by(models.Transaction.opdate.desc(), models.Transaction.id.desc()) \
-        .limit(limit).offset(skip).all()
+        query = query.filter(models.Transaction.category_id.in_(category_ids))
+    query = query.filter(or_(models.Transaction.account_id.in_(account_ids), models.Transaction.recipient_id.in_(account_ids))) \
+        .order_by(models.Transaction.opdate.desc(), models.Transaction.id.desc())
+    if limit:
+        query = query.limit(limit)
+    if skip:
+        query = query.offset(skip)
+
+    transactions = query.all()
     if not category_ids:
         account_balances = dict((a.id,a.start_balance) for a in accounts if a.id in account_ids)
         # get balances for all previous transactions
@@ -222,6 +227,7 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
     df['id'] = None
     df['account'] = None
     df['recipient'] = None
+    df['selected'] = True
     transactions = []
     for i, row in df.iterrows():
         row['account'] = acc if row['type'] == models.Category.EXPENSE else None
@@ -229,12 +235,20 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
         stored = db_trx.loc[(not db_trx['id'].empty) & (db_trx['opdate'] == row['opdate']) & ((db_trx['account_id'] == account_id) & (db_trx['debit'] == row['debit']) | (db_trx['recipient_id'] == account_id) & (db_trx['credit'] == row['credit']))]
         if not stored.empty:
             row['id'] = stored.iloc[0]['id']
+            row['selected'] = False
             stored.iloc[0]['id'] = None
         transactions.append(schemas.TransactionImport(**row))
     return transactions
 
 def create_transactions(db: Session, user_id: int, transactions: List[schemas.TransactionImport]):
     for transaction in transactions:
+        if transaction.id is not None and not transaction.selected:
+            db_transaction = db.query(models.Transaction).get(transaction.id)
+            if not db_transaction.party:
+                db_transaction.party = transaction.party
+            if not db_transaction.details:
+                db_transaction.details = transaction.details
+            continue
         db_transaction = models.Transaction(owner_id = user_id, opdate = transaction.opdate, \
             details = transaction.details, \
             party = transaction.party, \

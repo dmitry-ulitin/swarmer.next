@@ -4,7 +4,7 @@ import { Group } from '../models/group';
 import { Amount, Total } from '../models/balance';
 import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
-import { Transaction, TransactionType } from '../models/transaction';
+import { Transaction, TransactionImport, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
 import { TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
@@ -366,7 +366,7 @@ export class AccState {
                 return;
             }
             let transactions = await firstValueFrom(this.api.importTransactions(id, file));
-            transactions = await firstValueFrom(this.dialogService.open<Transaction[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
+            transactions = await firstValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
             if (transactions) {
                 await firstValueFrom(this.api.saveTransactions(transactions));
                 cxt.dispatch(new GetGroups());

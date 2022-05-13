@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Category } from '../models/category';
 import { Group } from '../models/group';
-import { Transaction } from '../models/transaction';
+import { Transaction, TransactionImport } from '../models/transaction';
 
 @Injectable({
   providedIn: 'root'
@@ -46,14 +46,14 @@ export class ApiService {
     return this.http.delete<void>(`/api/transactions/${id}`);
   }
 
-  importTransactions(id: number, file: File): Observable<Transaction[]> {
+  importTransactions(id: number, file: File): Observable<TransactionImport[]> {
     const formData: FormData = new FormData();
     formData.append('file', file, file.name);
     formData.append('id', id.toString());
-    return this.http.post<Transaction[]>('/api/import', formData);
+    return this.http.post<TransactionImport[]>('/api/import', formData);
   }
 
-  saveTransactions(transactions: Transaction[]): Observable<void> {
+  saveTransactions(transactions: TransactionImport[]): Observable<void> {
     return this.http.patch<void>('/api/import', transactions);
   }
 
