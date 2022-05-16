@@ -18,6 +18,7 @@ div.active>div {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 11px;
 }
 
 .t-left {
@@ -27,4 +28,16 @@ div.active>div {
 .t-right {
     padding-left: 2rem;
     text-align: right;
+}
+
+.type0 {
+    color: #8f8100;
+}
+
+.type1 {
+    color: #b40000;
+}
+
+.type2 {
+    color: #14aa00;
 }

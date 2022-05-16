@@ -1,19 +1,14 @@
 <div class="h-100 overflow-auto">
     <div class="t-content" *ngFor="let t of transactions$ | async" [class.active]="(transactions_id$ | async) === t.id"
-        [style.background-color]="t.bg" (click)="selectTransaction(t.id)">
+         (click)="selectTransaction(t.id)">
         <div class="t-row">
             <div class="t-left">{{t.name}}</div>
-            <div class="t-right">{{t.amount.value | currency:t.amount.currency}}</div>
+            <div class="t-right" [class]="'type'+t.type">{{t.amount.value | currency:t.amount.currency}}</div>
         </div>
         <div class="t-row">
-            <div class="t-left">{{t.opdate | date:'shortDate'}} {{t.balance?.fullname}}</div>
+            <div class="t-left">{{t.opdate | date:'shortDate'}} {{t.party}} {{t.balance?.fullname}}</div>
             <div class="t-right text-black-50">{{t.balance?.balance | currency:t.balance?.currency}}</div>
         </div>
-        <div class="t-row t-long">
-            {{t.party}}
-        </div>
-        <div class="t-row t-long">
-            {{t.details}}
-        </div>
+        <div class="t-row t-long">{{t.details}}</div>
     </div>
 </div>
