@@ -45,7 +45,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     return this.type === TransactionType.Expense ? 'expense' : (this.type === TransactionType.Income ? 'income' : 'transfer');
   }
 
-  accounts$ = this.store.select(AccState.accounts);
+  accounts = this.store.selectSnapshot(AccState.accounts);
   categories$ = this.store.select(state => state.acc.categories).pipe(map(categories => categories.filter((c: Category) => c.root_id === this.type)));
   currencies = this.store.selectSnapshot(AccState.currencies);
 
@@ -91,15 +91,39 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       }
     });
     this.form.controls['type'].valueChanges.pipe(takeUntil(destroy$)).subscribe(type => {
+      let account = this.form.controls['account'].value;
+      let recipient = this.form.controls['recipient'].value;
+      let category = this.form.controls['category'].value;
       if (type === TransactionType.Expense) {
         this.form.controls['ccurrency'].enable();
         this.form.controls['dcurrency'].disable();
+        if (!account) {
+          this.form.controls['account'].setValue(recipient);
+          this.form.controls['dcurrency'].setValue(recipient.currency);
+        }
+        if (category?.root_id !== type) {
+          this.form.controls['category'].setValue(null);
+        }
       } else if (type === TransactionType.Income) {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].enable();
+        if (!recipient) {
+          this.form.controls['recipient'].setValue(account);
+          this.form.controls['ccurrency'].setValue(account.currency);
+        }
+        if (category?.root_id !== type) {
+          this.form.controls['category'].setValue(null);
+        }
       } else {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].disable();
+        if (account && (!recipient || account.id === recipient.id)) {
+          this.form.controls['recipient'].setValue(this.accounts.find(a => a.id !== account?.id && a.currency === account?.currency));
+        } else if (recipient && (!account || recipient.id === account.id)) {
+          this.form.controls['account'].setValue(this.accounts.find(a => a.id !== recipient?.id && a.currency === recipient?.currency));
+        }
+        this.form.controls['dcurrency'].setValue(account.currency);
+        this.form.controls['ccurrency'].setValue(recipient.currency);
       }
     });
     this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {

@@ -20,12 +20,12 @@
         </div>
         <tui-select class="account" formControlName="account" [valueContent]="accountContent" [tuiTextfieldSize]="'m'" *ngIf="showAccount">
             Account
-            <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async" [itemContent]="accountContent" [size]="'m'">
+            <tui-data-list-wrapper *tuiDataList [items]="accounts" [itemContent]="accountContent" [size]="'m'">
             </tui-data-list-wrapper>
         </tui-select>
         <tui-select class="recipient" formControlName="recipient" [valueContent]="accountContent" [tuiTextfieldSize]="'m'" *ngIf="showRecipient">
             Recipient
-            <tui-data-list-wrapper *tuiDataList [items]="accounts$ | async" [itemContent]="accountContent" [size]="'m'">
+            <tui-data-list-wrapper *tuiDataList [items]="accounts" [itemContent]="accountContent" [size]="'m'">
             </tui-data-list-wrapper>
         </tui-select>
         <ng-template #accountContent let-account>
