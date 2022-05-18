@@ -79,6 +79,10 @@ export class HeaderComponent {
     this.store.dispatch(new DeleteTransaction());
   }
 
+  onCorrection(account: Account): void {
+    this.store.dispatch(new CreateTransaction(TransactionType.Correction));
+  }
+
   onImport(account: Account): void {
     this.store.dispatch(new ImportTransactions(account.id));
   }

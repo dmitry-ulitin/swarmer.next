@@ -10,9 +10,11 @@ class Category(Base):
     TRANSFER = 0
     EXPENSE = 1
     INCOME = 2
+    CORRECTION = 3
     EXPENSE_BG = '#ffe2dc'
     INCOME_BG = '#ddffd7'
     TRANSFER_BG = '#f9fbbe'
+    CORRECTION_BG = '#ffffff'
     id = Column(Integer, primary_key=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     created = Column(DateTime, nullable = False, default=datetime.now)
@@ -48,6 +50,7 @@ def insert_initial_records(*args, **kwargs):
         db = SessionLocal()
         db.add(Category(id=Category.EXPENSE, name='Expense', bg=Category.EXPENSE_BG))
         db.add(Category(id=Category.INCOME, name='Income', bg=Category.INCOME_BG))
+        db.add(Category(id=Category.CORRECTION, name='Correction', bg=Category.CORRECTION_BG))
         db.add(Category(id=101, parent_id=Category.EXPENSE, name='Car', owner_id=1))
         db.add(Category(id=1011, parent_id=101, name='Fuel', owner_id=1))
         db.add(Category(id=1012, parent_id=101, name='Repair', owner_id=1))

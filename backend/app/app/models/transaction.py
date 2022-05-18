@@ -1,4 +1,5 @@
 from datetime import datetime
+from unicodedata import category
 from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.event import listens_for
@@ -28,10 +29,16 @@ class Transaction(Base):
     mcc = Column(Integer, nullable=True)
     @hybridproperty
     def type(self):
-        return Category.TRANSFER if self.account_id and self.recipient_id else Category.EXPENSE if self.account_id else Category.INCOME
+        return Category.TRANSFER if self.account_id and self.recipient_id else \
+               Category.CORRECTION if self.category_id==Category.CORRECTION else \
+               Category.EXPENSE if self.account_id else \
+               Category.INCOME
     @hybridproperty
     def bg(self):
-        return Category.TRANSFER_BG if self.type == 0 else self.category.bgc if self.category else Category.EXPENSE_BG if self.type == Category.EXPENSE else Category.INCOME_BG
+        return Category.TRANSFER_BG if self.type == 0 else \
+               self.category.bgc if self.category else \
+               Category.EXPENSE_BG if self.type == Category.EXPENSE else \
+               Category.INCOME_BG
 
 
 @listens_for(Transaction.__table__, 'after_create')

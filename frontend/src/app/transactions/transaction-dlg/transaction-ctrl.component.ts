@@ -42,7 +42,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   get typeString(): string {
-    return this.type === TransactionType.Expense ? 'expense' : (this.type === TransactionType.Income ? 'income' : 'transfer');
+    return TransactionType[this.type].toLocaleLowerCase();
   }
 
   accounts = this.store.selectSnapshot(AccState.accounts);
@@ -54,7 +54,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   get showCredit(): boolean {
-    return this.convertation || this.type === TransactionType.Expense;
+    return this.convertation || this.type === TransactionType.Expense || this.type === TransactionType.Correction;
   }
 
   get showDebit(): boolean {
@@ -65,28 +65,36 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     return this.type !== TransactionType.Income;
   }
 
+  get showBalance(): boolean {
+    return this.type === TransactionType.Correction;
+  }
+
   get showRecipient(): boolean {
-    return this.type !== TransactionType.Expense;
+    return this.type === TransactionType.Income || this.type === TransactionType.Transfer;
   }
 
   get showCategory(): boolean {
-    return this.type !== TransactionType.Transfer;
+    return this.type === TransactionType.Income || this.type === TransactionType.Expense;
   }
 
   constructor(private store: Store, destroy$: TuiDestroyService) {
     this.form.controls['account'].valueChanges.pipe(takeUntil(destroy$)).subscribe(account => {
       if (account) {
-        this.form.controls['ccurrency'].setValue(account.currency);
-        if (this.type === TransactionType.Expense) {
-          this.form.controls['dcurrency'].setValue(account.currency);
+        this.form.controls['dcurrency'].setValue(account.currency);
+        if (this.type !== TransactionType.Transfer) {
+          this.form.controls['ccurrency'].setValue(account.currency);
+        }
+        if (this.type === TransactionType.Correction) {
+          this.form.controls['credit'].setValue(0);
+          this.form.controls['debit'].setValue(account.balance);
         }
       }
     });
     this.form.controls['recipient'].valueChanges.pipe(takeUntil(destroy$)).subscribe(account => {
       if (account) {
-        this.form.controls['dcurrency'].setValue(account.currency);
-        if (this.type === TransactionType.Income) {
-          this.form.controls['ccurrency'].setValue(account.currency);
+        this.form.controls['ccurrency'].setValue(account.currency);
+        if (this.type !== TransactionType.Transfer) {
+          this.form.controls['dcurrency'].setValue(account.currency);
         }
       }
     });
@@ -99,7 +107,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['dcurrency'].disable();
         if (!account) {
           this.form.controls['account'].setValue(recipient);
-          this.form.controls['dcurrency'].setValue(recipient.currency);
+          this.form.controls['dcurrency'].setValue(recipient?.currency);
         }
         if (category?.root_id !== type) {
           this.form.controls['category'].setValue(null);
@@ -109,12 +117,15 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['dcurrency'].enable();
         if (!recipient) {
           this.form.controls['recipient'].setValue(account);
-          this.form.controls['ccurrency'].setValue(account.currency);
+          this.form.controls['ccurrency'].setValue(account?.currency);
         }
         if (category?.root_id !== type) {
           this.form.controls['category'].setValue(null);
         }
-      } else {
+      } else if (type === TransactionType.Correction) {
+        this.form.controls['ccurrency'].disable();
+        this.form.controls['dcurrency'].disable();
+      } else if (type === TransactionType.Transfer) {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].disable();
         if (account && (!recipient || account.id === recipient.id)) {
@@ -128,13 +139,23 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     });
     this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
       if (!value.ccurrency || !value.dcurrency || value.ccurrency === value.dcurrency) {
-        value.credit = value.debit = value.debit || value.credit;
+        value.credit = value.debit = value.credit || value.debit;
       }
       value.currency = !value.recipient ? value.dcurrency : (!value.account ? value.ccurrency : null);
       const now = new Date();
       value.opdate = value.opdate ? value.opdate.toLocalNativeDate() : now;
       value.opdate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       this.onChange(value);
+    });
+    this.form.controls['debit'].valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
+      if (this.type === TransactionType.Correction) {
+        this.form.controls['credit'].setValue(value - this.form.controls['account'].value.balance, {emitEvent: false});
+      }
+    });
+    this.form.controls['credit'].valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
+      if (this.type === TransactionType.Correction) {
+        this.form.controls['debit'].setValue(this.form.controls['account'].value.balance + (value || 0), {emitEvent: false});
+      }
     });
   }
 
@@ -143,7 +164,9 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     const opdate = typeof value.opdate === 'string' ? new Date(value.opdate) : (value.opdate || new Date());
     const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
     const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
-    this.form.patchValue({ ...value, credit: value.credit || undefined, debit: value.debit || undefined, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency });
+    const debit = (value.type === TransactionType.Correction ? (value.account_balance || value.recipient_balance || value.account?.balance) : value.debit)  || undefined;
+    const credit = (value.type === TransactionType.Correction ? 0 : value.credit)  || undefined;
+    this.form.patchValue({ ...value, credit, debit, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency });
   }
 
   onYesterday(): void {

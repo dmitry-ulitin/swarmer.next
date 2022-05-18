@@ -4,7 +4,8 @@ import { Account } from './account';
 export enum TransactionType {
     Transfer = 0,
     Expense,
-    Income
+    Income,
+    Correction
 }
 
 export interface Transaction {

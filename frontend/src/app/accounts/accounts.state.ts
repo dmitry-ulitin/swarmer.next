@@ -332,13 +332,15 @@ export class AccState {
         } else if (action.type === TransactionType.Income) {
             recipient = account;
             account = undefined;
+        } else if (action.type === TransactionType.Correction) {
+            recipient = account;
         }
         let transaction: Transaction = {
             type: action.type,
             opdate: new Date(),
             account: account,
             recipient: recipient,
-            category: null,
+            category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, root_id: null } : null,
             currency: account?.currency || recipient?.currency || 'EUR',
             debit: 0,
             credit: 0,

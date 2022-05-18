@@ -1,8 +1,8 @@
 <app-transaction-ctrl [formControl]="transaction"></app-transaction-ctrl>
 <div class="footer">
-    <button *ngIf="transaction.value.type != 1" tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'" (click)="onExpense()"></button>
-    <button *ngIf="transaction.value.type != 2" tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'" (click)="onIncome()"></button>
-    <button *ngIf="transaction.value.type != 0" tuiIconButton type="button" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'" (click)="onTransfer()"></button>
+    <button *ngIf="showExpense" tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'" (click)="onExpense()"></button>
+    <button *ngIf="showIncome" tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'" (click)="onIncome()"></button>
+    <button *ngIf="showTransfer" tuiIconButton type="button" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'" (click)="onTransfer()"></button>
     <span class="flex-fill"></span>
     <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onSubmit()">Save</button>
     <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>

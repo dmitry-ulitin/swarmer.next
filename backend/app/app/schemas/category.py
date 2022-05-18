@@ -14,7 +14,7 @@ class Category(CategoryBase):
     id: int
     fullname: str
     level: int
-    root_id: int
+    root_id: int = None
 
     class Config:
         orm_mode = True

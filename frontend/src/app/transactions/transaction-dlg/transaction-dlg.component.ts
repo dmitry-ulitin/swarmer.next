@@ -30,6 +30,22 @@ export function iconsPath(name: string): string {
 export class TransactionDlgComponent {
   transaction = new FormControl();
 
+  get type(): TransactionType {
+    return this.transaction.value.type;
+  }
+
+  get showTransfer(): boolean {
+    return this.type == TransactionType.Income || this.type == TransactionType.Expense;
+  }
+
+  get showIncome(): boolean {
+    return this.type === TransactionType.Transfer && this.transaction.value.category?.root_id === TransactionType.Income;
+  }
+
+  get showExpense(): boolean {
+    return this.type === TransactionType.Transfer && this.transaction.value.category?.root_id === TransactionType.Expense;
+  }
+
   constructor(
     private api: ApiService,
     private store: Store,
@@ -45,8 +61,17 @@ export class TransactionDlgComponent {
         value.recipient = null;
       } else if (value.type === TransactionType.Income) {
         value.account = null;
-      } else {
+      } else if (value.type === TransactionType.Transfer) {
         value.category = null;
+      } else if (value.type === TransactionType.Correction) {
+        if (value.debit<0) {
+          value.recipient = null;
+          value.debit = -value.debit;
+        } else {
+          value.recipient = value.account;
+          value.account = null;
+        }
+        value.credit = value.debit;
       }
       const transaction = await firstValueFrom(this.api.saveTransaction(value));
       this.context.completeWith(transaction);
