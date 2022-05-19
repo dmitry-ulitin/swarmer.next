@@ -10,7 +10,7 @@ export enum TransactionType {
 
 export interface Transaction {
     id?: number | null;
-    opdate: Date;
+    opdate: string;
     account?: Account | null;
     account_balance?: number;
     credit: number;

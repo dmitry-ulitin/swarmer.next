@@ -6,6 +6,7 @@ import { map, takeUntil } from 'rxjs';
 import { AccState } from 'src/app/accounts/accounts.state';
 import { Category } from 'src/app/models/category';
 import { TransactionType } from 'src/app/models/transaction';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-transaction-ctrl',
@@ -77,6 +78,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     return this.type === TransactionType.Income || this.type === TransactionType.Expense;
   }
 
+  timePart = '';
   constructor(private store: Store, destroy$: TuiDestroyService) {
     this.form.controls['account'].valueChanges.pipe(takeUntil(destroy$)).subscribe(account => {
       if (account) {
@@ -106,21 +108,21 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['ccurrency'].enable();
         this.form.controls['dcurrency'].disable();
         if (!account) {
-          this.form.controls['account'].setValue(recipient);
-          this.form.controls['dcurrency'].setValue(recipient?.currency);
+          this.form.controls['account'].setValue(recipient, {emitEvent: false});
+          this.form.controls['dcurrency'].setValue(recipient?.currency, {emitEvent: false});
         }
         if (category?.root_id !== type) {
-          this.form.controls['category'].setValue(null);
+          this.form.controls['category'].setValue(null, {emitEvent: false});
         }
       } else if (type === TransactionType.Income) {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].enable();
         if (!recipient) {
-          this.form.controls['recipient'].setValue(account);
-          this.form.controls['ccurrency'].setValue(account?.currency);
+          this.form.controls['recipient'].setValue(account, {emitEvent: false});
+          this.form.controls['ccurrency'].setValue(account?.currency, {emitEvent: false});
         }
         if (category?.root_id !== type) {
-          this.form.controls['category'].setValue(null);
+          this.form.controls['category'].setValue(null, {emitEvent: false});
         }
       } else if (type === TransactionType.Correction) {
         this.form.controls['ccurrency'].disable();
@@ -129,23 +131,13 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].disable();
         if (account && (!recipient || account.id === recipient.id)) {
-          this.form.controls['recipient'].setValue(this.accounts.find(a => a.id !== account?.id && a.currency === account?.currency));
+          this.form.controls['recipient'].setValue(this.accounts.find(a => a.id !== account?.id && a.currency === account?.currency), {emitEvent: false});
         } else if (recipient && (!account || recipient.id === account.id)) {
-          this.form.controls['account'].setValue(this.accounts.find(a => a.id !== recipient?.id && a.currency === recipient?.currency));
+          this.form.controls['account'].setValue(this.accounts.find(a => a.id !== recipient?.id && a.currency === recipient?.currency), {emitEvent: false});
         }
-        this.form.controls['dcurrency'].setValue(account.currency);
-        this.form.controls['ccurrency'].setValue(recipient.currency);
+        this.form.controls['dcurrency'].setValue(account.currency, {emitEvent: false});
+        this.form.controls['ccurrency'].setValue(recipient.currency, {emitEvent: false});
       }
-    });
-    this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
-      if (!value.ccurrency || !value.dcurrency || value.ccurrency === value.dcurrency) {
-        value.credit = value.debit = value.credit || value.debit;
-      }
-      value.currency = !value.recipient ? value.dcurrency : (!value.account ? value.ccurrency : null);
-      const now = new Date();
-      value.opdate = value.opdate ? value.opdate.toLocalNativeDate() : now;
-      value.opdate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
-      this.onChange(value);
     });
     this.form.controls['debit'].valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
       if (this.type === TransactionType.Correction) {
@@ -157,16 +149,28 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['debit'].setValue(this.form.controls['account'].value.balance + (value || 0), {emitEvent: false});
       }
     });
+    this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
+      if (!value.ccurrency || !value.dcurrency || value.ccurrency === value.dcurrency) {
+        value.credit = value.debit = value.credit || value.debit;
+      }
+      value.currency = !value.recipient ? value.dcurrency : (!value.account ? value.ccurrency : null);
+      const now = new Date();
+      value.opdate = value.opdate ? value.opdate.toLocalNativeDate() : now;
+      value.opdate = moment(value.opdate).format('YYYY-MM-DD') + ' ' + this.timePart;
+      this.onChange(value);
+    });
   }
 
   writeValue(value: any): void {
     this.form.reset({}, { emitEvent: false });
     const opdate = typeof value.opdate === 'string' ? new Date(value.opdate) : (value.opdate || new Date());
+    this.timePart = moment(opdate).format().substring(11);
     const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
     const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
     const debit = (value.type === TransactionType.Correction ? (value.account_balance || value.recipient_balance || value.account?.balance) : value.debit)  || undefined;
     const credit = (value.type === TransactionType.Correction ? 0 : value.credit)  || undefined;
-    this.form.patchValue({ ...value, credit, debit, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency });
+    this.form.patchValue({ ...value, credit, debit, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency }, { emitEvent: false });
+    this.form.controls['type']?.setValue(value.type, {emitEvent: true});
   }
 
   onYesterday(): void {

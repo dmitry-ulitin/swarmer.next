@@ -15,6 +15,7 @@ import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.compo
 import { AccountDialogComponent } from './account-dlg/account-dlg.component';
 import { InputFileDlgComponent } from '../import/input-file-dlg.component';
 import { ImportDlgComponent } from '../import/import-dlg.component';
+import * as moment from 'moment';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -337,7 +338,7 @@ export class AccState {
         }
         let transaction: Transaction = {
             type: action.type,
-            opdate: new Date(),
+            opdate: moment().format(),
             account: account,
             recipient: recipient,
             category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, root_id: null } : null,
