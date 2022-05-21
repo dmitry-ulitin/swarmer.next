@@ -38,9 +38,9 @@ def get_groups(db: Session, user_id: int):
     for group in all_groups:
         for account in group.accounts:
             account.balance = account.start_balance
-            account.balance -= sum(list(map(lambda b: b.credit, list(
+            account.balance -= sum(list(map(lambda b: b.debit, list(
                 filter(lambda b: b.account_id == account.id, balances)))))
-            account.balance += sum(list(map(lambda b: b.debit, list(
+            account.balance += sum(list(map(lambda b: b.credit, list(
                 filter(lambda b: b.recipient_id == account.id, balances)))))
     return all_groups
 
@@ -167,11 +167,11 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
         # set balances to transactions
         for t in transactions[::-1]:
             if t.account and t.account.id in account_balances:
-                account_balances[t.account.id] -= t.credit
+                account_balances[t.account.id] -= t.debit
                 t.account.balance = account_balances[t.account.id]
                 t.account_balance = account_balances[t.account.id]
             if t.recipient and t.recipient.id in account_balances:
-                account_balances[t.recipient.id] += t.debit
+                account_balances[t.recipient.id] += t.credit
                 t.recipient.balance = account_balances[t.recipient.id]
                 t.recipient_balance = account_balances[t.recipient.id]
     return transactions
@@ -226,9 +226,9 @@ def create_transaction(db: Session, user_id: int, transaction: schemas.Transacti
 def update_transaction(db: Session, user_id: int, transaction: schemas.TransactionUpdate):
     db_transaction = db.query(models.Transaction).get(transaction.id)
 
-    if transaction.account:
+    if db_transaction.account:
         update_corrections(db, db_transaction.account.id, -db_transaction.debit, db_transaction.opdate, transaction.id, False)
-    if transaction.recipient:
+    if db_transaction.recipient:
         update_corrections(db, db_transaction.recipient.id, db_transaction.credit, db_transaction.opdate, transaction.id, False)
 
     db_transaction.owner_id=user_id
@@ -243,9 +243,9 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
     db_transaction.debit=transaction.debit
 
     if transaction.account:
-        update_corrections(db, db_transaction.account.id, db_transaction.debit, db_transaction.opdate, transaction.id)
+        update_corrections(db, transaction.account.id, transaction.debit, transaction.opdate, transaction.id)
     if transaction.recipient:
-        update_corrections(db, db_transaction.recipient.id, +db_transaction.credit, db_transaction.opdate, transaction.id)
+        update_corrections(db, transaction.recipient.id, -transaction.credit, transaction.opdate, transaction.id)
 
     db.commit()
     return get_transaction(db, user_id, db_transaction.id)

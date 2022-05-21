@@ -17,16 +17,15 @@ class Transaction(Base):
     opdate = Column(DateTime, nullable = False)
     account_id = Column(Integer, ForeignKey('accounts.id'), nullable=True)
     account = relationship("Account", foreign_keys=[account_id])
-    credit = Column(Numeric, nullable=False)
-    recipient_id = Column(Integer, ForeignKey('accounts.id'), nullable=True)
-    recipient = relationship("Account", foreign_keys=[recipient_id])
     debit = Column(Numeric, nullable=False)
+    recipient_id = Column(Integer, ForeignKey('accounts.id'), nullable=True)
+    credit = Column(Numeric, nullable=False)
+    recipient = relationship("Account", foreign_keys=[recipient_id])
     category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     category = relationship("Category")
     currency = Column(String, nullable=True)
     party = Column(String, nullable=True)
     details = Column(String, nullable=True)
-    mcc = Column(Integer, nullable=True)
     @hybridproperty
     def type(self):
         return Category.TRANSFER if self.account_id and self.recipient_id else \

@@ -154,10 +154,10 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       }
     });
     this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
-      if (!value.ccurrency || !value.dcurrency || value.ccurrency === value.dcurrency) {
+      if (!value.recipient || !value.account || value.recipient?.currency === value.account?.currency) {
         value.credit = value.debit = value.credit || value.debit;
       }
-      value.currency = !value.recipient ? value.dcurrency : (!value.account ? value.ccurrency : null);
+      value.currency = value.recipient && value.account ? null : (value.recipient?.currency || value.account?.currency);
       const now = new Date();
       value.opdate = value.opdate ? value.opdate.toLocalNativeDate() : now;
       value.opdate = moment(value.opdate).format('YYYY-MM-DD') + ' ' + this.timePart;

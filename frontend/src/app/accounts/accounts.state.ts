@@ -407,8 +407,8 @@ function patchGroupBalance(groups: Group[], account: Account | null | undefined,
 
 function transaction2View(t: Transaction, selected: { [key: number]: boolean }): TransactionView {
     const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
-    const amount = t.account ? { value: t.credit, currency: t.account.currency } : (t.recipient ? { value: t.debit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const useRecipient = !t.account_balance || t.recipient && t.recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]);
+    const amount = (t.account && !useRecipient) ? { value: t.debit, currency: t.account.currency } : (t.recipient ? { value: t.credit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const acc = useRecipient ? t.recipient : t.account;
     return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
 }
@@ -423,10 +423,10 @@ function deleteTransactionFromState(transaction: Transaction, cxt: StateContext<
         for (let i = index - 1; i >= 0; i--) {
             const trx = transactions[i];
             if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.credit;
+                trx.account_balance += transaction.debit;
             }
             if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance -= transaction.debit;
+                trx.recipient_balance -= transaction.credit;
             }
             transactions[i] = transaction2View(trx, selected);
         }
@@ -450,10 +450,10 @@ function addTransactionToState(transaction: Transaction, cxt: StateContext<AccSt
         for (let i = index - 1; i >= 0; i--) {
             const trx = transactions[i];
             if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.credit;
+                trx.account_balance += transaction.debit;
             }
             if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance += transaction.debit;
+                trx.recipient_balance += transaction.credit;
             }
             transactions[i] = transaction2View(trx, selected);
         }
