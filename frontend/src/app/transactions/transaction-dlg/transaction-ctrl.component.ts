@@ -173,7 +173,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
     const debit = (value.type === TransactionType.Correction ? (value.account_balance || value.recipient_balance || value.account?.balance) : value.debit)  || undefined;
     const credit = (value.type === TransactionType.Correction && value.account ? -value.credit : value.credit)  || undefined;
-    const category = this.categories.find(c => c.id === value.category.id) || value.category;
+    const category = this.categories.find(c => c.id === value.category?.id) || value.category;
     const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
     const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
     this.form.patchValue({ ...value, credit, debit, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency, category, account, recipient }, { emitEvent: false });
