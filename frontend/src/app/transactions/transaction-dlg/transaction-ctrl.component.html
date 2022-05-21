@@ -35,7 +35,7 @@
     <tui-select formControlName="category" [valueContent]="categoryValue" [tuiTextfieldSize]="'s'"
         [tuiTextfieldCleaner]="true" *ngIf="showCategory">
         no category
-        <tui-data-list-wrapper *tuiDataList [items]="categories$ | async" [itemContent]="categoryContent" [size]="'s'">
+        <tui-data-list-wrapper *tuiDataList [items]="categories | tuiFilter: matcher: type" [itemContent]="categoryContent" [size]="'s'">
         </tui-data-list-wrapper>
     </tui-select>
     <ng-template #categoryValue let-category>
