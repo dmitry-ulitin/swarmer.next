@@ -282,6 +282,8 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
     acc_db.group.current_user_id = user_id
     acc = schemas.Account(id=acc_db.id, fullname=acc_db.fullname,
                           currency=acc_db.currency, balance=acc_db.start_balance)
+    # load rules
+    rules = db.query(models.Rule).filter(models.Rule.owner_id == user_id).all()
     # load transactions
     query = db.query(models.Transaction).filter(or_(models.Transaction.account_id == account_id, models.Transaction.recipient_id == account_id)) \
         .filter(models.Transaction.opdate >= df.iloc[0]['opdate']) \
@@ -304,7 +306,13 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
             row['id'] = stored.iloc[0]['id']
             row['selected'] = False
             stored.iloc[0]['id'] = None
-        transactions.append(schemas.TransactionImport(**row))
+        transaction = schemas.TransactionImport(**row)
+        matches = [r for r in rules if r.transaction_type == transaction.type and r.condition_type == models.Rule.PARTY_EQUALS and r.condition_value == transaction.party]
+        if not matches:
+            matches = [r for r in rules if r.transaction_type == transaction.type and r.condition_type == models.Rule.PARTY_CONTAINS and transaction.party and str(transaction.party).lower().find(r.condition_value.lower()) != -1]
+        if matches:
+            transaction.category = matches[0].category
+        transactions.append(transaction)
     return transactions
 
 
