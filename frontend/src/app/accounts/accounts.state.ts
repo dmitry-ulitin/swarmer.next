@@ -422,11 +422,23 @@ function deleteTransactionFromState(transaction: Transaction, cxt: StateContext<
         const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
         for (let i = index - 1; i >= 0; i--) {
             const trx = transactions[i];
-            if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.debit;
+            if (trx.account && trx.account?.id === transaction.account?.id) {
+                if (typeof trx.account_balance === 'number') {
+                    trx.account_balance += transaction.debit;
+                }
+                if (trx.category?.id == TransactionType.Correction) {
+                    trx.debit += transaction.debit;
+                    trx.credit = trx.debit;
+                }
             }
-            if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance -= transaction.credit;
+            if (trx.recipient && trx.recipient?.id === transaction.recipient?.id) {
+                if (typeof trx.recipient_balance === 'number') {
+                    trx.recipient_balance -= transaction.credit;
+                }
+                if (trx.category?.id == TransactionType.Correction) {
+                    trx.debit += transaction.debit;
+                    trx.credit = trx.debit;
+                }
             }
             transactions[i] = transaction2View(trx, selected);
         }
@@ -449,11 +461,37 @@ function addTransactionToState(transaction: Transaction, cxt: StateContext<AccSt
         const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
         for (let i = index - 1; i >= 0; i--) {
             const trx = transactions[i];
-            if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.debit;
+            if (trx.account && trx.account?.id === transaction.account?.id) {
+                if (typeof trx.account_balance === 'number') {
+                    trx.account_balance -= transaction.debit;
+                }
+                if (trx.category?.id == TransactionType.Correction) {
+                    trx.debit -= transaction.debit;
+                    if (trx.debit < 0) {
+                        trx.debit = -trx.debit;
+                        trx.recipient = trx.account;
+                        trx.recipient_balance = trx.account_balance;
+                        trx.account = undefined;
+                        trx.account_balance = undefined;
+                    }
+                    trx.credit = trx.debit;
+                }
             }
-            if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance += transaction.credit;
+            if (trx.recipient && trx.recipient?.id === transaction.recipient?.id) {
+                if (typeof trx.recipient_balance === 'number') {
+                    trx.recipient_balance += transaction.credit;
+                }
+                if (trx.category?.id == TransactionType.Correction) {
+                    trx.credit -= transaction.credit;
+                    if (trx.credit < 0) {
+                        trx.credit = -trx.credit;
+                        trx.account = trx.recipient;
+                        trx.account_balance = trx.recipient_balance;
+                        trx.recipient = undefined;
+                        trx.recipient_balance = undefined;
+                    }
+                    trx.debit = trx.credit;
+                }
             }
             transactions[i] = transaction2View(trx, selected);
         }
