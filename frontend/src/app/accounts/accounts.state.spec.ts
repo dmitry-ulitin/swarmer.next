@@ -1,14 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { AccState, GetGroups, GetTransactions, SelectAccounts, ToggleGropup } from './accounts.state';
 
 export const TEST_STATE = {
-  groups: [{ id: 1, accounts: [], name: "cash" }, { id: 2, accounts: [], name: "card" }],
+  groups: [
+    { id: 1, name: "cash", accounts: [{id: 1, fullname: "cash", currency: "RUB"}] },
+    { id: 2, name: "bank 1", accounts: [{id: 2, fullname: "card RUB", currency: "RUB"}, {id: 3, fullname: "card EUR", currency: "EUR"}] },
+    { id: 3, name: "bank 2", accounts: [{id: 4, fullname: "card RUB", currency: "RUB"}, {id: 5, fullname: "card EUR", currency: "EUR"}] }
+  ],
   expanded: [2],
   accounts: [],
-  transactions: []
+  transactions: [],
+  transaction_id: null,
+  categories: []
 };
 
 describe('AccState', () => {
@@ -29,16 +35,23 @@ describe('AccState', () => {
 
   it('it loads account groups', async () => {
     apiSpy.getGroups.and.returnValue(of([{ id: 1, accounts: [], name: "cash" }]));
-    await store.dispatch(new GetGroups()).toPromise();
+    await firstValueFrom(store.dispatch(new GetGroups()));
     const groups = store.selectSnapshot(state => state.acc.groups);
     expect(groups.length).toBe(1);
   });
 
   it('it expands group', () => {
-    store.dispatch(new ToggleGropup(1));
+    store.dispatch(new ToggleGropup(3));
     const expanded = store.selectSnapshot(state => state.acc.expanded);
     expect(expanded.length).toBe(2);
-    expect(expanded.includes(1)).toBeTruthy();
+    expect(expanded.includes(2)).toBeTruthy();
+    expect(expanded.includes(3)).toBeTruthy();
+  });
+
+  it('it can\'t expand group with one account', () => {
+    store.dispatch(new ToggleGropup(1));
+    const expanded = store.selectSnapshot(state => state.acc.expanded);
+    expect(expanded.length).toBe(1);
     expect(expanded.includes(2)).toBeTruthy();
   });
 
@@ -88,7 +101,7 @@ describe('AccState', () => {
         "type": 1
       }
     ]));
-    await store.dispatch(new GetTransactions()).toPromise();
+    await firstValueFrom(store.dispatch(new GetTransactions()));
     const transactions = store.selectSnapshot(state => state.acc.transactions);
     expect(transactions.length).toBe(3);
     expect(transactions[0].name).toBe("modulbank EUR => modulbank RUB");

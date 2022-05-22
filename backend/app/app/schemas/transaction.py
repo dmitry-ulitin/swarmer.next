@@ -13,6 +13,7 @@ class TransactionBase(BaseModel):
     recipient: Account = None
     debit: Decimal
     currency: str = None
+    party: str = None
     details: str = None
 
 class TransactionCreate(TransactionBase):
@@ -21,6 +22,10 @@ class TransactionCreate(TransactionBase):
 class TransactionUpdate(TransactionBase):
     id: int
 
+class TransactionImport(TransactionBase):
+    id: int = None
+    type: int
+    selected: bool
 
 class Transaction(TransactionBase):
     id: int

@@ -1,8 +1,43 @@
-table.table {
-    border-collapse: collapse;
+div.active>div {
+    background-color: rgba(0,0,0,.075);
 }
-.table td, .table th {
-    vertical-align: top;
+  
+
+.t-content {
     border-top: 1px solid #dee2e6;
-    padding: .25rem .5rem;
+    padding: 0 .5rem;
+}
+
+.t-row {
+    display: flex;
+}
+
+.t-long {
+    display: block;
+    max-width: 30rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+}
+
+.t-left {
+    flex: 1;
+}
+
+.t-right {
+    padding-left: 2rem;
+    text-align: right;
+}
+
+.type0 {
+    color: #8f8100;
+}
+
+.type1 {
+    color: #b40000;
+}
+
+.type2 {
+    color: #14aa00;
 }

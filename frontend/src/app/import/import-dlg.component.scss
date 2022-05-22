@@ -1,0 +1,45 @@
+.container {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+.table {
+    width: 100%;
+    flex-grow: 1;
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+}
+
+.footer {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.number {
+    text-align: right;
+}
+
+.category {
+    min-width: 20rem;
+}
+
+.credit {
+    color: brown;
+}
+
+.debit {
+    color: green;
+}
+
+.category-level-2 {
+    margin-left: 1rem;
+}
+
+.category-level-3 {
+    margin-left: 2rem;
+}

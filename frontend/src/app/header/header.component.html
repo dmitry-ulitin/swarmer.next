@@ -22,6 +22,8 @@
                 <button tuiOption (click)="newGroup()" [size]="'s'">New Account</button>
                 <button tuiOption *ngIf="!!group" (click)="editGroup(group)" [size]="'s'">Edit '{{group?.fullname}}'</button>
                 <button tuiOption *ngIf="!!group" (click)="deleteGroup(group)" [size]="'s'">Delete '{{group?.fullname}}'</button>
+                <button tuiOption *ngIf="account$ | async as account" (click)="onCorrection(account)" [size]="'s'">Correct '{{account.fullname}}' Balance</button>
+                <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)" [size]="'s'">Import '{{account.fullname}}' Statement</button>
             </tui-data-list>
         </ng-template>
     </span>

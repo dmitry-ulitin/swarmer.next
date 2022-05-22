@@ -4,7 +4,7 @@ import { Group } from '../models/group';
 import { Amount, Total } from '../models/balance';
 import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
-import { Transaction, TransactionType } from '../models/transaction';
+import { Transaction, TransactionImport, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
 import { TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
@@ -13,6 +13,9 @@ import { TransactionDlgComponent } from '../transactions/transaction-dlg/transac
 import { Category } from '../models/category';
 import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.component';
 import { AccountDialogComponent } from './account-dlg/account-dlg.component';
+import { InputFileDlgComponent } from '../import/input-file-dlg.component';
+import { ImportDlgComponent } from '../import/import-dlg.component';
+import * as moment from 'moment';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -57,8 +60,8 @@ export class SelectTransaction {
     constructor(public id: number) { }
 }
 
-export class AddTransaction {
-    static readonly type = '[Acc] Add Transaction';
+export class CreateTransaction {
+    static readonly type = '[Acc] Create Transaction';
     constructor(public type: TransactionType) { }
 }
 
@@ -69,6 +72,11 @@ export class EditTransaction {
 
 export class DeleteTransaction {
     static readonly type = '[Acc] Delete Transaction';
+    constructor(public id?: number) { }
+}
+
+export class ImportTransactions {
+    static readonly type = '[Acc] Import Transactions';
     constructor(public id?: number) { }
 }
 
@@ -117,8 +125,26 @@ export class AccState {
     }
 
     @Selector()
+    static selectedGroup(state: AccStateModel): Group | undefined {
+        const groups = AccState.selectedGroups(state);
+        return groups.length === 1 ? groups[0] : undefined;
+    }
+
+    @Selector()
     static accounts(state: AccStateModel): Account[] {
         return state.groups.filter(g => !g.deleted).reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
+    }
+
+    @Selector()
+    static selectedAccounts(state: AccStateModel): Account[] {
+        const accounts = AccState.accounts(state);
+        return accounts.filter(a => state.accounts.includes(a.id));
+    }
+
+    @Selector()
+    static selectedAccount(state: AccStateModel): Account | undefined {
+        const accounts = AccState.selectedAccounts(state);
+        return accounts.length === 1 ? accounts[0] : undefined;
     }
 
     @Selector()
@@ -203,7 +229,7 @@ export class AccState {
                 let grp = state.groups.find(g => g.id === id);
                 if (!grp) {
                     throw new Error('Account not found');
-                }                    
+                }
                 const answer = await firstValueFrom(
                     this.dialogService.open(new PolymorpheusComponent(ConfirmationDlgComponent, this.injector), { data: `Are you sure you want to delete account '${grp.fullname}'?`, dismissible: false, size: 's' }),
                     { defaultValue: false }
@@ -297,8 +323,8 @@ export class AccState {
         }
     }
 
-    @Action(AddTransaction)
-    addTransaction(cxt: StateContext<AccStateModel>, action: AddTransaction) {
+    @Action(CreateTransaction)
+    addTransaction(cxt: StateContext<AccStateModel>, action: CreateTransaction) {
         const state = cxt.getState();
         let account: Account | undefined = state.accounts.length > 0 ? getAccount(state.groups, state.accounts[0]) : state.groups[0]?.accounts[0];
         let recipient: Account | undefined = undefined;
@@ -307,13 +333,15 @@ export class AccState {
         } else if (action.type === TransactionType.Income) {
             recipient = account;
             account = undefined;
+        } else if (action.type === TransactionType.Correction) {
+            recipient = account;
         }
         let transaction: Transaction = {
             type: action.type,
-            opdate: new Date(),
+            opdate: moment().format(),
             account: account,
             recipient: recipient,
-            category: null,
+            category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, root_id: null } : null,
             currency: account?.currency || recipient?.currency || 'EUR',
             debit: 0,
             credit: 0,
@@ -329,6 +357,27 @@ export class AccState {
                 }
             }
         });
+    }
+
+    @Action(ImportTransactions)
+    async importTransactions(cxt: StateContext<AccStateModel>, action: ImportTransactions) {
+        try {
+            const state = cxt.getState();
+            const id = action.id || state.accounts[0];
+            const file = await firstValueFrom(this.dialogService.open<File>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
+            if (!file) {
+                return;
+            }
+            let transactions = await firstValueFrom(this.api.importTransactions(id, file));
+            transactions = await firstValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
+            if (transactions) {
+                await firstValueFrom(this.api.saveTransactions(transactions));
+                cxt.dispatch(new GetGroups());
+                cxt.dispatch(new GetTransactions());
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
     }
 
     @Action([AppLoginSuccess, GetCategories], { cancelUncompleted: true })
@@ -358,8 +407,8 @@ function patchGroupBalance(groups: Group[], account: Account | null | undefined,
 
 function transaction2View(t: Transaction, selected: { [key: number]: boolean }): TransactionView {
     const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
-    const amount = t.account ? { value: t.credit, currency: t.account.currency } : (t.recipient ? { value: t.debit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const useRecipient = !t.account_balance || t.recipient && t.recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]);
+    const amount = (t.account && !useRecipient) ? { value: t.debit, currency: t.account.currency } : (t.recipient ? { value: t.credit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const acc = useRecipient ? t.recipient : t.account;
     return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
 }
@@ -374,10 +423,10 @@ function deleteTransactionFromState(transaction: Transaction, cxt: StateContext<
         for (let i = index - 1; i >= 0; i--) {
             const trx = transactions[i];
             if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.credit;
+                trx.account_balance += transaction.debit;
             }
             if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance -= transaction.debit;
+                trx.recipient_balance -= transaction.credit;
             }
             transactions[i] = transaction2View(trx, selected);
         }
@@ -401,10 +450,10 @@ function addTransactionToState(transaction: Transaction, cxt: StateContext<AccSt
         for (let i = index - 1; i >= 0; i--) {
             const trx = transactions[i];
             if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.credit;
+                trx.account_balance += transaction.debit;
             }
             if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance += transaction.debit;
+                trx.recipient_balance += transaction.credit;
             }
             transactions[i] = transaction2View(trx, selected);
         }

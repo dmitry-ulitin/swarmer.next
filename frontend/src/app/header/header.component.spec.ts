@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Store } from '@ngxs/store';
+import { NgxsModule, Store } from '@ngxs/store';
 import { of } from 'rxjs';
 
 import { HeaderComponent } from './header.component';
@@ -11,6 +11,7 @@ describe('HeaderComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      imports: [ NgxsModule.forRoot([])],
       declarations: [ HeaderComponent ],
       providers: [ { provide: Store, useValue: storeSpy } ]
     })

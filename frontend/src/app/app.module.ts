@@ -21,13 +21,17 @@ import { registerLocaleData } from '@angular/common';
 import { TransactionsComponent } from './transactions/transactions.component';
 import { HomeComponent } from './home/home.component';
 import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiNotificationsModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule } from '@taiga-ui/core';
-import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule, TuiSelectModule, TuiComboBoxModule, TuiFilterByInputPipeModule, TuiInputDateModule, TuiTextAreaModule } from '@taiga-ui/kit';
+import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule, TuiSelectModule, TuiComboBoxModule, TuiFilterByInputPipeModule, TuiInputDateModule, TuiTextAreaModule, TuiInputFilesModule, TuiFilesModule } from '@taiga-ui/kit';
 import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { TransactionDlgComponent } from './transactions/transaction-dlg/transaction-dlg.component';
 import { TransactionCtrlComponent } from './transactions/transaction-dlg/transaction-ctrl.component';
 import { ConfirmationDlgComponent } from './confirmation/confirmation-dlg.component';
 import { AccountCtrlComponent } from './accounts/account-dlg/account-ctrl.component';
 import { AccountDialogComponent } from './accounts/account-dlg/account-dlg.component';
+import { InputFileDlgComponent } from './import/input-file-dlg.component';
+import { ImportDlgComponent } from './import/import-dlg.component';
+import { TuiTableModule } from '@taiga-ui/addon-table';
+import { TuiFilterPipeModule } from '@taiga-ui/cdk';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -42,7 +46,9 @@ registerLocaleData(localeRu, 'ru');
     HomeComponent,
     TransactionCtrlComponent,
     TransactionDlgComponent,
-    ConfirmationDlgComponent
+    ConfirmationDlgComponent,
+    InputFileDlgComponent,
+    ImportDlgComponent
   ],
   imports: [
     BrowserModule,
@@ -58,6 +64,8 @@ registerLocaleData(localeRu, 'ru');
     TuiInputPasswordModule,
     TuiInputNumberModule,
     TuiInputDateModule,
+    TuiInputFilesModule,
+    TuiFilesModule,
     TuiTextfieldControllerModule,
     TuiTextAreaModule,
     TuiHostedDropdownModule,
@@ -71,6 +79,10 @@ registerLocaleData(localeRu, 'ru');
     TuiLinkModule,
     TuiDialogModule,
     TuiFilterByInputPipeModule,
+    TuiFilterPipeModule,
+
+    TuiTableModule,
+    
     NgxsModule.forRoot([AppState, AccState]),
     NgxsStoragePluginModule.forRoot({ key: 'app.token' }),
     NgxsSelectSnapshotModule.forRoot()

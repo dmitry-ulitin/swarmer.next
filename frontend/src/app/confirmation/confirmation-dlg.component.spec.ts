@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ConfirmationDlgComponent } from './confirmation-dlg.component';
+import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 
 describe('ConfirmationDlgComponent', () => {
   let component: ConfirmationDlgComponent;
@@ -8,7 +8,10 @@ describe('ConfirmationDlgComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ConfirmationDlgComponent ]
+      declarations: [ ConfirmationDlgComponent ],
+      providers: [
+        { provide: POLYMORPHEUS_CONTEXT, useValue: {} }
+      ]
     })
     .compileComponents();
   });

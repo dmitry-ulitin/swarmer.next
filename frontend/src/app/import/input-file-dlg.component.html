@@ -1,0 +1,25 @@
+<tui-input-files
+    *ngIf="!control.value"
+    accept=".csv, .txt"
+    [formControl]="control"
+    (reject)="onReject($event)"
+></tui-input-files>
+ 
+<tui-files class="tui-space_top-1">
+    <tui-file
+        *ngIf="control.valueChanges | async as file"
+        [file]="file"
+        (removed)="removeFile()"
+    ></tui-file>
+ 
+    <tui-file
+        *ngIf="rejectedFiles$ | async as file"
+        state="error"
+        [file]="file"
+        (removed)="clearRejected()"
+    ></tui-file>
+</tui-files>
+<div class="footer">
+    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()" [disabled]="!control.value">Next</button>
+    <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
+</div>

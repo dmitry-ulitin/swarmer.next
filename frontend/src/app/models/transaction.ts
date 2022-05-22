@@ -4,12 +4,13 @@ import { Account } from './account';
 export enum TransactionType {
     Transfer = 0,
     Expense,
-    Income
+    Income,
+    Correction
 }
 
 export interface Transaction {
     id?: number | null;
-    opdate: Date;
+    opdate: string;
     account?: Account | null;
     account_balance?: number;
     credit: number;
@@ -18,7 +19,13 @@ export interface Transaction {
     debit: number;
     category?: Category | null;
     currency: string;
+    party?: string;
     details: string;
     type: TransactionType;
     bg?: string;
 }
+
+export interface TransactionImport extends Transaction {
+    selected: boolean;
+}
+

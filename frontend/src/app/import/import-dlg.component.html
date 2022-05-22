@@ -1,0 +1,45 @@
+<div class="container">
+    <div class="table">
+        <table tuiTable [columns]="columns">
+            <thead>
+                <tr tuiThGroup>
+                    <th *tuiHead="'selected'" tuiTh></th>
+                    <th *tuiHead="'date'" tuiTh>Date</th>
+                    <th *tuiHead="'amount'" tuiTh>Amount</th>
+                    <th *tuiHead="'category'" tuiTh class="category">Category</th>
+                    <th *tuiHead="'party'" tuiTh>Sender/Reciever</th>
+                    <th *tuiHead="'details'" tuiTh>Details</th>
+                </tr>
+            </thead>
+            <tbody tuiTbody [data]="data">
+                <tr *tuiRow="let item of data; let index = index" tuiTr [class.credit]="item.type == 1"
+                    [class.debit]="item.type == 2">
+                    <td *tuiCell="'selected'" tuiTd><input type="checkbox" [checked]="item.selected"></td>
+                    <td *tuiCell="'date'" tuiTd>{{item.opdate | date: 'dd/MM/yyyy'}}</td>
+                    <td *tuiCell="'amount'" tuiTd class="number">{{item.debit | currency: item.currency}}</td>
+                    <td *tuiCell="'category'" tuiTd>
+                        <tui-select [valueContent]="categoryValue" [tuiTextfieldSize]="'s'"
+                            [tuiTextfieldCleaner]="true" [formControl]="category(index)">
+                            no category
+                            <tui-data-list-wrapper *tuiDataList [items]="(categories$ | async) | tuiFilter: matcher: item.type"
+                                [itemContent]="categoryContent" [size]="'s'">
+                            </tui-data-list-wrapper>
+                        </tui-select>
+                    </td>
+                    <td *tuiCell="'party'" tuiTd>{{item.party}}</td>
+                    <td *tuiCell="'details'" tuiTd>{{item.details}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="footer">
+        <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()">Next</button>
+        <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
+    </div>
+</div>
+<ng-template #categoryValue let-category>
+    {{category.fullname}}
+</ng-template>
+<ng-template #categoryContent let-category>
+    <div [class]="'category-level-' + category.level">{{category.name}}</div>
+</ng-template>
