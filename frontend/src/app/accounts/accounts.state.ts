@@ -6,7 +6,7 @@ import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction, TransactionImport, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
-import { TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
+import { TuiAlertService, TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
@@ -110,7 +110,7 @@ export class AccState {
     constructor(private api: ApiService,
         @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
         @Inject(Injector) private readonly injector: Injector,
-        private readonly notificationsService: TuiNotificationsService,
+        private readonly alertService: TuiAlertService,
         private zone: NgZone
     ) { }
 
@@ -185,7 +185,7 @@ export class AccState {
         ).subscribe({
             next: (data: any) => {
                 if (data) {
-                    this.zone.run(() => this.notificationsService.show('Account created', { status: TuiNotification.Success }).subscribe());
+                    this.zone.run(() => this.alertService.open('Account created', { status: TuiNotification.Success }).subscribe());
                     const state = cxt.getState();
                     const groups = state.groups.slice();
                     const index = groups.findIndex(g => data.is_owner && !g.is_owner || data.is_coowner && !g.is_coowner);
@@ -204,7 +204,7 @@ export class AccState {
             next: (data: any) => {
                 if (data) {
                     const state = cxt.getState();
-                    this.zone.run(() => this.notificationsService.show('Account updated', { status: TuiNotification.Success }).subscribe());
+                    this.zone.run(() => this.alertService.open('Account updated', { status: TuiNotification.Success }).subscribe());
                     const groups = state.groups.slice().map(g => g.id === data.id ? data as Group : g);
                     let accounts = state.accounts;
                     const groupSelected = !action.group.accounts.some(a => !accounts.includes(a.id));
@@ -236,7 +236,7 @@ export class AccState {
                 );
                 if (answer) {
                     await firstValueFrom(this.api.deleteGroup(id));
-                    this.zone.run(() => this.notificationsService.show('Account deleted').subscribe());
+                    this.zone.run(() => this.alertService.open('Account deleted').subscribe());
                     const groups = state.groups.slice().map(g => g.id !== id ? g : { ...g, deleted: true });
                     const accounts = state.accounts.filter(id => groups.some(g => !g.deleted && g.accounts.some(a => a.id === id)));
                     cxt.patchState({ groups, accounts });
@@ -285,7 +285,7 @@ export class AccState {
                     ).subscribe({
                         next: (data: any) => {
                             if (data) {
-                                this.zone.run(() => this.notificationsService.show('Transaction updated', { status: TuiNotification.Success }).subscribe());
+                                this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
                                 deleteTransactionFromState(transaction, cxt);
                                 addTransactionToState(data, cxt);
                             }
@@ -314,7 +314,7 @@ export class AccState {
                         trx = await firstValueFrom(this.api.getTransaction(transaction_id));
                     }
                     await firstValueFrom(this.api.deleteTransaction(transaction_id));
-                    this.zone.run(() => this.notificationsService.show('Transaction deleted').subscribe());
+                    this.zone.run(() => this.alertService.open('Transaction deleted').subscribe());
                     deleteTransactionFromState(trx, cxt);
                 }
             }
@@ -352,7 +352,7 @@ export class AccState {
         ).subscribe({
             next: (data: any) => {
                 if (data) {
-                    this.zone.run(() => this.notificationsService.show('Transaction created', { status: TuiNotification.Success }).subscribe());
+                    this.zone.run(() => this.alertService.open('Transaction created', { status: TuiNotification.Success }).subscribe());
                     addTransactionToState(data, cxt);
                 }
             }
