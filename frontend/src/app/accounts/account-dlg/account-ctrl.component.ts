@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
-import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormArray, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
 import { takeUntil } from 'rxjs';
@@ -25,22 +25,22 @@ export class AccountCtrlComponent implements ControlValueAccessor {
   currencies = this.store.selectSnapshot(AccState.currencies);
   userCurrency = this.store.selectSnapshot(AppState.claims)?.currency || 'RUB';
 
-  form = new FormGroup({
-    'id': new FormControl(),
-    'fullname': new FormControl('', Validators.required),
-    'is_owner': new FormControl(true),
-    'is_coowner': new FormControl(false),
-    'is_shared': new FormControl(false),
-    'accounts': new FormArray([]),
-    'permissions': new FormArray([])
+  form = new UntypedFormGroup({
+    'id': new UntypedFormControl(),
+    'fullname': new UntypedFormControl('', Validators.required),
+    'is_owner': new UntypedFormControl(true),
+    'is_coowner': new UntypedFormControl(false),
+    'is_shared': new UntypedFormControl(false),
+    'accounts': new UntypedFormArray([]),
+    'permissions': new UntypedFormArray([])
   });
 
-  get accounts(): FormArray {
-    return this.form.controls.accounts as FormArray;
+  get accounts(): UntypedFormArray {
+    return this.form.controls.accounts as UntypedFormArray;
   }
 
-  getAccount(index: number): FormGroup {
-    return this.accounts.controls[index] as FormGroup;
+  getAccount(index: number): UntypedFormGroup {
+    return this.accounts.controls[index] as UntypedFormGroup;
   }
 
   constructor(private store: Store, destroy$: TuiDestroyService) {
@@ -66,13 +66,13 @@ export class AccountCtrlComponent implements ControlValueAccessor {
   }
 
   onAddAccount(acc: any): void {
-    this.accounts.push(new FormGroup({
-      'id': new FormControl(acc?.id),
-      'name': new FormControl(acc?.name || ''),
-      'currency': new FormControl(acc?.currency || this.userCurrency),
-      'start_balance': new FormControl(acc?.start_balance),
-      'balance': new FormControl(acc?.balance),
-      'deleted': new FormControl(acc?.deleted)
+    this.accounts.push(new UntypedFormGroup({
+      'id': new UntypedFormControl(acc?.id),
+      'name': new UntypedFormControl(acc?.name || ''),
+      'currency': new UntypedFormControl(acc?.currency || this.userCurrency),
+      'start_balance': new UntypedFormControl(acc?.start_balance),
+      'balance': new UntypedFormControl(acc?.balance),
+      'deleted': new UntypedFormControl(acc?.deleted)
     }));
     this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
   }

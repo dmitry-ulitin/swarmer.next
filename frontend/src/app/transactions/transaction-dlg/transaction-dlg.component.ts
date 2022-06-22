@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDialogContext, TUI_ICONS_PATH } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
@@ -28,7 +28,7 @@ export function iconsPath(name: string): string {
   ]
 })
 export class TransactionDlgComponent {
-  transaction = new FormControl();
+  transaction = new UntypedFormControl();
 
   get type(): TransactionType {
     return this.transaction.value.type;
