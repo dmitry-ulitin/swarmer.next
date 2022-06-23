@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { AppLogin } from '../app.state';
@@ -11,9 +11,9 @@ import { AppLogin } from '../app.state';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
-  form: FormGroup = new FormGroup({
-    username: new FormControl(''),
-    password: new FormControl('')
+  form: UntypedFormGroup = new UntypedFormGroup({
+    username: new UntypedFormControl(''),
+    password: new UntypedFormControl('')
   });
   returnUrl = this.route.snapshot.queryParams.returnUrl || '/';
 

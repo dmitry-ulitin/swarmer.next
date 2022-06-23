@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { TuiDialogContext } from '@taiga-ui/core';
 import { TuiFileLike } from '@taiga-ui/kit';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
@@ -11,7 +11,7 @@ import { Subject } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputFileDlgComponent {
-  readonly control = new FormControl();
+  readonly control = new UntypedFormControl();
   readonly rejectedFiles$ = new Subject<TuiFileLike | null>();
 
   constructor(@Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<TuiFileLike | null, undefined>) {

@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, forwardRef } from '@angular/core';
-import { ControlValueAccessor, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDay, TuiDestroyService } from '@taiga-ui/cdk';
 import { map, takeUntil } from 'rxjs';
@@ -24,19 +24,19 @@ import { Account } from 'src/app/models/account';
   ]
 })
 export class TransactionCtrlComponent implements ControlValueAccessor {
-  form = new FormGroup({
-    'id': new FormControl(),
-    'opdate': new FormControl(),
-    'account': new FormControl(),
-    'credit': new FormControl(),
-    'ccurrency': new FormControl(),
-    'recipient': new FormControl(),
-    'debit': new FormControl(),
-    'dcurrency': new FormControl(),
-    'category': new FormControl(),
-    'party': new FormControl(''),
-    'details': new FormControl(''),
-    'type': new FormControl()
+  form = new UntypedFormGroup({
+    'id': new UntypedFormControl(),
+    'opdate': new UntypedFormControl(),
+    'account': new UntypedFormControl(),
+    'credit': new UntypedFormControl(),
+    'ccurrency': new UntypedFormControl(),
+    'recipient': new UntypedFormControl(),
+    'debit': new UntypedFormControl(),
+    'dcurrency': new UntypedFormControl(),
+    'category': new UntypedFormControl(),
+    'party': new UntypedFormControl(''),
+    'details': new UntypedFormControl(''),
+    'type': new UntypedFormControl()
   });
 
   get type(): TransactionType {

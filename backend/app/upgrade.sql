@@ -7,7 +7,7 @@ alter table users add column is_active BOOLEAN;
 update users set is_active=1;
 alter table accounts drop column "order";
 alter table categories rename column user_id to owner_id;
-insert into categories (id,name, bg,created,updated) values (3,'Correction', '#ffffff','2019-02-28 00:00:00.000000','2019-02-28 22:46:52.887517');
+insert into categories (id,name, bg,created,updated) values (3,'Correction', '#ffffff','2019-02-28 00:00:00.000000','2019-02-28 00:00:00.000000');
 
 alter table account_groups rename column user_id to owner_id;
 CREATE TABLE account_groups2 (
@@ -50,3 +50,50 @@ CREATE TABLE transactions2 (
 insert into transactions2 select id,owner_id,created,updated,opdate,account_id,credit,recipient_id,debit,category_id,currency,party,details from transactions;
 drop table transactions;
 alter table transactions2 rename to transactions;
+
+CREATE TABLE rules (
+        id INTEGER NOT NULL, 
+        owner_id INTEGER NOT NULL, 
+        created DATETIME NOT NULL, 
+        updated DATETIME NOT NULL,
+        transaction_type INTEGER NOT NULL,
+        condition_type INTEGER NOT NULL, 
+        condition_value VARCHAR(255) NOT NULL, 
+        category_id INTEGER, 
+        party_id INTEGER, 
+        PRIMARY KEY (id), 
+        FOREIGN KEY(owner_id) REFERENCES users (id),
+        FOREIGN KEY(category_id) REFERENCES categories (id),
+        FOREIGN KEY(party_id) REFERENCES accounts (id), 
+        CHECK (transaction_type IN (0, 1, 2))
+);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,2,'SELVER',1021);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,2,'Prisma',1021);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,2,'STOCKMANN',1021);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'LOVE MUSSELS',1022);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'ONE SIXTY ESTLAND',1022);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'NEW THAI',1022);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'ST.VITUS',1022);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'VANA VILLEM',1022);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'POHJALA TAP ROOM',1022);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'ZENIMAX EUROPE LIMITED',114);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,2,'BOLT.EU',105);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'GOOGLE*YOUTUBEPREMIUM',108);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,1,'pargi.ee',101);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,2,'RYANAIR',110);
+insert into rules (owner_id,created,updated,transaction_type,condition_type,condition_value,category_id)
+ values (2,'2022-05-22 00:00:00.000000','2022-05-22 00:00:00.000000',1,2,'HILL HILL BILLIARD CAF',107);

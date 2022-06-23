@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
-import { AbstractControl, FormArray, FormControl } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDialogContext } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
@@ -18,14 +18,14 @@ export class ImportDlgComponent {
   categories$ = this.store.select(state => state.acc.categories);
   readonly matcher = (category: Category, type: TransactionType): boolean => category.root_id == type;
 
-  categories!: FormArray;
+  categories!: UntypedFormArray;
   category(index: number) {
-    return this.categories.at(index) as FormControl;
+    return this.categories.at(index) as UntypedFormControl;
   }
 
   constructor(private store: Store, @Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<TransactionImport[] | null, TransactionImport[]>) {
     this.data = this.context.data;
-    this.categories = new FormArray(this.data.map(t => new FormControl(t.category)));
+    this.categories = new UntypedFormArray(this.data.map(t => new UntypedFormControl(t.category)));
     merge(...this.categories.controls.map((control: AbstractControl, index: number) =>
       control.valueChanges.pipe(map(value => ({ rowIndex: index, data: value })))
     )).subscribe(changes => {

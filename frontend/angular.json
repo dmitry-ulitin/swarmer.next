@@ -123,5 +123,7 @@
       }
     }
   },
-  "defaultProject": "swarmer"
+  "cli": {
+    "analytics": false
+  }
 }

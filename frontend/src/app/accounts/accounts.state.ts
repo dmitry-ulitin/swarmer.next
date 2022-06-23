@@ -6,7 +6,7 @@ import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction, TransactionImport, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
-import { TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
+import { TuiAlertService, TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
@@ -110,7 +110,7 @@ export class AccState {
     constructor(private api: ApiService,
         @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
         @Inject(Injector) private readonly injector: Injector,
-        private readonly notificationsService: TuiNotificationsService,
+        private readonly alertService: TuiAlertService,
         private zone: NgZone
     ) { }
 
@@ -185,7 +185,7 @@ export class AccState {
         ).subscribe({
             next: (data: any) => {
                 if (data) {
-                    this.zone.run(() => this.notificationsService.show('Account created', { status: TuiNotification.Success }).subscribe());
+                    this.zone.run(() => this.alertService.open('Account created', { status: TuiNotification.Success }).subscribe());
                     const state = cxt.getState();
                     const groups = state.groups.slice();
                     const index = groups.findIndex(g => data.is_owner && !g.is_owner || data.is_coowner && !g.is_coowner);
@@ -204,7 +204,7 @@ export class AccState {
             next: (data: any) => {
                 if (data) {
                     const state = cxt.getState();
-                    this.zone.run(() => this.notificationsService.show('Account updated', { status: TuiNotification.Success }).subscribe());
+                    this.zone.run(() => this.alertService.open('Account updated', { status: TuiNotification.Success }).subscribe());
                     const groups = state.groups.slice().map(g => g.id === data.id ? data as Group : g);
                     let accounts = state.accounts;
                     const groupSelected = !action.group.accounts.some(a => !accounts.includes(a.id));
@@ -236,7 +236,7 @@ export class AccState {
                 );
                 if (answer) {
                     await firstValueFrom(this.api.deleteGroup(id));
-                    this.zone.run(() => this.notificationsService.show('Account deleted').subscribe());
+                    this.zone.run(() => this.alertService.open('Account deleted').subscribe());
                     const groups = state.groups.slice().map(g => g.id !== id ? g : { ...g, deleted: true });
                     const accounts = state.accounts.filter(id => groups.some(g => !g.deleted && g.accounts.some(a => a.id === id)));
                     cxt.patchState({ groups, accounts });
@@ -285,9 +285,9 @@ export class AccState {
                     ).subscribe({
                         next: (data: any) => {
                             if (data) {
-                                this.zone.run(() => this.notificationsService.show('Transaction updated', { status: TuiNotification.Success }).subscribe());
-                                deleteTransactionFromState(transaction, cxt);
-                                addTransactionToState(data, cxt);
+                                this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
+                                patchStateTransactions(transaction, cxt, true);
+                                patchStateTransactions(data, cxt, false);
                             }
                         }
                     });
@@ -314,8 +314,8 @@ export class AccState {
                         trx = await firstValueFrom(this.api.getTransaction(transaction_id));
                     }
                     await firstValueFrom(this.api.deleteTransaction(transaction_id));
-                    this.zone.run(() => this.notificationsService.show('Transaction deleted').subscribe());
-                    deleteTransactionFromState(trx, cxt);
+                    this.zone.run(() => this.alertService.open('Transaction deleted').subscribe());
+                    patchStateTransactions(trx, cxt, true);
                 }
             }
         } catch (err) {
@@ -352,8 +352,8 @@ export class AccState {
         ).subscribe({
             next: (data: any) => {
                 if (data) {
-                    this.zone.run(() => this.notificationsService.show('Transaction created', { status: TuiNotification.Success }).subscribe());
-                    addTransactionToState(data, cxt);
+                    this.zone.run(() => this.alertService.open('Transaction created', { status: TuiNotification.Success }).subscribe());
+                    patchStateTransactions(data, cxt, false);
                 }
             }
         });
@@ -399,7 +399,8 @@ function patchGroupBalance(groups: Group[], account: Account | null | undefined,
             const aindex = groups[gindex].accounts.findIndex(a => a.id === account.id);
             const acc = groups[gindex].accounts[aindex];
             if (typeof acc.balance === 'number') {
-                acc.balance += amount;
+                groups[gindex].accounts = [...groups[gindex].accounts];
+                groups[gindex].accounts[aindex] = { ...acc, balance: acc.balance + amount };
             }
         }
     }
@@ -413,57 +414,62 @@ function transaction2View(t: Transaction, selected: { [key: number]: boolean }):
     return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
 }
 
-function deleteTransactionFromState(transaction: Transaction, cxt: StateContext<AccStateModel>) {
+function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccStateModel>, remove: boolean) {
     const state = cxt.getState();
     const transactions = state.transactions.slice();
-    const index = transactions.findIndex(t => t.id === transaction.id);
+    const index = remove ? transactions.findIndex(t => t.id === transaction.id) : Math.max(transactions.findIndex(t => transaction.opdate > t.opdate), 0);
     if (index >= 0) {
         // patch transactions balances
         const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
         for (let i = index - 1; i >= 0; i--) {
-            const trx = transactions[i];
-            if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.debit;
+            let patch = 0;
+            const trx = {...transactions[i]};
+            if (trx.account && trx.account?.id === transaction.account?.id || trx.recipient && trx.recipient?.id === transaction.account?.id) {
+                patch = -transaction.debit;
             }
-            if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance -= transaction.credit;
+            if (trx.account && trx.account?.id === transaction.recipient?.id || trx.recipient && trx.recipient?.id === transaction.recipient?.id) {
+                patch = transaction.credit;
+            }
+            if (remove) {
+                patch = -patch;
+            }
+            if (typeof trx.account_balance === 'number' && (trx.account?.id === transaction.account?.id || trx.account?.id === transaction.recipient?.id)) {
+                trx.account_balance += patch;
+            }
+            if (typeof trx.recipient_balance === 'number' && (trx.recipient?.id === transaction.account?.id || trx.recipient?.id === transaction.recipient?.id)) {
+                trx.recipient_balance += patch;
+            }
+            if (trx.category?.id == TransactionType.Correction) {
+                trx.credit += patch;
+                if (trx.credit < 0) {
+                    trx.credit = -trx.credit;
+                    if (trx.recipient) {
+                        trx.account = trx.recipient;
+                        trx.account_balance = trx.recipient_balance;
+                        trx.recipient = undefined;
+                        trx.recipient_balance = undefined;
+                    } else if (trx.account) {
+                        trx.recipient = trx.account;
+                        trx.recipient_balance = trx.account_balance;
+                        trx.account = undefined;
+                        trx.account_balance = undefined;
+                    }
+                }
+                trx.debit = trx.credit;
             }
             transactions[i] = transaction2View(trx, selected);
         }
-        transactions.splice(index, 1);
-    }
-    // patch group balances
-    const groups = state.groups.slice();
-    patchGroupBalance(groups, transaction.account, transaction.debit);
-    patchGroupBalance(groups, transaction.recipient, -transaction.credit);
-    const transaction_id = transaction.id === state.transaction_id ? null : state.transaction_id;
-    cxt.patchState({ transactions, groups, transaction_id });
-}
-
-function addTransactionToState(transaction: Transaction, cxt: StateContext<AccStateModel>) {
-    const state = cxt.getState();
-    const transactions = state.transactions.slice();
-    const index = transactions.findIndex(t => transaction.opdate > t.opdate);
-    if (index >= 0) {
-        // patch transactions balances
-        const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
-        for (let i = index - 1; i >= 0; i--) {
-            const trx = transactions[i];
-            if (trx.account && typeof trx.account_balance === 'number' && trx.account?.id === transaction.account?.id) {
-                trx.account_balance += transaction.debit;
-            }
-            if (trx.recipient && typeof trx.recipient_balance === 'number' && trx.recipient?.id === transaction.recipient?.id) {
-                trx.recipient_balance += transaction.credit;
-            }
-            transactions[i] = transaction2View(trx, selected);
+        if (remove) {
+            transactions.splice(index, 1);
+        } else {
+            transactions.splice(index, 0, transaction2View(transaction, selected));
         }
-        transactions.splice(index, 0, transaction2View(transaction, selected));
     }
     // patch group balances
     const groups = state.groups.slice();
-    patchGroupBalance(groups, transaction.account, -transaction.debit);
-    patchGroupBalance(groups, transaction.recipient, transaction.credit);
-    const transaction_id = transaction.id;
+    patchGroupBalance(groups, transaction.account, remove ? transaction.debit : -transaction.debit);
+    patchGroupBalance(groups, transaction.recipient, remove ? -transaction.credit : transaction.credit);
+    const transaction_id = remove && transaction.id === state.transaction_id ? null : (remove ? state.transaction_id : transaction.id);
     cxt.patchState({ transactions, groups, transaction_id });
 }
 

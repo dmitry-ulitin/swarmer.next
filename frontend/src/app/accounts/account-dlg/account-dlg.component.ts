@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDialogContext, TuiDialogService } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
@@ -15,7 +15,7 @@ import { Group } from '../../models/group';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountDialogComponent {
-  group = new FormControl();
+  group = new UntypedFormControl();
 
   constructor(
     private api: ApiService,
