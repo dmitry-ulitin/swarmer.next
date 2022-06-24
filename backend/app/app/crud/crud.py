@@ -1,5 +1,8 @@
 from datetime import datetime
+from locale import currency
 from typing import List
+from unittest import result
+from app.schemas.statistics import Summary
 from fastapi import UploadFile
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session
@@ -110,8 +113,8 @@ def delete_group(db: Session, user_id: int, id: int):
 
 
 def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
-                     account_ids=[], category_ids=[],
-                     start: datetime = None, finish: datetime = None, shared: bool = False):
+                     account_ids=[], shared: bool = True, category_ids=[],
+                     start: datetime = None, finish: datetime = None):
     # select accounts
     user_accounts = db.query(models.Account).join(models.Account.group).filter(
         models.AccountGroup.owner_id == user_id).all()
@@ -176,6 +179,57 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
                 t.recipient_balance = account_balances[t.recipient.id]
     return transactions
 
+def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
+                     start: datetime = None, finish: datetime = None):
+    # select accounts
+    user_accounts = db.query(models.Account).join(models.Account.group).filter(
+        models.AccountGroup.owner_id == user_id).all()
+    user_permissions = db.query(models.ACL).filter(
+        models.ACL.user_id == user_id).all()
+    accounts = user_accounts + \
+        [a for p in user_permissions for a in p.group.accounts]
+    for group in [a.group for a in accounts]:
+        group.current_user_id = user_id
+    for account in accounts:
+        account.balance = account.start_balance
+
+    if not any(account_ids):
+        account_ids = [a.id for a in accounts if (
+            a.group.is_owner or a.group.is_coowner or a.group.is_shared) and (shared or not a.group.is_shared)]
+
+    account_currencies = dict((a.id, a.currency) for a in accounts)
+    currencies = set(a.currency  for a in accounts if a.id in account_ids)
+    result = dict((c, Summary(currency=c, debit=0, credit=0, transfers_debit=0, transfers_credit=0)) for c in currencies)
+    print(account_currencies.keys())
+    print(account_ids)
+
+    # get transactions
+    query = db.query(models.Transaction.account_id, models.Transaction.recipient_id,
+                     label('debit', func.sum(models.Transaction.debit)), label('credit', func.sum(models.Transaction.credit))) \
+        .filter(or_(models.Transaction.account_id.in_(account_ids), models.Transaction.recipient_id.in_(account_ids)))
+    if start:
+        query = query.filter(models.Transaction.opdate >= start)
+    if finish:
+        query = query.filter(models.Transaction.opdate <= finish)
+    balances = query.group_by(models.Transaction.account_id, models.Transaction.recipient_id).all()
+    for b in balances:
+        if b.account_id in account_ids:
+            acurrency = account_currencies[b.account_id]
+            if b.recipient_id in account_currencies.keys():
+                if b.recipient_id not in account_ids:
+                    rcurrency = account_currencies[b.recipient_id]
+                    result[rcurrency].transfers_debit += b.credit
+            else:
+                result[acurrency].debit += b.debit
+        if b.recipient_id in account_ids:
+            rcurrency = account_currencies[b.recipient_id]
+            if b.account_id in account_currencies.keys():
+                if b.account_id not in account_ids:
+                    acurrency = account_currencies[b.account_id]
+                    result[acurrency].transfers_credit += b.debit
+            else:
+                result[rcurrency].credit += b.credit
+    return list(result.values())
 
 def get_transaction(db: Session, user_id: int, id: int):
     transaction = db.query(models.Transaction).get(id)
