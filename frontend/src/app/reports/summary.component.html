@@ -1,0 +1,8 @@
+<div class="t-row" *ngFor="let s of summary$ | async; let i = index">
+    <div class="t-left"><ng-template [ngIf]="i==0">Expenses</ng-template></div>
+    <div class="t-right">{{s.debit | currency:s.currency}}</div>
+</div>
+<div class="t-row" *ngFor="let s of summary$ | async; let i = index">
+    <div class="t-left"><ng-template [ngIf]="i==0">Income</ng-template></div>
+    <div class="t-right">{{s.credit | currency:s.currency}}</div>
+</div>

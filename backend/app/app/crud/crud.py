@@ -200,8 +200,6 @@ def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
     account_currencies = dict((a.id, a.currency) for a in accounts)
     currencies = set(a.currency  for a in accounts if a.id in account_ids)
     result = dict((c, Summary(currency=c, debit=0, credit=0, transfers_debit=0, transfers_credit=0)) for c in currencies)
-    print(account_currencies.keys())
-    print(account_ids)
 
     # get transactions
     query = db.query(models.Transaction.account_id, models.Transaction.recipient_id,
@@ -218,7 +216,8 @@ def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
             if b.recipient_id in account_currencies.keys():
                 if b.recipient_id not in account_ids:
                     rcurrency = account_currencies[b.recipient_id]
-                    result[rcurrency].transfers_debit += b.credit
+                    if  rcurrency in result.keys():
+                        result[rcurrency].transfers_debit += b.credit
             else:
                 result[acurrency].debit += b.debit
         if b.recipient_id in account_ids:
@@ -226,7 +225,8 @@ def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
             if b.account_id in account_currencies.keys():
                 if b.account_id not in account_ids:
                     acurrency = account_currencies[b.account_id]
-                    result[acurrency].transfers_credit += b.debit
+                    if  acurrency in result.keys():
+                        result[acurrency].transfers_credit += b.debit
             else:
                 result[rcurrency].credit += b.credit
     return list(result.values())
