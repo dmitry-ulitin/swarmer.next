@@ -16,6 +16,7 @@ import { AccountDialogComponent } from './account-dlg/account-dlg.component';
 import { InputFileDlgComponent } from '../import/input-file-dlg.component';
 import { ImportDlgComponent } from '../import/import-dlg.component';
 import * as moment from 'moment';
+import { Summary } from '../models/summary';
 
 export interface TransactionView extends Transaction {
     name: string;
@@ -55,6 +56,10 @@ export class GetTransactions {
     static readonly type = '[Acc] Get Transactions';
 }
 
+export class GetSummary {
+    static readonly type = '[Acc] Get Summary';
+}
+
 export class SelectTransaction {
     static readonly type = '[Acc] Select Transaction';
     constructor(public id: number) { }
@@ -91,6 +96,7 @@ export interface AccStateModel {
     transactions: TransactionView[];
     transaction_id: number | null;
     categories: Category[];
+    summary: Summary[];
 }
 
 @State<AccStateModel>({
@@ -101,7 +107,8 @@ export interface AccStateModel {
         accounts: [],
         transactions: [],
         transaction_id: null,
-        categories: []
+        categories: [],
+        summary: []
     }
 })
 
@@ -153,7 +160,7 @@ export class AccState {
     }
 
     ngxsOnInit(ctx: StateContext<AccState>) {
-        ctx.dispatch([new GetGroups(), new GetTransactions(), new GetCategories()]);
+        ctx.dispatch([new GetGroups(), new GetTransactions(), new GetCategories(), new GetSummary()]);
     }
 
     @Action([AppLoginSuccess, GetGroups], { cancelUncompleted: true })
@@ -267,10 +274,23 @@ export class AccState {
         }
     }
 
+
+    @Action([AppLoginSuccess, GetSummary], { cancelUncompleted: true })
+    async getSummary(cxt: StateContext<AccStateModel>) {
+        try {
+            const state = cxt.getState();
+            const summary = await firstValueFrom(this.api.getSummary(state.accounts));
+            cxt.patchState({ summary });
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
     @Action(SelectAccounts)
     selectAccounts(cxt: StateContext<AccStateModel>, action: SelectAccounts) {
         cxt.patchState({ accounts: action.accounts });
         cxt.dispatch(new GetTransactions());
+        cxt.dispatch(new GetSummary());
     }
 
     @Action(EditTransaction)

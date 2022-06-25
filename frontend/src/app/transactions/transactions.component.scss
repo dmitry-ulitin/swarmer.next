@@ -22,6 +22,14 @@ div.active>div {
 }
 
 .t-left {
+    display: block;
+    max-width: 23rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.t-fill {
     flex: 1;
 }
 

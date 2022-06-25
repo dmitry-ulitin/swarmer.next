@@ -1,0 +1,14 @@
+<div class="t-row" *ngFor="let s of summary$ | async; let i = index">
+    <div class="t-left"><ng-template [ngIf]="i==0">Expenses</ng-template></div>
+    <div class="t-right debit">{{s.debit | currency:s.currency}}</div>
+</div>
+<div class="t-row" *ngFor="let s of summary$ | async; let i = index">
+    <div class="t-left"><ng-template [ngIf]="i==0">Income</ng-template></div>
+    <div class="t-right credit">{{s.credit | currency:s.currency}}</div>
+</div>
+<div class="t-row" *ngFor="let s of summary$ | async; let i = index">
+    <ng-template [ngIf]="s.transfers_credit-s.transfers_debit">
+        <div class="t-left"><ng-template [ngIf]="i==0">Transfers</ng-template></div>
+        <div class="t-right" [class.credit]="s.transfers_credit>s.transfers_debit" [class.debit]="s.transfers_credit<s.transfers_debit">{{(s.transfers_credit-s.transfers_debit) | currency:s.currency}}</div>
+    </ng-template>
+</div>

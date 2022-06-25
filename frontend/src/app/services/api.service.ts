@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Category } from '../models/category';
 import { Group } from '../models/group';
+import { Summary } from '../models/summary';
 import { Transaction, TransactionImport } from '../models/transaction';
 
 @Injectable({
@@ -32,6 +33,12 @@ export class ApiService {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     return this.http.get<Transaction[]>('/api/transactions/', {params: params});
+  }
+
+  getSummary(accounts: number[]): Observable<Summary[]> {
+    let params = new HttpParams();
+    params = params.set('accounts', accounts.join(","));
+    return this.http.get<Summary[]>('/api/transactions/summary', {params: params});
   }
 
   getTransaction(id: number): Observable<Transaction> {

@@ -54,6 +54,12 @@ def get_transactions(skip: int = 0, limit: int = 0, accounts: str = '', db: Sess
     transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a])
     return transactions
 
+@app.get("/api/transactions/summary", response_model=List[schemas.Summary])
+def get_summary(accounts: str = '', db: Session = Depends(get_db)):
+    user_id = 2
+    summary = crud.get_summary(db, user_id, [int(a) for a in accounts.split(',') if a])
+    return summary
+
 @app.get("/api/transactions/{id}", response_model=schemas.Transaction)
 def get_transaction(id: int, db: Session = Depends(get_db)):
     user_id = 2
@@ -83,6 +89,12 @@ def import_transactions(file: UploadFile, id: int = Form(...), db: Session = Dep
 def create_transactions(transactions: List[schemas.TransactionImport], db: Session = Depends(get_db)):
     user_id = 2
     crud.create_transactions(db=db, user_id=user_id, transactions=transactions)
+
+@app.get("/api/transactions/summary", response_model=List[schemas.Summary])
+def get_summary(accounts: str = '', db: Session = Depends(get_db)):
+    user_id = 2
+    summary = crud.get_summary(db, user_id, [int(a) for a in accounts.split(',') if a])
+    return summary
 
 @app.get("/api/categories/", response_model=List[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):
