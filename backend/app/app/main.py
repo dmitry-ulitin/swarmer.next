@@ -81,9 +81,9 @@ def delete_transaction(id: int, db: Session = Depends(get_db)):
     crud.delete_transaction(db, user_id, id)
 
 @app.post("/api/import", response_model=List[schemas.TransactionImport])
-def import_transactions(file: UploadFile, id: int = Form(...), db: Session = Depends(get_db)):
+def import_transactions(file: UploadFile, id: int = Form(...), bank: int = Form(...), db: Session = Depends(get_db)):
     user_id = 2
-    return crud.import_transactions(db, user_id, id, file)
+    return crud.import_transactions(db, user_id, id, bank, file)
 
 @app.patch("/api/import", status_code=204, response_class=Response)
 def create_transactions(transactions: List[schemas.TransactionImport], db: Session = Depends(get_db)):
