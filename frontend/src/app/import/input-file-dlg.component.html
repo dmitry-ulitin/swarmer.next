@@ -1,25 +1,19 @@
-<tui-input-files
-    *ngIf="!control.value"
-    accept=".csv, .txt"
-    [formControl]="control"
-    (reject)="onReject($event)"
-></tui-input-files>
- 
+<tui-select tuiTextfieldSize="m" [formControl]="bank" [valueContent]="bankContent" class="tui-space_bottom-2">
+    Bank
+    <tui-data-list-wrapper *tuiDataList [items]="banks" [itemContent]="bankContent"></tui-data-list-wrapper>
+</tui-select>
+
+<tui-input-files *ngIf="!files.value" accept=".csv, .txt" [formControl]="files" (reject)="onReject($event)">
+</tui-input-files>
+
 <tui-files class="tui-space_top-1">
-    <tui-file
-        *ngIf="control.valueChanges | async as file"
-        [file]="file"
-        (removed)="removeFile()"
-    ></tui-file>
- 
-    <tui-file
-        *ngIf="rejectedFiles$ | async as file"
-        state="error"
-        [file]="file"
-        (removed)="clearRejected()"
-    ></tui-file>
+    <tui-file *ngIf="files.valueChanges | async as file" [file]="file" (removed)="removeFile()"></tui-file>
+
+    <tui-file *ngIf="rejectedFiles$ | async as file" state="error" [file]="file" (removed)="clearRejected()"></tui-file>
 </tui-files>
 <div class="footer">
-    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()" [disabled]="!control.value">Next</button>
+    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onNext()"
+        [disabled]="!files.value">Next</button>
     <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
 </div>
+<ng-template #bankContent let-bank>{{bank.name}}</ng-template>
