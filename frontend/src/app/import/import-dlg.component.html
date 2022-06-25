@@ -14,7 +14,7 @@
             <tbody tuiTbody [data]="data">
                 <tr *tuiRow="let item of data; let index = index" tuiTr [class.credit]="item.type == 1"
                     [class.debit]="item.type == 2">
-                    <td *tuiCell="'selected'" tuiTd><input type="checkbox" [checked]="item.selected"></td>
+                    <td *tuiCell="'selected'" tuiTd><input type="checkbox" [checked]="item.selected" (change)="onCheck($event, index)"></td>
                     <td *tuiCell="'date'" tuiTd>{{item.opdate | date: 'dd/MM/yyyy'}}</td>
                     <td *tuiCell="'amount'" tuiTd class="number">{{item.debit | currency: item.currency}}</td>
                     <td *tuiCell="'category'" tuiTd>

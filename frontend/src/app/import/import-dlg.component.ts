@@ -33,6 +33,10 @@ export class ImportDlgComponent {
     });
   }
 
+  onCheck(event: any, index: number) {
+    this.data[index].selected = event.target?.checked;
+  }
+
   onNext() {
     this.data.forEach((t, index) => t.category = this.category(index).value);
     this.context.completeWith(this.data);
