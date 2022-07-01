@@ -384,11 +384,11 @@ export class AccState {
         try {
             const state = cxt.getState();
             const id = action.id || state.accounts[0];
-            const file = await firstValueFrom(this.dialogService.open<File>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
-            if (!file) {
+            const value = await firstValueFrom(this.dialogService.open<{bank: number, file:File}>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
+            if (!value) {
                 return;
             }
-            let transactions = await firstValueFrom(this.api.importTransactions(id, file));
+            let transactions = await firstValueFrom(this.api.importTransactions(id, value.bank, value.file));
             transactions = await firstValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
             if (transactions) {
                 await firstValueFrom(this.api.saveTransactions(transactions));

@@ -11,10 +11,12 @@ import { Subject } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputFileDlgComponent {
-  readonly control = new UntypedFormControl();
+  readonly banks = [{id:1, name: 'LHV'}, {id:2, name: 'Tinkoff'}, {id:3, name: 'Альфа-Банк'}];
+  readonly files = new UntypedFormControl();
+  readonly bank = new UntypedFormControl(this.banks[0]);
   readonly rejectedFiles$ = new Subject<TuiFileLike | null>();
 
-  constructor(@Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<TuiFileLike | null, undefined>) {
+  constructor(@Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<{bank: number,file:TuiFileLike} | null, undefined>) {
   }
 
   onReject(file: TuiFileLike | readonly TuiFileLike[]): void {
@@ -22,7 +24,7 @@ export class InputFileDlgComponent {
   }
 
   removeFile(): void {
-      this.control.setValue(null);
+      this.files.setValue(null);
   }
 
   clearRejected(): void {
@@ -30,7 +32,7 @@ export class InputFileDlgComponent {
   }
 
   onNext() {
-    this.context.completeWith(this.control.value);
+    this.context.completeWith({bank: this.bank.value.id, file: this.files.value});
   }
 
   onCancel() {

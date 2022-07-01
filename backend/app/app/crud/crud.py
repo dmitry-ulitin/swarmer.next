@@ -316,7 +316,15 @@ def delete_transaction(db: Session, user_id: int, transaction_id: int):
     db.commit()
 
 
-def import_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
+def import_transactions(db: Session, user_id: int, account_id: int, bank_id: int, file: UploadFile):
+    transactions = []
+    if bank_id == 1:
+        transactions = import_lhv_transactions(db, user_id, account_id, file)
+    elif bank_id == 2:
+        transactions = import_tinkoff_transactions(db, user_id, account_id, file)
+    return transactions
+
+def import_lhv_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
     data = pd.read_csv(file.file)
     data = data.iloc[:, [2, 8, 13, 7, 11, 4]]
     data.columns = ['opdate', 'debit', 'currency', 'type', 'details', 'party']
@@ -325,6 +333,21 @@ def import_transactions(db: Session, user_id: int, account_id: int, file: Upload
     data['credit'] = data['debit']
     data['type'] = data['type'].apply(
         lambda x: models.Category.EXPENSE if x == 'D' else models.Category.INCOME)
+    data = data.iloc[::-1]
+    print(data)
+    return reconcile_transactions(db, user_id, account_id, data)
+
+def import_tinkoff_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
+    data = pd.read_csv(file.file, sep=';', encoding='cp1251', decimal=",")
+    data = data.iloc[:, [0, 4, 5, 4, 9, 11]]
+    data.columns = ['opdate', 'debit', 'currency', 'type', 'details', 'party']
+    data['opdate'] = pd.to_datetime(data['opdate'], format='%d.%m.%Y %H:%M:%S')
+    data['debit'] = pd.to_numeric(data['debit'])
+    data['type'] = pd.to_numeric(data['type'])
+    data['type'] = data['type'].apply(
+        lambda x: models.Category.EXPENSE if x < 0 else models.Category.INCOME)
+    data['debit'] = data['debit'].abs()
+    data['credit'] = data['debit']
     print(data)
     return reconcile_transactions(db, user_id, account_id, data)
 
@@ -340,8 +363,8 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
     rules = db.query(models.Rule).filter(models.Rule.owner_id == user_id).all()
     # load transactions
     query = db.query(models.Transaction).filter(or_(models.Transaction.account_id == account_id, models.Transaction.recipient_id == account_id)) \
-        .filter(models.Transaction.opdate >= df.iloc[0]['opdate']) \
-        .order_by(models.Transaction.opdate.desc(), models.Transaction.id.desc())
+        .filter(models.Transaction.opdate >= df.iloc[-1]['opdate'].date()) \
+        .order_by(models.Transaction.opdate, models.Transaction.id)
     db_trx = pd.read_sql(query.statement, db.bind)
     db_trx['opdate'] = db_trx['opdate'].apply(lambda opdate: opdate.date())
     print(db_trx)
@@ -354,7 +377,7 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
     for i, row in df.iterrows():
         row['account'] = acc if row['type'] == models.Category.EXPENSE else None
         row['recipient'] = acc if row['type'] == models.Category.INCOME else None
-        stored = db_trx.loc[(not db_trx['id'].empty) & (db_trx['opdate'] == row['opdate']) & ((db_trx['account_id'] == account_id) & (
+        stored = db_trx.loc[(not db_trx['id'].empty) & (db_trx['opdate'] == row['opdate'].date()) & ((db_trx['account_id'] == account_id) & (
             db_trx['debit'] == row['debit']) | (db_trx['recipient_id'] == account_id) & (db_trx['credit'] == row['credit']))]
         if not stored.empty:
             row['id'] = stored.iloc[0]['id']
