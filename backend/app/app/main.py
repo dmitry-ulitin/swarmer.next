@@ -49,9 +49,9 @@ def delete_group(id: int, db: Session = Depends(get_db)):
     crud.delete_group(db, user_id, id)
 
 @app.get("/api/transactions/", response_model=List[schemas.Transaction])
-def get_transactions(skip: int = 0, limit: int = 0, accounts: str = '', db: Session = Depends(get_db)):
+def get_transactions(skip: int = 0, limit: int = 0, accounts: str = '', search: str = '', db: Session = Depends(get_db)):
     user_id = 2
-    transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a])
+    transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a], True, [], search)
     return transactions
 
 @app.get("/api/transactions/summary", response_model=List[schemas.Summary])

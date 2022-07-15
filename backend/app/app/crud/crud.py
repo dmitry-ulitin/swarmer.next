@@ -1,7 +1,5 @@
 from datetime import datetime
-from locale import currency
 from typing import List
-from unittest import result
 from app.schemas.statistics import Summary
 from fastapi import UploadFile
 from sqlalchemy import func, or_, and_
@@ -113,7 +111,7 @@ def delete_group(db: Session, user_id: int, id: int):
 
 
 def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
-                     account_ids=[], shared: bool = True, category_ids=[],
+                     account_ids=[], shared: bool = True, category_ids=[], search="",
                      start: datetime = None, finish: datetime = None):
     # select accounts
     user_accounts = db.query(models.Account).join(models.Account.group).filter(
@@ -132,11 +130,16 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
             a.group.is_owner or a.group.is_coowner or a.group.is_shared) and (shared or not a.group.is_shared)]
 
     # get transactions
-    query = db.query(models.Transaction)
+    query = db.query(models.Transaction).join(models.Transaction.category, isouter = True)
     if start:
         query = query.filter(models.Transaction.opdate >= start)
     if finish:
         query = query.filter(models.Transaction.opdate <= finish)
+
+    if search:
+        query = query.filter(or_(models.Transaction.details.ilike('%' + search + '%'), models.Transaction.party.ilike(
+            '%' + search + '%'), models.Category.name.ilike(
+            '%' + search + '%')))
     if category_ids == [0]:
         query = query.filter(models.Transaction.account_id.isnot(None)).filter(
             models.Transaction.recipient_id.isnot(None))
@@ -156,7 +159,8 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
         query = query.offset(skip)
 
     transactions = query.all()
-    if not category_ids:
+    account_balances = {}
+    if not category_ids and not search:
         account_balances = dict((a.id, a.start_balance)
                                 for a in accounts if a.id in account_ids)
         # get balances for all previous transactions
@@ -167,20 +171,27 @@ def get_transactions(db: Session, user_id: int, skip: int = 0, limit: int = 0,
                                         list(filter(lambda b: b.account_id == id, balances)))))
             account_balances[id] += sum(list(map(lambda b: b.debit,
                                         list(filter(lambda b: b.recipient_id == id, balances)))))
-        # set balances to transactions
-        for t in transactions[::-1]:
-            if t.account and t.account.id in account_balances:
+    # set balances to transactions
+    for t in transactions[::-1]:
+        if t.account:
+            t.account.balance = t.account.start_balance
+            t.account.group.current_user_id = user_id
+            if t.account.id in account_balances:
                 account_balances[t.account.id] -= t.debit
                 t.account.balance = account_balances[t.account.id]
                 t.account_balance = account_balances[t.account.id]
-            if t.recipient and t.recipient.id in account_balances:
+        if t.recipient:
+            t.recipient.balance = t.recipient.start_balance
+            t.recipient.group.current_user_id = user_id
+            if t.recipient.id in account_balances:
                 account_balances[t.recipient.id] += t.credit
                 t.recipient.balance = account_balances[t.recipient.id]
                 t.recipient_balance = account_balances[t.recipient.id]
     return transactions
 
+
 def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
-                     start: datetime = None, finish: datetime = None):
+                start: datetime = None, finish: datetime = None):
     # select accounts
     user_accounts = db.query(models.Account).join(models.Account.group).filter(
         models.AccountGroup.owner_id == user_id).all()
@@ -198,8 +209,9 @@ def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
             a.group.is_owner or a.group.is_coowner or a.group.is_shared) and (shared or not a.group.is_shared)]
 
     account_currencies = dict((a.id, a.currency) for a in accounts)
-    currencies = set(a.currency  for a in accounts if a.id in account_ids)
-    result = dict((c, Summary(currency=c, debit=0, credit=0, transfers_debit=0, transfers_credit=0)) for c in currencies)
+    currencies = set(a.currency for a in accounts if a.id in account_ids)
+    result = dict((c, Summary(currency=c, debit=0, credit=0,
+                  transfers_debit=0, transfers_credit=0)) for c in currencies)
 
     # get transactions
     query = db.query(models.Transaction.account_id, models.Transaction.recipient_id,
@@ -209,14 +221,15 @@ def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
         query = query.filter(models.Transaction.opdate >= start)
     if finish:
         query = query.filter(models.Transaction.opdate <= finish)
-    balances = query.group_by(models.Transaction.account_id, models.Transaction.recipient_id).all()
+    balances = query.group_by(
+        models.Transaction.account_id, models.Transaction.recipient_id).all()
     for b in balances:
         if b.account_id in account_ids:
             acurrency = account_currencies[b.account_id]
             if b.recipient_id in account_currencies.keys():
                 if b.recipient_id not in account_ids:
                     rcurrency = account_currencies[b.recipient_id]
-                    if  rcurrency in result.keys():
+                    if rcurrency in result.keys():
                         result[rcurrency].transfers_debit += b.credit
             else:
                 result[acurrency].debit += b.debit
@@ -225,11 +238,12 @@ def get_summary(db: Session, user_id: int, account_ids=[], shared: bool = True,
             if b.account_id in account_currencies.keys():
                 if b.account_id not in account_ids:
                     acurrency = account_currencies[b.account_id]
-                    if  acurrency in result.keys():
+                    if acurrency in result.keys():
                         result[acurrency].transfers_credit += b.debit
             else:
                 result[rcurrency].credit += b.credit
     return list(result.values())
+
 
 def get_transaction(db: Session, user_id: int, id: int):
     transaction = db.query(models.Transaction).get(id)
@@ -268,9 +282,11 @@ def create_transaction(db: Session, user_id: int, transaction: schemas.Transacti
     db.add(db_transaction)
     # update corrections
     if transaction.account:
-        update_corrections(db, transaction.account.id, transaction.debit, transaction.opdate)
+        update_corrections(db, transaction.account.id,
+                           transaction.debit, transaction.opdate)
     if transaction.recipient:
-        update_corrections(db, transaction.recipient.id, -transaction.credit, transaction.opdate)
+        update_corrections(db, transaction.recipient.id, -
+                           transaction.credit, transaction.opdate)
 
     db.commit()
     db.refresh(db_transaction)
@@ -281,25 +297,29 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
     db_transaction = db.query(models.Transaction).get(transaction.id)
 
     if db_transaction.account:
-        update_corrections(db, db_transaction.account.id, -db_transaction.debit, db_transaction.opdate, transaction.id, False)
+        update_corrections(db, db_transaction.account.id, -db_transaction.debit,
+                           db_transaction.opdate, transaction.id, False)
     if db_transaction.recipient:
-        update_corrections(db, db_transaction.recipient.id, db_transaction.credit, db_transaction.opdate, transaction.id, False)
+        update_corrections(db, db_transaction.recipient.id, db_transaction.credit,
+                           db_transaction.opdate, transaction.id, False)
 
-    db_transaction.owner_id=user_id
-    db_transaction.opdate=transaction.opdate
-    db_transaction.details=transaction.details
-    db_transaction.party=transaction.party
-    db_transaction.currency=transaction.currency
-    db_transaction.category_id=transaction.category.id if transaction.category else None
-    db_transaction.account_id=transaction.account.id if transaction.account else None
-    db_transaction.recipient_id=transaction.recipient.id if transaction.recipient else None
-    db_transaction.credit=transaction.credit
-    db_transaction.debit=transaction.debit
+    db_transaction.owner_id = user_id
+    db_transaction.opdate = transaction.opdate
+    db_transaction.details = transaction.details
+    db_transaction.party = transaction.party
+    db_transaction.currency = transaction.currency
+    db_transaction.category_id = transaction.category.id if transaction.category else None
+    db_transaction.account_id = transaction.account.id if transaction.account else None
+    db_transaction.recipient_id = transaction.recipient.id if transaction.recipient else None
+    db_transaction.credit = transaction.credit
+    db_transaction.debit = transaction.debit
 
     if transaction.account:
-        update_corrections(db, transaction.account.id, transaction.debit, transaction.opdate, transaction.id)
+        update_corrections(db, transaction.account.id,
+                           transaction.debit, transaction.opdate, transaction.id)
     if transaction.recipient:
-        update_corrections(db, transaction.recipient.id, -transaction.credit, transaction.opdate, transaction.id)
+        update_corrections(db, transaction.recipient.id, -
+                           transaction.credit, transaction.opdate, transaction.id)
 
     db.commit()
     return get_transaction(db, user_id, db_transaction.id)
@@ -308,9 +328,11 @@ def update_transaction(db: Session, user_id: int, transaction: schemas.Transacti
 def delete_transaction(db: Session, user_id: int, transaction_id: int):
     transaction = db.query(models.Transaction).get(transaction_id)
     if transaction.account:
-        update_corrections(db, transaction.account.id, -transaction.debit, transaction.opdate, transaction_id)
+        update_corrections(db, transaction.account.id, -
+                           transaction.debit, transaction.opdate, transaction_id)
     if transaction.recipient:
-        update_corrections(db, transaction.recipient.id, transaction.credit, transaction.opdate, transaction_id)
+        update_corrections(db, transaction.recipient.id,
+                           transaction.credit, transaction.opdate, transaction_id)
     db.query(models.Transaction).filter(
         models.Transaction.id == transaction_id).delete()
     db.commit()
@@ -321,8 +343,10 @@ def import_transactions(db: Session, user_id: int, account_id: int, bank_id: int
     if bank_id == 1:
         transactions = import_lhv_transactions(db, user_id, account_id, file)
     elif bank_id == 2:
-        transactions = import_tinkoff_transactions(db, user_id, account_id, file)
+        transactions = import_tinkoff_transactions(
+            db, user_id, account_id, file)
     return transactions
+
 
 def import_lhv_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
     data = pd.read_csv(file.file)
@@ -336,6 +360,7 @@ def import_lhv_transactions(db: Session, user_id: int, account_id: int, file: Up
     data = data.iloc[::-1]
     print(data)
     return reconcile_transactions(db, user_id, account_id, data)
+
 
 def import_tinkoff_transactions(db: Session, user_id: int, account_id: int, file: UploadFile):
     data = pd.read_csv(file.file, sep=';', encoding='cp1251', decimal=",")
@@ -384,9 +409,11 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
             row['selected'] = False
             stored.iloc[0]['id'] = None
         transaction = schemas.TransactionImport(**row)
-        matches = [r for r in rules if r.transaction_type == transaction.type and r.condition_type == models.Rule.PARTY_EQUALS and r.condition_value == transaction.party]
+        matches = [r for r in rules if r.transaction_type == transaction.type and r.condition_type ==
+                   models.Rule.PARTY_EQUALS and r.condition_value == transaction.party]
         if not matches:
-            matches = [r for r in rules if r.transaction_type == transaction.type and r.condition_type == models.Rule.PARTY_CONTAINS and transaction.party and str(transaction.party).lower().find(r.condition_value.lower()) != -1]
+            matches = [r for r in rules if r.transaction_type == transaction.type and r.condition_type ==
+                       models.Rule.PARTY_CONTAINS and transaction.party and str(transaction.party).lower().find(r.condition_value.lower()) != -1]
         if matches:
             transaction.category = matches[0].category
         transactions.append(transaction)
@@ -414,10 +441,13 @@ def create_transactions(db: Session, user_id: int, transactions: List[schemas.Tr
         db.add(db_transaction)
         # update corrections
         if transaction.account:
-            update_corrections(db, transaction.account.id, transaction.debit, transaction.opdate)
+            update_corrections(db, transaction.account.id,
+                               transaction.debit, transaction.opdate)
         if transaction.recipient:
-            update_corrections(db, transaction.recipient.id, -transaction.credit, transaction.opdate)
+            update_corrections(db, transaction.recipient.id, -
+                               transaction.credit, transaction.opdate)
     db.commit()
+
 
 def get_user_categories(db: Session, user_id: int):
     a_au = [au.group.owner_id for au in db.query(
@@ -438,6 +468,7 @@ def get_user_categories(db: Session, user_id: int):
         categories.append(c)
         p = c
     return categories
+
 
 def update_corrections(db: Session, aid, correction, opdate, tid=None, delete_zeros=True):
     query = db.query(models.Transaction).filter(or_(models.Transaction.account_id == aid, models.Transaction.recipient_id == aid)).filter(
