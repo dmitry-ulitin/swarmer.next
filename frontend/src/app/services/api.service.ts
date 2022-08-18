@@ -14,7 +14,7 @@ export class ApiService {
   constructor(private http: HttpClient) { }
 
   getGroups(): Observable<Group[]> {
-    return this.http.get<Group[]>('/api/groups/');
+    return this.http.get<Group[]>('/api/groups');
   }
 
   getGroup(id: number): Observable<Group> {
@@ -22,7 +22,7 @@ export class ApiService {
   }
 
   saveGroup(group: Group): Observable<Group> {
-    return !!group.id ? this.http.put<Group>('/api/groups/', group) : this.http.post<Group>('/api/groups/', group);
+    return !!group.id ? this.http.put<Group>('/api/groups', group) : this.http.post<Group>('/api/groups', group);
   }
 
   deleteGroup(id: number): Observable<void> {
@@ -33,7 +33,7 @@ export class ApiService {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('search', search);
-    return this.http.get<Transaction[]>('/api/transactions/', {params: params});
+    return this.http.get<Transaction[]>('/api/transactions', {params: params});
   }
 
   getSummary(accounts: number[]): Observable<Summary[]> {
@@ -47,7 +47,7 @@ export class ApiService {
   }
 
   saveTransaction(transaction: Transaction): Observable<Transaction> {
-    return !!transaction.id ? this.http.put<Transaction>('/api/transactions/', transaction) : this.http.post<Transaction>('/api/transactions/', transaction);
+    return !!transaction.id ? this.http.put<Transaction>('/api/transactions', transaction) : this.http.post<Transaction>('/api/transactions', transaction);
   }
 
   deleteTransaction(id: number): Observable<void> {
@@ -67,6 +67,6 @@ export class ApiService {
   }
 
   getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>('/api/categories/');
+    return this.http.get<Category[]>('/api/categories');
   }
 }
