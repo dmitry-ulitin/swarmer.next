@@ -21,7 +21,7 @@ def get_db():
 
 @app.post("/api/login")
 def read_root():
-    return {"access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MzYxMjQ3NjcsIm5iZiI6MTYzNjEyNDc2NywianRpIjoiMmQxMjg5ZGMtNzg5OC00MWYwLWE4MjAtYTRkMjUyZmRiMDk3IiwiaWRlbnRpdHkiOnsiZW1haWwiOiJkbWl0cnkudWxpdGluQGdtYWlsLmNvbSIsIm5hbWUiOiJEbWl0cnkiLCJpZCI6MSwiY3VycmVuY3kiOiJSVUIifSwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIn0.6TY__4KWu-Uwp8xInzMm65-WAbM0gK_CdYnO4PdiypM"}
+    return {"access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJuYXRhLnVsaXRpbmFAZ21haWwuY29tIiwibmFtZSI6Ik5hdGEiLCJjdXJyZW5jeSI6IkVVUiIsImlkIjoyLCJpYXQiOjE2NjA4NzQ1NTF9.EcjeanYh0twKVCHnXIUWI2wFf39uthvOoWSZb7PWwmA"}
 
 @app.get("/api/groups", response_model=List[schemas.AccountGroup])
 def get_groups(db: Session = Depends(get_db)):

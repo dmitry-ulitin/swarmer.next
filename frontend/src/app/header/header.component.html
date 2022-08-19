@@ -30,7 +30,7 @@
     <span *ngIf="isAuthenticated$ | async">
         <tui-hosted-dropdown #userMenu [content]="dropdown" tuiDropdownAlign="left">
             <button tuiButton type="button" appearance="flat" [size]="'s'" [icon]="'tuiIconUser'"
-                [iconRight]="icon">{{(claims$ | async)?.identity.name}}</button>
+                [iconRight]="icon">{{(claims$ | async)?.name}}</button>
         </tui-hosted-dropdown>
         <ng-template #icon>
             <tui-svg src="tuiIconChevronDown" class="icon" [class.icon_rotated]="userMenu.open"></tui-svg>
