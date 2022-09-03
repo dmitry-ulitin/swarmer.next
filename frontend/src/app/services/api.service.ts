@@ -59,11 +59,11 @@ export class ApiService {
     formData.append('file', file, file.name);
     formData.append('id', acc.toString());
     formData.append('bank', bank.toString());
-    return this.http.post<TransactionImport[]>('/api/import', formData);
+    return this.http.post<TransactionImport[]>('/api/transactions/import', formData);
   }
 
   saveTransactions(transactions: TransactionImport[]): Observable<void> {
-    return this.http.patch<void>('/api/import', transactions);
+    return this.http.patch<void>('/api/transactions/import', transactions);
   }
 
   getCategories(): Observable<Category[]> {

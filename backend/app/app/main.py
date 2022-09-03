@@ -80,12 +80,12 @@ def delete_transaction(id: int, db: Session = Depends(get_db)):
     user_id = 2
     crud.delete_transaction(db, user_id, id)
 
-@app.post("/api/import", response_model=List[schemas.TransactionImport])
+@app.post("/api/transactions/import", response_model=List[schemas.TransactionImport])
 def import_transactions(file: UploadFile, id: int = Form(...), bank: int = Form(...), db: Session = Depends(get_db)):
     user_id = 2
     return crud.import_transactions(db, user_id, id, bank, file)
 
-@app.patch("/api/import", status_code=204, response_class=Response)
+@app.patch("/api/transactions/import", status_code=204, response_class=Response)
 def create_transactions(transactions: List[schemas.TransactionImport], db: Session = Depends(get_db)):
     user_id = 2
     crud.create_transactions(db=db, user_id=user_id, transactions=transactions)
