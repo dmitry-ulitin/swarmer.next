@@ -441,10 +441,12 @@ function patchGroupBalance(groups: Group[], account: Account | null | undefined,
 
 function transaction2View(t: Transaction, selected: { [key: number]: boolean }): TransactionView {
     const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
-    const useRecipient = t.recipient && (!t.account_balance || t.recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]));
+    const account_balance = t.account_balance || t.account?.balance;
+    const recipient_balance = t.recipient_balance || t.recipient?.balance;
+    const useRecipient = t.recipient && (!account_balance || recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]));
     const amount = (t.account && !useRecipient) ? { value: t.debit, currency: t.account.currency } : (t.recipient ? { value: t.credit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const acc = useRecipient ? t.recipient : t.account;
-    return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
+    return { ...t, account_balance, recipient_balance, name, amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? recipient_balance : account_balance } };
 }
 
 function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccStateModel>, remove: boolean) {
