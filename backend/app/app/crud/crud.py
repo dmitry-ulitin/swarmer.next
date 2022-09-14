@@ -420,7 +420,7 @@ def reconcile_transactions(db: Session, user_id: int, account_id: int, df: pd.Da
     return transactions
 
 
-def create_transactions(db: Session, user_id: int, transactions: List[schemas.TransactionImport]):
+def create_transactions(db: Session, user_id: int, transactions: List[schemas.TransactionImport], account_id: int):
     for transaction in transactions:
         if transaction.id is not None and not transaction.selected:
             db_transaction = db.query(models.Transaction).get(transaction.id)
@@ -435,17 +435,15 @@ def create_transactions(db: Session, user_id: int, transactions: List[schemas.Tr
                                             party=transaction.party,
                                             currency=transaction.currency,
                                             category_id=transaction.category.id if transaction.category else None,
-                                            account_id=transaction.account.id if transaction.account else None,
-                                            recipient_id=transaction.recipient.id if transaction.recipient else None,
+                                            account_id=account_id if transaction.type  == models.Category.EXPENSE else None,
+                                            recipient_id=account_id if transaction.type  == models.Category.INCOME else None,
                                             credit=transaction.credit, debit=transaction.debit)
         db.add(db_transaction)
         # update corrections
-        if transaction.account:
-            update_corrections(db, transaction.account.id,
-                               transaction.debit, transaction.opdate)
-        if transaction.recipient:
-            update_corrections(db, transaction.recipient.id, -
-                               transaction.credit, transaction.opdate)
+        if transaction.type  == models.Category.EXPENSE:
+            update_corrections(db, account_id, transaction.debit, transaction.opdate)
+        if transaction.type  == models.Category.INCOME:
+            update_corrections(db, account_id, -transaction.credit, transaction.opdate)
     db.commit()
 
 

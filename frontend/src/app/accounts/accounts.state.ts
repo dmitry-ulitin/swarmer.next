@@ -398,7 +398,7 @@ export class AccState {
             let transactions = await firstValueFrom(this.api.importTransactions(id, value.bank, value.file));
             transactions = await firstValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
             if (transactions) {
-                await firstValueFrom(this.api.saveTransactions(transactions));
+                await firstValueFrom(this.api.saveTransactions(id, transactions));
                 cxt.dispatch(new GetGroups());
                 cxt.dispatch(new GetTransactions());
             }

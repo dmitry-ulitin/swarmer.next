@@ -62,8 +62,8 @@ export class ApiService {
     return this.http.post<TransactionImport[]>('/api/transactions/import', formData);
   }
 
-  saveTransactions(transactions: TransactionImport[]): Observable<void> {
-    return this.http.patch<void>('/api/transactions/import', transactions);
+  saveTransactions(acc: number, transactions: TransactionImport[]): Observable<void> {
+    return this.http.patch<void>(`/api/transactions/import?account=${acc}`, transactions);
   }
 
   getCategories(): Observable<Category[]> {

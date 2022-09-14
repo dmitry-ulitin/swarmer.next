@@ -86,9 +86,9 @@ def import_transactions(file: UploadFile, id: int = Form(...), bank: int = Form(
     return crud.import_transactions(db, user_id, id, bank, file)
 
 @app.patch("/api/transactions/import", status_code=204, response_class=Response)
-def create_transactions(transactions: List[schemas.TransactionImport], db: Session = Depends(get_db)):
+def create_transactions(transactions: List[schemas.TransactionImport], account: int, db: Session = Depends(get_db)):
     user_id = 2
-    crud.create_transactions(db=db, user_id=user_id, transactions=transactions)
+    crud.create_transactions(db=db, user_id=user_id, transactions=transactions, account_id=account)
 
 @app.get("/api/transactions/summary", response_model=List[schemas.Summary])
 def get_summary(accounts: str = '', db: Session = Depends(get_db)):
