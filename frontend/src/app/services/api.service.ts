@@ -13,8 +13,8 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  getGroups(): Observable<Group[]> {
-    return this.http.get<Group[]>('/api/groups');
+  getGroups(opdate: string): Observable<Group[]> {
+    return this.http.get<Group[]>(`/api/groups?opdate=${encodeURIComponent(opdate)}`);
   }
 
   getGroup(id: number): Observable<Group> {

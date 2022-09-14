@@ -173,7 +173,7 @@ export class AccState {
     @Action([AppLoginSuccess, GetGroups], { cancelUncompleted: true })
     async getGroups(cxt: StateContext<AccStateModel>) {
         try {
-            const groups = await firstValueFrom(this.api.getGroups());
+            const groups = await firstValueFrom(this.api.getGroups(''));
             cxt.patchState({ groups });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
