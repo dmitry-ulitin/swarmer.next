@@ -1,4 +1,4 @@
-<div class="h-100 overflow-auto">
+<div class="h-100 overflow-auto" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
     <div class="t-content" *ngFor="let t of transactions$ | async" [class.active]="(transactions_id$ | async) === t.id"
          (click)="selectTransaction(t.id)">
         <div class="t-row">

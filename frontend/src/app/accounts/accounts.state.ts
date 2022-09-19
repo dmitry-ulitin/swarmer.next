@@ -18,6 +18,8 @@ import { ImportDlgComponent } from '../import/import-dlg.component';
 import * as moment from 'moment';
 import { Summary } from '../models/summary';
 
+const GET_TRANSACTIONS_LIMIT: number = 100;
+
 export interface TransactionView extends Transaction {
     name: string;
     amount: Amount;
@@ -54,6 +56,10 @@ export class DeleteGroup {
 
 export class GetTransactions {
     static readonly type = '[Acc] Get Transactions';
+}
+
+export class ScrollTransactions {
+    static readonly type = '[Acc] Scroll Transactions';
 }
 
 export class GetSummary {
@@ -103,6 +109,7 @@ export interface AccStateModel {
     categories: Category[];
     search: string;
     summary: Summary[];
+    loaded: boolean;
 }
 
 @State<AccStateModel>({
@@ -115,7 +122,8 @@ export interface AccStateModel {
         transaction_id: null,
         categories: [],
         search: '',
-        summary: []
+        summary: [],
+        loaded: false
     }
 })
 
@@ -271,11 +279,28 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search));
+            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, 0, GET_TRANSACTIONS_LIMIT));
             const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => transaction2View(t, selected));
             const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
-            cxt.patchState({ transactions: tv, transaction_id });
+            cxt.patchState({ transactions: tv, loaded: false, transaction_id });
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action(ScrollTransactions, { cancelUncompleted: true })
+    async scrollTransactions(cxt: StateContext<AccStateModel>) {
+        try {
+            const state = cxt.getState();
+            if (!state.loaded) {
+                const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.transactions.length, GET_TRANSACTIONS_LIMIT));
+                const loaded = transactions.length < GET_TRANSACTIONS_LIMIT;
+                const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
+                const tv = state.transactions.concat(transactions.map(t => transaction2View(t, selected)));
+                const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
+                cxt.patchState({ transactions: tv, loaded, transaction_id });
+            }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
@@ -391,7 +416,7 @@ export class AccState {
         try {
             const state = cxt.getState();
             const id = action.id || state.accounts[0];
-            const value = await firstValueFrom(this.dialogService.open<{bank: number, file:File}>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
+            const value = await firstValueFrom(this.dialogService.open<{ bank: number, file: File }>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
             if (!value) {
                 return;
             }
@@ -458,7 +483,7 @@ function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccS
         const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
         for (let i = index - 1; i >= 0; i--) {
             let patch = 0;
-            const trx = {...transactions[i]};
+            const trx = { ...transactions[i] };
             if (trx.account && trx.account?.id === transaction.account?.id || trx.recipient && trx.recipient?.id === transaction.account?.id) {
                 patch = -transaction.debit;
             }
