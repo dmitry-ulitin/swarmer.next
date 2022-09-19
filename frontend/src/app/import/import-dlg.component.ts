@@ -16,7 +16,7 @@ export class ImportDlgComponent {
   readonly columns = ['selected', 'date', 'amount', 'category', 'party', 'details'];
   data: TransactionImport[] = [];
   categories$ = this.store.select(state => state.acc.categories);
-  readonly matcher = (category: Category, type: TransactionType): boolean => category.root_id == type;
+  readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.root_id == type;
 
   categories!: UntypedFormArray;
   category(index: number) {

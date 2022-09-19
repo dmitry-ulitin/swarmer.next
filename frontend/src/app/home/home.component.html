@@ -1,5 +1,8 @@
-<div class="d-flex h-100 w-100">
-    <app-accounts class="p-2"></app-accounts>
-    <app-transactions class="p-2"></app-transactions>
-    <app-summary class="p-2"></app-summary>
+<div class="d-flex flex-column h-100 w-100">
+    <app-filters></app-filters>
+    <div class="flex-grow-1 d-flex overflow-auto w-100">
+        <app-accounts class="p-2"></app-accounts>
+        <app-transactions class="p-2"></app-transactions>
+        <app-summary class="p-2"></app-summary>
+    </div>
 </div>

@@ -64,14 +64,14 @@ export class TransactionDlgComponent {
       } else if (value.type === TransactionType.Transfer) {
         value.category = null;
       } else if (value.type === TransactionType.Correction) {
-        if (value.debit<0) {
+        if (value.credit<0) {
           value.recipient = null;
-          value.debit = -value.debit;
+          value.credit = -value.credit;
         } else {
           value.recipient = value.account;
           value.account = null;
         }
-        value.credit = value.debit;
+        value.debit = value.credit;
       }
       const transaction = await firstValueFrom(this.api.saveTransaction(value));
       this.context.completeWith(transaction);

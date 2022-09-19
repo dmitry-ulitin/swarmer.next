@@ -2,12 +2,14 @@ import { Component, ChangeDetectionStrategy, forwardRef } from '@angular/core';
 import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDay, TuiDestroyService } from '@taiga-ui/cdk';
-import { map, takeUntil } from 'rxjs';
+import { firstValueFrom, map, takeUntil } from 'rxjs';
 import { AccState } from 'src/app/accounts/accounts.state';
 import { Category } from 'src/app/models/category';
 import { TransactionType } from 'src/app/models/transaction';
 import * as moment from 'moment';
 import { Account } from 'src/app/models/account';
+import { ApiService } from 'src/app/services/api.service';
+import { AppPrintError } from 'src/app/app.state';
 
 @Component({
   selector: 'app-transaction-ctrl',
@@ -50,7 +52,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   accounts: Account[] = this.store.selectSnapshot(AccState.accounts);
   currencies: string[] = this.store.selectSnapshot(AccState.currencies);
   categories: Category[] = this.store.selectSnapshot(state => state.acc.categories);
-  readonly matcher = (category: Category, type: TransactionType): boolean => category.root_id == type;
+  readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.root_id == type;
 
   get convertation(): boolean {
     return this.form.controls['dcurrency'].value !== this.form.controls['ccurrency'].value;
@@ -81,7 +83,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   timePart = '';
-  constructor(private store: Store, destroy$: TuiDestroyService) {
+  constructor(private store: Store, private api: ApiService, destroy$: TuiDestroyService) {
     this.form.controls['account'].valueChanges.pipe(takeUntil(destroy$)).subscribe(account => {
       if (account) {
         this.form.controls['dcurrency'].setValue(account.currency);
@@ -110,21 +112,21 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['ccurrency'].enable();
         this.form.controls['dcurrency'].disable();
         if (!account) {
-          this.form.controls['account'].setValue(recipient, {emitEvent: false});
-          this.form.controls['dcurrency'].setValue(recipient?.currency, {emitEvent: false});
+          this.form.controls['account'].setValue(recipient, { emitEvent: false });
+          this.form.controls['dcurrency'].setValue(recipient?.currency, { emitEvent: false });
         }
         if (category?.root_id !== type) {
-          this.form.controls['category'].setValue(null, {emitEvent: false});
+          this.form.controls['category'].setValue(null, { emitEvent: false });
         }
       } else if (type === TransactionType.Income) {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].enable();
         if (!recipient) {
-          this.form.controls['recipient'].setValue(account, {emitEvent: false});
-          this.form.controls['ccurrency'].setValue(account?.currency, {emitEvent: false});
+          this.form.controls['recipient'].setValue(account, { emitEvent: false });
+          this.form.controls['ccurrency'].setValue(account?.currency, { emitEvent: false });
         }
         if (category?.root_id !== type) {
-          this.form.controls['category'].setValue(null, {emitEvent: false});
+          this.form.controls['category'].setValue(null, { emitEvent: false });
         }
       } else if (type === TransactionType.Correction) {
         this.form.controls['ccurrency'].disable();
@@ -134,28 +136,35 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
         this.form.controls['dcurrency'].disable();
         if (account && (!recipient || account.id === recipient.id)) {
           recipient = this.accounts.find(a => a.id !== account?.id && a.currency === account?.currency);
-          this.form.controls['recipient'].setValue(recipient, {emitEvent: false});
+          this.form.controls['recipient'].setValue(recipient, { emitEvent: false });
         } else if (recipient && (!account || recipient.id === account.id)) {
           account = this.accounts.find(a => a.id !== recipient?.id && a.currency === recipient?.currency);
-          this.form.controls['account'].setValue(account, {emitEvent: false});
+          this.form.controls['account'].setValue(account, { emitEvent: false });
         }
-        this.form.controls['dcurrency'].setValue(account.currency, {emitEvent: false});
-        this.form.controls['ccurrency'].setValue(recipient.currency, {emitEvent: false});
+        this.form.controls['dcurrency'].setValue(account.currency, { emitEvent: false });
+        this.form.controls['ccurrency'].setValue(recipient.currency, { emitEvent: false });
       }
     });
     this.form.controls['debit'].valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
       if (this.type === TransactionType.Correction) {
-        this.form.controls['credit'].setValue(value - this.form.controls['account'].value.balance, {emitEvent: false});
+        this.form.controls['credit'].setValue(value - this.form.controls['account'].value.balance, { emitEvent: false });
       }
     });
     this.form.controls['credit'].valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
       if (this.type === TransactionType.Correction) {
-        this.form.controls['debit'].setValue(this.form.controls['account'].value.balance + (value || 0), {emitEvent: false});
+        this.form.controls['debit'].setValue(this.form.controls['account'].value.balance + (value || 0), { emitEvent: false });
       }
     });
+    this.form.controls['opdate'].valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
+      const date = value ? value.toLocalNativeDate() : new Date();
+      this.onDateValueChanges(moment(date).format('YYYY-MM-DD') + ' ' + this.timePart);
+    });
     this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => {
-      if (!value.recipient || !value.account || value.recipient?.currency === value.account?.currency) {
-        value.credit = value.debit = value.credit || value.debit;
+      if (!this.showDebit) {
+        value.debit = value.credit;
+      }
+      if (!this.showCredit) {
+        value.credit = value.debit;
       }
       value.currency = value.recipient && value.account ? null : (value.recipient?.currency || value.account?.currency);
       const now = new Date();
@@ -171,13 +180,14 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     this.timePart = moment(opdate).format().substring(11);
     const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
     const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
-    const debit = (value.type === TransactionType.Correction ? (value.account_balance || value.recipient_balance || value.account?.balance) : value.debit)  || undefined;
-    const credit = (value.type === TransactionType.Correction && value.account ? -value.credit : value.credit)  || undefined;
+    const debit = (value.type === TransactionType.Correction ? (value.account_balance || value.recipient_balance || value.account?.balance || value.recipient?.balance) : value.debit) || undefined;
+    const credit = (value.type === TransactionType.Correction && value.account ? -value.credit : value.credit) || undefined;
     const category = this.categories.find(c => c.id === value.category?.id) || value.category;
     const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
     const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
     this.form.patchValue({ ...value, credit, debit, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency, category, account, recipient }, { emitEvent: false });
-    this.form.controls['type']?.setValue(value.type, {emitEvent: true});
+    this.form.controls['type']?.setValue(value.type, { emitEvent: true });
+    this.onDateValueChanges(moment(opdate).format('YYYY-MM-DD') + ' ' + this.timePart);
   }
 
   onYesterday(): void {
@@ -192,6 +202,20 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   onTomorrow(): void {
     const opdate: TuiDay = this.form.controls['opdate'].value;
     this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
+  }
+
+  async onDateValueChanges(opdate: string) {
+    console.log(opdate);
+    try {
+      const groups = await firstValueFrom(this.api.getGroups(opdate));
+      this.accounts = groups.filter(g => !g.deleted).reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted);
+      const value = this.form.getRawValue();
+      const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
+      const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
+      this.form.patchValue({account, recipient}, { emitEvent: false });
+    } catch (err) {
+      this.store.dispatch(new AppPrintError(err));
+    }
   }
 
   onChange: any = () => { };

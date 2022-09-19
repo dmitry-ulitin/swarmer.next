@@ -33,6 +33,7 @@ import { InputFileDlgComponent } from './import/input-file-dlg.component';
 import { ImportDlgComponent } from './import/import-dlg.component';
 import { TuiTableModule } from '@taiga-ui/addon-table';
 import { TuiFilterPipeModule } from '@taiga-ui/cdk';
+import { FiltersComponent } from './filters/filters.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -50,7 +51,8 @@ registerLocaleData(localeRu, 'ru');
     ConfirmationDlgComponent,
     InputFileDlgComponent,
     ImportDlgComponent,
-    SummaryComponent
+    SummaryComponent,
+    FiltersComponent
   ],
   imports: [
     BrowserModule,

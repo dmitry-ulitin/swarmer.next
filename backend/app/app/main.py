@@ -19,11 +19,11 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/api/login/")
+@app.post("/api/login")
 def read_root():
-    return {"access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MzYxMjQ3NjcsIm5iZiI6MTYzNjEyNDc2NywianRpIjoiMmQxMjg5ZGMtNzg5OC00MWYwLWE4MjAtYTRkMjUyZmRiMDk3IiwiaWRlbnRpdHkiOnsiZW1haWwiOiJkbWl0cnkudWxpdGluQGdtYWlsLmNvbSIsIm5hbWUiOiJEbWl0cnkiLCJpZCI6MSwiY3VycmVuY3kiOiJSVUIifSwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIn0.6TY__4KWu-Uwp8xInzMm65-WAbM0gK_CdYnO4PdiypM"}
+    return {"access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJuYXRhLnVsaXRpbmFAZ21haWwuY29tIiwibmFtZSI6Ik5hdGEiLCJjdXJyZW5jeSI6IkVVUiIsImlkIjoyLCJpYXQiOjE2NjA4NzQ1NTF9.EcjeanYh0twKVCHnXIUWI2wFf39uthvOoWSZb7PWwmA"}
 
-@app.get("/api/groups/", response_model=List[schemas.AccountGroup])
+@app.get("/api/groups", response_model=List[schemas.AccountGroup])
 def get_groups(db: Session = Depends(get_db)):
     user_id = 2
     return crud.get_groups(db, user_id)
@@ -33,12 +33,12 @@ def get_group(id: int, db: Session = Depends(get_db)):
     user_id = 2
     return crud.get_group(db, user_id, id)
 
-@app.post("/api/groups/", response_model=schemas.AccountGroup)
+@app.post("/api/groups", response_model=schemas.AccountGroup)
 def create_group(group: schemas.AccountGroupCreate, db: Session = Depends(get_db)):
     user_id = 2
     return crud.create_group(db, user_id, group)
 
-@app.put("/api/groups/", response_model=schemas.AccountGroup)
+@app.put("/api/groups", response_model=schemas.AccountGroup)
 def update_group(group: schemas.AccountGroupUpdate, db: Session = Depends(get_db)):
     user_id = 2
     return crud.update_group(db, user_id, group)
@@ -48,10 +48,10 @@ def delete_group(id: int, db: Session = Depends(get_db)):
     user_id = 2
     crud.delete_group(db, user_id, id)
 
-@app.get("/api/transactions/", response_model=List[schemas.Transaction])
-def get_transactions(skip: int = 0, limit: int = 0, accounts: str = '', db: Session = Depends(get_db)):
+@app.get("/api/transactions", response_model=List[schemas.Transaction])
+def get_transactions(skip: int = 0, limit: int = 0, accounts: str = '', search: str = '', db: Session = Depends(get_db)):
     user_id = 2
-    transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a])
+    transactions = crud.get_transactions(db, user_id, skip, limit, [int(a) for a in accounts.split(',') if a], True, [], search)
     return transactions
 
 @app.get("/api/transactions/summary", response_model=List[schemas.Summary])
@@ -65,12 +65,12 @@ def get_transaction(id: int, db: Session = Depends(get_db)):
     user_id = 2
     return crud.get_transaction(db, user_id, id)
 
-@app.post("/api/transactions/", response_model=schemas.Transaction)
+@app.post("/api/transactions", response_model=schemas.Transaction)
 def create_transaction(transaction: schemas.TransactionCreate, db: Session = Depends(get_db)):
     user_id = 2
     return crud.create_transaction(db=db, user_id=user_id, transaction=transaction)
 
-@app.put("/api/transactions/", response_model=schemas.Transaction)
+@app.put("/api/transactions", response_model=schemas.Transaction)
 def update_transaction(transaction: schemas.TransactionUpdate, db: Session = Depends(get_db)):
     user_id = 2
     return crud.update_transaction(db=db, user_id=user_id, transaction=transaction)
@@ -80,15 +80,15 @@ def delete_transaction(id: int, db: Session = Depends(get_db)):
     user_id = 2
     crud.delete_transaction(db, user_id, id)
 
-@app.post("/api/import", response_model=List[schemas.TransactionImport])
+@app.post("/api/transactions/import", response_model=List[schemas.TransactionImport])
 def import_transactions(file: UploadFile, id: int = Form(...), bank: int = Form(...), db: Session = Depends(get_db)):
     user_id = 2
     return crud.import_transactions(db, user_id, id, bank, file)
 
-@app.patch("/api/import", status_code=204, response_class=Response)
-def create_transactions(transactions: List[schemas.TransactionImport], db: Session = Depends(get_db)):
+@app.patch("/api/transactions/import", status_code=204, response_class=Response)
+def create_transactions(transactions: List[schemas.TransactionImport], account: int, db: Session = Depends(get_db)):
     user_id = 2
-    crud.create_transactions(db=db, user_id=user_id, transactions=transactions)
+    crud.create_transactions(db=db, user_id=user_id, transactions=transactions, account_id=account)
 
 @app.get("/api/transactions/summary", response_model=List[schemas.Summary])
 def get_summary(accounts: str = '', db: Session = Depends(get_db)):
@@ -96,7 +96,7 @@ def get_summary(accounts: str = '', db: Session = Depends(get_db)):
     summary = crud.get_summary(db, user_id, [int(a) for a in accounts.split(',') if a])
     return summary
 
-@app.get("/api/categories/", response_model=List[schemas.Category])
+@app.get("/api/categories", response_model=List[schemas.Category])
 def read_categories(db: Session = Depends(get_db)):
     user_id = 2
     categories = crud.get_user_categories(db, user_id)

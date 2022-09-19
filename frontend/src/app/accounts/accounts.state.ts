@@ -89,6 +89,11 @@ export class GetCategories {
     static readonly type = '[Acc] Get Categories';
 }
 
+export class SetSearch {
+    static readonly type = '[Acc] Set Search';
+    constructor(public search: string) { }
+}
+
 export interface AccStateModel {
     groups: Group[];
     expanded: number[];
@@ -96,6 +101,7 @@ export interface AccStateModel {
     transactions: TransactionView[];
     transaction_id: number | null;
     categories: Category[];
+    search: string;
     summary: Summary[];
 }
 
@@ -108,6 +114,7 @@ export interface AccStateModel {
         transactions: [],
         transaction_id: null,
         categories: [],
+        search: '',
         summary: []
     }
 })
@@ -166,7 +173,7 @@ export class AccState {
     @Action([AppLoginSuccess, GetGroups], { cancelUncompleted: true })
     async getGroups(cxt: StateContext<AccStateModel>) {
         try {
-            const groups = await firstValueFrom(this.api.getGroups());
+            const groups = await firstValueFrom(this.api.getGroups(''));
             cxt.patchState({ groups });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -264,7 +271,7 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts));
+            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search));
             const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => transaction2View(t, selected));
             const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
@@ -391,7 +398,7 @@ export class AccState {
             let transactions = await firstValueFrom(this.api.importTransactions(id, value.bank, value.file));
             transactions = await firstValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
             if (transactions) {
-                await firstValueFrom(this.api.saveTransactions(transactions));
+                await firstValueFrom(this.api.saveTransactions(id, transactions));
                 cxt.dispatch(new GetGroups());
                 cxt.dispatch(new GetTransactions());
             }
@@ -408,6 +415,12 @@ export class AccState {
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
+    }
+
+    @Action(SetSearch, { cancelUncompleted: true })
+    setSearch(cxt: StateContext<AccStateModel>, action: SetSearch) {
+        cxt.patchState({ search: action.search });
+        cxt.dispatch(new GetTransactions());
     }
 }
 
@@ -428,10 +441,12 @@ function patchGroupBalance(groups: Group[], account: Account | null | undefined,
 
 function transaction2View(t: Transaction, selected: { [key: number]: boolean }): TransactionView {
     const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
-    const useRecipient = !t.account_balance || t.recipient && t.recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]);
+    const account_balance = t.account_balance || t.account?.balance;
+    const recipient_balance = t.recipient_balance || t.recipient?.balance;
+    const useRecipient = t.recipient && (!account_balance || recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]));
     const amount = (t.account && !useRecipient) ? { value: t.debit, currency: t.account.currency } : (t.recipient ? { value: t.credit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const acc = useRecipient ? t.recipient : t.account;
-    return { ...t, name: name, amount: amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? t.recipient_balance : t.account_balance } };
+    return { ...t, account_balance, recipient_balance, name, amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? recipient_balance : account_balance } };
 }
 
 function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccStateModel>, remove: boolean) {
