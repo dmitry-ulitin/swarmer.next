@@ -29,7 +29,11 @@ export class ImportDlgComponent {
     merge(...this.categories.controls.map((control: AbstractControl, index: number) =>
       control.valueChanges.pipe(map(value => ({ rowIndex: index, data: value })))
     )).subscribe(changes => {
-      this.categories.controls.filter((control: AbstractControl, index: number) => this.data[index].party === this.data[changes.rowIndex].party).forEach(control => control.setValue(changes.data, { emitEvent: false }));
+      if (this.data[changes.rowIndex].party) {
+        this.categories.controls
+          .filter((control: AbstractControl, index: number) => !this.data[index].category && this.data[index].party === this.data[changes.rowIndex].party)
+          .forEach(control => control.setValue(changes.data, { emitEvent: false }));
+      }
     });
   }
 

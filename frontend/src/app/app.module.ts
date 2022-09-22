@@ -34,6 +34,7 @@ import { ImportDlgComponent } from './import/import-dlg.component';
 import { TuiTableModule } from '@taiga-ui/addon-table';
 import { TuiFilterPipeModule } from '@taiga-ui/cdk';
 import { FiltersComponent } from './filters/filters.component';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -60,6 +61,7 @@ registerLocaleData(localeRu, 'ru');
     BrowserAnimationsModule,
     ReactiveFormsModule,
     HttpClientModule,
+    InfiniteScrollModule,
     TuiRootModule,
     TuiModeModule,
     TuiButtonModule,

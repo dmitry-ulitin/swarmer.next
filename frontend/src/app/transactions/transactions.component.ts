@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { SelectTransaction } from '../accounts/accounts.state';
+import { ScrollTransactions, SelectTransaction } from '../accounts/accounts.state';
 
 @Component({
   selector: 'app-transactions',
@@ -16,5 +16,9 @@ export class TransactionsComponent {
 
   selectTransaction(id: number) {
     this.store.dispatch(new SelectTransaction(id));
+  }
+
+  onScroll(): void {
+    this.store.dispatch(new ScrollTransactions());
   }
 }
