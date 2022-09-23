@@ -6,7 +6,7 @@ import { ApiService } from '../services/api.service';
 import { AppLoginSuccess, AppPrintError } from '../app.state';
 import { Transaction, TransactionImport, TransactionType } from '../models/transaction';
 import { Account } from '../models/account';
-import { TuiAlertService, TuiDialogService, TuiNotification, TuiNotificationsService } from '@taiga-ui/core';
+import { TuiAlertService, TuiDialogService, TuiNotification } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { firstValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';

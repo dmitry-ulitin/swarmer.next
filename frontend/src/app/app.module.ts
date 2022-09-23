@@ -21,7 +21,7 @@ import { registerLocaleData } from '@angular/common';
 import { TransactionsComponent } from './transactions/transactions.component';
 import { HomeComponent } from './home/home.component';
 import { SummaryComponent } from './reports/summary.component';
-import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiNotificationsModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule } from '@taiga-ui/core';
+import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiAlertModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule } from '@taiga-ui/core';
 import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule, TuiSelectModule, TuiComboBoxModule, TuiFilterByInputPipeModule, TuiInputDateModule, TuiTextAreaModule, TuiInputFilesModule, TuiFilesModule } from '@taiga-ui/kit';
 import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { TransactionDlgComponent } from './transactions/transaction-dlg/transaction-dlg.component';
@@ -80,7 +80,7 @@ registerLocaleData(localeRu, 'ru');
     TuiDataListModule,
     TuiDataListWrapperModule,
     TuiSvgModule,
-    TuiNotificationsModule,
+    TuiAlertModule,
     TuiGroupModule,
     TuiLinkModule,
     TuiDialogModule,
