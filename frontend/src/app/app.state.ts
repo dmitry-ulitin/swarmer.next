@@ -2,7 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Router } from '@angular/router';
-import { TuiNotificationsService, TuiNotification } from '@taiga-ui/core';
+import { TuiAlertService, TuiNotification } from '@taiga-ui/core';
 
 export class AppLogin {
     static readonly type = '[App] Login';
@@ -41,7 +41,7 @@ export interface AppStateModel {
 })
 @Injectable()
 export class AppState {
-    constructor(private http: HttpClient, private router: Router, private zone: NgZone, private readonly notificationsService: TuiNotificationsService) { }
+    constructor(private http: HttpClient, private router: Router, private zone: NgZone, private readonly alertService: TuiAlertService) { }
 
     @Action(AppLogin, { cancelUncompleted: true })
     async appLogin(cxt: StateContext<AppStateModel>, action: AppLogin) {
@@ -68,14 +68,14 @@ export class AppState {
 
     @Action(AppPrintSuccess)
     appPrintSuccess(action: AppPrintSuccess) {
-        this.zone.run(() => this.notificationsService.show(action.message).subscribe());
+        this.zone.run(() => this.alertService.open(action.message).subscribe());
     }
 
     @Action(AppPrintError)
     appPrintError(cxt: StateContext<AppStateModel>, action: AppPrintError) {
         const statusText: { [id: string]: string } = { 403: 'Forbidden', 500: 'Internal Server Error' };
         const message = statusText[action.error?.status] || action.error?.statusText || action.error?.message || action.error;
-        this.zone.run(() => this.notificationsService.show(message, { status: TuiNotification.Error}).subscribe());
+        this.zone.run(() => this.alertService.open(message, { status: TuiNotification.Error}).subscribe());
     }
 
     @Selector()

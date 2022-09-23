@@ -192,7 +192,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   onYesterday(): void {
     const opdate: TuiDay = this.form.controls['opdate'].value;
-    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, true));
+    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }));
   }
 
   onToday(): void {
@@ -201,7 +201,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   onTomorrow(): void {
     const opdate: TuiDay = this.form.controls['opdate'].value;
-    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }, false));
+    this.form.controls['opdate'].setValue(opdate.append({ day: -1 }));
   }
 
   async onDateValueChanges(opdate: string) {
