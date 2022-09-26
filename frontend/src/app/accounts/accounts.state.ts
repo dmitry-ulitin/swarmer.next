@@ -340,6 +340,9 @@ export class AccState {
                                 this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
                                 patchStateTransactions(transaction, cxt, true);
                                 patchStateTransactions(data, cxt, false);
+                                if (!!data.category &&  cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
+                                    cxt.dispatch(new GetCategories());
+                                }
                             }
                         }
                     });

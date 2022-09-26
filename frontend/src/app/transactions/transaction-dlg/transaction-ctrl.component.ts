@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, forwardRef } from '@angular/core';
-import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR, NG_VALIDATORS, FormControl } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR, NG_VALIDATORS, FormControl, ValidationErrors } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDay, TuiDestroyService } from '@taiga-ui/cdk';
 import { firstValueFrom, map, takeUntil } from 'rxjs';
@@ -226,7 +226,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     this.form.controls['newcategory'].setValue(null);
   }
 
-  validate({ value }: FormControl) {
+  validate({ value }: FormControl): ValidationErrors | null {
     const valid = (!this.showCredit || !!value.credit) && (!this.showDebit || !!value.debit) && (!this.newcategory || !!value.newcategory);
     return { invalid: !valid };
   }

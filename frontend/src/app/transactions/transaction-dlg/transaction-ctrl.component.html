@@ -32,16 +32,16 @@
             {{account.fullname}}
         </ng-template>
     </div>
-    <div class="d-flex" *ngIf="!newcategory">
+    <div class="d-flex" *ngIf="showCategory && !newcategory">
         <tui-select  class="flex-fill" formControlName="category" [valueContent]="categoryValue" [tuiTextfieldSize]="'s'"
-            [tuiTextfieldCleaner]="true" *ngIf="showCategory">
+            [tuiTextfieldCleaner]="true">
             no category
             <tui-data-list-wrapper *tuiDataList [items]="categories | tuiFilter: matcher: type" [itemContent]="categoryContent" [size]="'s'">
             </tui-data-list-wrapper>
         </tui-select>
         <button tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'icon'" (click)="onCreateCategory()"></button>
     </div>
-    <div class="d-flex" *ngIf="newcategory">
+    <div class="d-flex" *ngIf="showCategory && newcategory">
         <tui-input formControlName="newcategory" [tuiTextfieldSize]="'s'" class="flex-fill"></tui-input>
         <button tuiIconButton type="button" icon="tuiIconUndo" [size]="'s'" [appearance]="'icon'" (click)="onCancelCategory()"></button>
     </div>
