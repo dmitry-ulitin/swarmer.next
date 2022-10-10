@@ -89,6 +89,11 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     return this.type === TransactionType.Income || this.type === TransactionType.Expense;
   }
 
+  get categoryParent(): string {
+    const category = this.form.controls['category'].value;
+    return category == null ? '' : (category.fullname + ' / ');
+  }
+
   timePart = '';
   constructor(private store: Store, private api: ApiService, destroy$: TuiDestroyService) {
     this.form.controls['account'].valueChanges.pipe(takeUntil(destroy$)).subscribe(account => {
