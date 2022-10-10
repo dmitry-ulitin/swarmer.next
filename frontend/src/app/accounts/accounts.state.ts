@@ -340,6 +340,9 @@ export class AccState {
                                 this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
                                 patchStateTransactions(transaction, cxt, true);
                                 patchStateTransactions(data, cxt, false);
+                                if (!!data.category &&  cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
+                                    cxt.dispatch(new GetCategories());
+                                }
                             }
                         }
                     });
@@ -393,7 +396,7 @@ export class AccState {
             opdate: moment().format(),
             account: account,
             recipient: recipient,
-            category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, root_id: null } : null,
+            category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, root_id: null, parent_id: null } : null,
             currency: account?.currency || recipient?.currency || 'EUR',
             debit: 0,
             credit: 0,

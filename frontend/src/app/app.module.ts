@@ -21,7 +21,7 @@ import { registerLocaleData } from '@angular/common';
 import { TransactionsComponent } from './transactions/transactions.component';
 import { HomeComponent } from './home/home.component';
 import { SummaryComponent } from './reports/summary.component';
-import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiAlertModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule } from '@taiga-ui/core';
+import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiAlertModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule, TuiPrimitiveTextfieldModule } from '@taiga-ui/core';
 import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule, TuiSelectModule, TuiComboBoxModule, TuiFilterByInputPipeModule, TuiInputDateModule, TuiTextAreaModule, TuiInputFilesModule, TuiFilesModule } from '@taiga-ui/kit';
 import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { TransactionDlgComponent } from './transactions/transaction-dlg/transaction-dlg.component';
@@ -35,6 +35,7 @@ import { TuiTableModule } from '@taiga-ui/addon-table';
 import { TuiFilterPipeModule } from '@taiga-ui/cdk';
 import { FiltersComponent } from './filters/filters.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { CategoryCtrlComponent } from './transactions/transaction-dlg/category-ctrl/category-ctrl.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -53,7 +54,8 @@ registerLocaleData(localeRu, 'ru');
     InputFileDlgComponent,
     ImportDlgComponent,
     SummaryComponent,
-    FiltersComponent
+    FiltersComponent,
+    CategoryCtrlComponent
   ],
   imports: [
     BrowserModule,
@@ -86,7 +88,7 @@ registerLocaleData(localeRu, 'ru');
     TuiDialogModule,
     TuiFilterByInputPipeModule,
     TuiFilterPipeModule,
-
+    TuiPrimitiveTextfieldModule,
     TuiTableModule,
     
     NgxsModule.forRoot([AppState, AccState]),

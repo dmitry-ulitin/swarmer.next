@@ -6,4 +6,5 @@ export interface Category {
     fullname: string;
     level: number;
     root_id: number | null;
+    parent_id: number | null;
 }

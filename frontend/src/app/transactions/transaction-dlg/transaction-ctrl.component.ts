@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, forwardRef } from '@angular/core';
-import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR, NG_VALIDATORS, FormControl, ValidationErrors } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDay, TuiDestroyService } from '@taiga-ui/cdk';
 import { firstValueFrom, map, takeUntil } from 'rxjs';
@@ -22,6 +22,11 @@ import { AppPrintError } from 'src/app/app.state';
       useExisting: forwardRef(() => TransactionCtrlComponent),
       multi: true,
     },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: TransactionCtrlComponent,
+      multi: true
+    },
     TuiDestroyService
   ]
 })
@@ -36,6 +41,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     'debit': new UntypedFormControl(),
     'dcurrency': new UntypedFormControl(),
     'category': new UntypedFormControl(),
+    'newcategory': new UntypedFormControl(),
     'party': new UntypedFormControl(''),
     'details': new UntypedFormControl(''),
     'type': new UntypedFormControl()
@@ -53,6 +59,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   currencies: string[] = this.store.selectSnapshot(AccState.currencies);
   categories: Category[] = this.store.selectSnapshot(state => state.acc.categories);
   readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.root_id == type;
+  newcategory = false;
 
   get convertation(): boolean {
     return this.form.controls['dcurrency'].value !== this.form.controls['ccurrency'].value;
@@ -80,6 +87,11 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   get showCategory(): boolean {
     return this.type === TransactionType.Income || this.type === TransactionType.Expense;
+  }
+
+  get categoryParent(): string {
+    const category = this.form.controls['category'].value;
+    return category == null ? '' : (category.fullname + ' / ');
   }
 
   timePart = '';
@@ -170,6 +182,10 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       const now = new Date();
       value.opdate = value.opdate ? value.opdate.toLocalNativeDate() : now;
       value.opdate = moment(value.opdate).format('YYYY-MM-DD') + ' ' + this.timePart;
+      if (this.newcategory) {
+        let parent = value.category;
+        value.category = { id: null, name: value.newcategory, fullname: (parent ? (parent.fullname + ' / ') : '') + value.newcategory, level: parent ? parent.level + 1 : 1, root_id: value.type, parent_id: parent ? parent.id : value.type }
+      }
       this.onChange(value);
     });
   }
@@ -187,6 +203,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
     this.form.patchValue({ ...value, credit, debit, opdate: TuiDay.fromLocalNativeDate(opdate), ccurrency, dcurrency, category, account, recipient }, { emitEvent: false });
     this.form.controls['type']?.setValue(value.type, { emitEvent: true });
+    this.newcategory = false;
     this.onDateValueChanges(moment(opdate).format('YYYY-MM-DD') + ' ' + this.timePart);
   }
 
@@ -204,6 +221,21 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     this.form.controls['opdate'].setValue(opdate.append({ day: -1 }));
   }
 
+  onCreateCategory() {
+    this.newcategory = true;
+    this.form.controls['newcategory'].setValue('');
+  }
+
+  onCancelCategory() {
+    this.newcategory = false;
+    this.form.controls['newcategory'].setValue(null);
+  }
+
+  validate({ value }: FormControl): ValidationErrors | null {
+    const valid = (!this.showCredit || !!value.credit) && (!this.showDebit || !!value.debit) && (!this.newcategory || !!value.newcategory);
+    return { invalid: !valid };
+  }
+
   async onDateValueChanges(opdate: string) {
     console.log(opdate);
     try {
@@ -212,7 +244,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       const value = this.form.getRawValue();
       const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
       const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
-      this.form.patchValue({account, recipient}, { emitEvent: false });
+      this.form.patchValue({ account, recipient }, { emitEvent: false });
     } catch (err) {
       this.store.dispatch(new AppPrintError(err));
     }
