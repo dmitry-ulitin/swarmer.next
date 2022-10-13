@@ -1,3 +1,11 @@
+.filters {
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    justify-content:flex-start;
+}
 .search {
-    max-width: 20rem;
+    width: 20rem;
+    margin-right: 0.5rem;
 }

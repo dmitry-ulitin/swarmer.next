@@ -17,6 +17,7 @@ import { InputFileDlgComponent } from '../import/input-file-dlg.component';
 import { ImportDlgComponent } from '../import/import-dlg.component';
 import * as moment from 'moment';
 import { Summary } from '../models/summary';
+import { Filter } from '../models/filter';
 
 const GET_TRANSACTIONS_LIMIT: number = 100;
 
@@ -32,6 +33,11 @@ export class GetGroups {
 
 export class SelectAccounts {
     static readonly type = '[Acc] Select Accounts';
+    constructor(public accounts: number[]) { }
+}
+
+export class DeselectAccounts {
+    static readonly type = '[Acc] Deselect Accounts';
     constructor(public accounts: number[]) { }
 }
 
@@ -161,6 +167,22 @@ export class AccState {
     static selectedAccounts(state: AccStateModel): Account[] {
         const accounts = AccState.accounts(state);
         return accounts.filter(a => state.accounts.includes(a.id));
+    }
+
+    @Selector()
+    static accountFilters(state: AccStateModel): Filter[] {
+        const filters = state.groups.map(g => ({ group: g, accounts: g.accounts.filter(a => state.accounts.includes(a.id)) }))
+            .filter(f => f.accounts.length > 0)
+            .map(f => ({ name: f.group.fullname, accounts: f.accounts, selected: !f.group.accounts.filter(a => !a.deleted).some(a => !state.accounts.includes(a.id)) }))
+            .reduce((acc, f) => {
+                if (f.selected) {
+                    acc.push({ name: f.name, ids: f.accounts.map(a => a.id) });
+                } else {
+                    acc = acc.concat(f.accounts.map(a => ({ name: a.fullname, ids: [a.id] })));
+                }
+                return acc;
+            }, [] as Filter[]);
+        return filters;
     }
 
     @Selector()
@@ -325,6 +347,14 @@ export class AccState {
         cxt.dispatch(new GetSummary());
     }
 
+    @Action(DeselectAccounts)
+    deselectAccounts(cxt: StateContext<AccStateModel>, action: DeselectAccounts) {
+        const state = cxt.getState();
+        cxt.patchState({ accounts: state.accounts.filter(a => !action.accounts.includes(a)) });
+        cxt.dispatch(new GetTransactions());
+        cxt.dispatch(new GetSummary());
+    }
+
     @Action(EditTransaction)
     async editTransaction(cxt: StateContext<AccStateModel>, action: EditTransaction) {
         try {
@@ -340,7 +370,7 @@ export class AccState {
                                 this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
                                 patchStateTransactions(transaction, cxt, true);
                                 patchStateTransactions(data, cxt, false);
-                                if (!!data.category &&  cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
+                                if (!!data.category && cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
                                     cxt.dispatch(new GetCategories());
                                 }
                             }

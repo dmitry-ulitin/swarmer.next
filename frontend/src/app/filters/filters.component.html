@@ -1,5 +1,6 @@
-<div class="p-2 search">
-    <tui-input [formControl]="search" [tuiTextfieldIcon]="'tuiIconSearch'" [tuiTextfieldCleaner]="true" [tuiTextfieldSize]="'s'">
+<div class="filters">
+    <tui-input class="search" [formControl]="search" [tuiTextfieldIcon]="'tuiIconSearch'" [tuiTextfieldCleaner]="true" [tuiTextfieldSize]="'s'">
         <input tuiTextfield type="text" />
     </tui-input>
+    <tui-tag *ngFor="let f of filters$ | async" [value]="f.name" [removable]="true" (edited)="removeFilter(f)"></tui-tag>
 </div>
