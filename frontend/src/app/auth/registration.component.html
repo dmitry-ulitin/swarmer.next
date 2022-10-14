@@ -1,0 +1,26 @@
+<div class="h-100 d-flex justify-content-center align-items-center">
+    <form [formGroup]="form" [tuiTextfieldSize]="'s'" style="min-width: 25rem;" (ngSubmit)="submit()">
+        <p>
+            <label [tuiLabel]="'Email'">
+                <tui-input formControlName="email">Enter your email</tui-input>
+            </label>
+            <!-- <tui-field-error formControlName="email"></tui-field-error> -->
+        </p>
+        <p>
+            <label [tuiLabel]="'Name'">
+                <tui-input formControlName="name">{{defaultName}}</tui-input>
+            </label>
+            <!-- <tui-field-error formControlName="name"></tui-field-error> -->
+        </p>
+        <p>
+            <label [tuiLabel]="'Password'">
+                <tui-input-password formControlName="password">Create a password</tui-input-password>
+            </label>
+            <!-- <tui-field-error formControlName="password"></tui-field-error> -->
+        </p>
+        <p class="d-flex align-items-center">
+            <span class="flex-fill">Already have an account? <a [routerLink]="['/login']" routerLinkActive="router-link-active" >Sign in</a></span>
+            <button tuiButton [disabled]="form.invalid" [size]="'s'">Register</button>
+        </p>
+    </form>
+</div>

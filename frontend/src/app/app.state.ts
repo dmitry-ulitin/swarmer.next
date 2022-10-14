@@ -4,9 +4,17 @@ import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { Router } from '@angular/router';
 import { TuiAlertService, TuiNotification } from '@taiga-ui/core';
 
+import {Registration} from './models/registration';
+import { firstValueFrom } from 'rxjs';
+
 export class AppLogin {
     static readonly type = '[App] Login';
     constructor(public username: string, public password: string, public returnUrl: string) { }
+}
+
+export class AppRegistration {
+    static readonly type = '[App] Registration';
+    constructor(public registration: Partial<Registration>) { }
 }
 
 export class AppLoginSuccess {
@@ -46,12 +54,27 @@ export class AppState {
     @Action(AppLogin, { cancelUncompleted: true })
     async appLogin(cxt: StateContext<AppStateModel>, action: AppLogin) {
         try {
-            const response = await this.http.post<any>('/api/login', { username: action.username, password: action.password }).toPromise();
+            const response = await firstValueFrom(this.http.post<any>('/api/login', { username: action.username, password: action.password }));
             if (!response?.access_token) {
                 throw new Error('Incorrect username or password');
             }
             cxt.setState({ token: response.access_token, username: action.username });
             this.zone.run(() => this.router.navigate([action.returnUrl || '']));
+            cxt.dispatch(new AppLoginSuccess());
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action(AppRegistration, { cancelUncompleted: true })
+    async appRegistration(cxt: StateContext<AppStateModel>, action: AppRegistration) {
+        try {
+            const response = await firstValueFrom(this.http.post<any>('/api/register', action.registration));
+            if (!response?.access_token) {
+                throw new Error('Incorrect username or password');
+            }
+            cxt.setState({ token: response.access_token, username: action.registration.name || '' });
+            this.zone.run(() => this.router.navigate(['']));
             cxt.dispatch(new AppLoginSuccess());
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
