@@ -1,18 +1,27 @@
 <div class="h-100 px-3 d-flex align-items-center" tuiMode="onDark">
     <div class="fw-bolder me-2">Swarmer Finance</div>
-    <button tuiIconButton type="button" icon="tuiIconRefresh" [size]="'s'" [appearance]="'flat'" (click)="onRefresh()" class="tui-space_right-2"></button>
-    <button tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'" (click)="onExpense()"></button>
-    <button tuiIconButton type="button" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'" (click)="onTransfer()"></button>
-    <button tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'" (click)="onIncome()"></button>
-    <span *ngIf="transactions_id$ | async" class="tui-space_left-2">
-        <button tuiIconButton type="button" icon="tuiIconEdit" [size]="'s'" [appearance]="'flat'" (click)="editTransaction()"></button>
-        <button tuiIconButton type="button" icon="tuiIconTrash" [size]="'s'" [appearance]="'flat'" (click)="deleteTransaction()"></button>
+    <span *ngIf="isAuthenticated$ | async">
+        <button tuiIconButton type="button" icon="tuiIconRefresh" [size]="'s'" [appearance]="'flat'"
+            (click)="onRefresh()" class="tui-space_right-2"></button>
+        <button tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'"
+            (click)="onExpense()"></button>
+        <button tuiIconButton type="button" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'"
+            (click)="onTransfer()"></button>
+        <button tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'"
+            (click)="onIncome()"></button>
+        <span *ngIf="transactions_id$ | async" class="tui-space_left-2">
+            <button tuiIconButton type="button" icon="tuiIconEdit" [size]="'s'" [appearance]="'flat'"
+                (click)="editTransaction()"></button>
+            <button tuiIconButton type="button" icon="tuiIconTrash" [size]="'s'" [appearance]="'flat'"
+                (click)="deleteTransaction()"></button>
+        </span>
     </span>
     <span class="flex-fill"></span>
-    <span>
+    <span *ngIf="isAuthenticated$ | async">
         <tui-hosted-dropdown #accMenu [content]="accDropdown" tuiDropdownAlign="left">
-            <button tuiButton type="button" appearance="flat" [size]="'s'"
-                [iconRight]="icon"><tui-svg src="tuiIconSettings"></tui-svg></button>
+            <button tuiButton type="button" appearance="flat" [size]="'s'" [iconRight]="icon">
+                <tui-svg src="tuiIconSettings"></tui-svg>
+            </button>
         </tui-hosted-dropdown>
         <ng-template #icon>
             <tui-svg src="tuiIconChevronDown" class="icon" [class.icon_rotated]="accMenu.open"></tui-svg>
@@ -20,10 +29,14 @@
         <ng-template #accDropdown>
             <tui-data-list>
                 <button tuiOption (click)="newGroup()" [size]="'s'">New Account</button>
-                <button tuiOption *ngIf="!!group" (click)="editGroup(group)" [size]="'s'">Edit '{{group.fullname}}'</button>
-                <button tuiOption *ngIf="!!group" (click)="deleteGroup(group)" [size]="'s'">Delete '{{group.fullname}}'</button>
-                <button tuiOption *ngIf="account$ | async as account" (click)="onCorrection(account)" [size]="'s'">Correct '{{account.fullname}}' Balance</button>
-                <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)" [size]="'s'">Import '{{account.fullname}}' Statement</button>
+                <button tuiOption *ngIf="!!group" (click)="editGroup(group)" [size]="'s'">Edit
+                    '{{group.fullname}}'</button>
+                <button tuiOption *ngIf="!!group" (click)="deleteGroup(group)" [size]="'s'">Delete
+                    '{{group.fullname}}'</button>
+                <button tuiOption *ngIf="account$ | async as account" (click)="onCorrection(account)"
+                    [size]="'s'">Correct '{{account.fullname}}' Balance</button>
+                <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)" [size]="'s'">Import
+                    '{{account.fullname}}' Statement</button>
             </tui-data-list>
         </ng-template>
     </span>
