@@ -96,9 +96,11 @@ export class AppState {
 
     @Action(AppPrintError)
     appPrintError(cxt: StateContext<AppStateModel>, action: AppPrintError) {
-        const statusText: { [id: string]: string } = { 403: 'Forbidden', 500: 'Internal Server Error' };
-        const message = statusText[action.error?.status] || action.error?.statusText || action.error?.message || action.error;
-        this.zone.run(() => this.alertService.open(message, { status: TuiNotification.Error}).subscribe());
+        if (action.error?.status !== 403) {
+            const statusText: { [id: string]: string } = { 403: 'Forbidden', 500: 'Internal Server Error' };        
+            const message = statusText[action.error?.status] || action.error?.statusText || action.error?.message || action.error;
+            this.zone.run(() => this.alertService.open(message, { status: TuiNotification.Error}).subscribe());
+        }
     }
 
     @Selector()
