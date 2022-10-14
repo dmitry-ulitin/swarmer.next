@@ -284,6 +284,7 @@ export class AccState {
                     const groups = state.groups.slice().map(g => g.id !== id ? g : { ...g, deleted: true });
                     const accounts = state.accounts.filter(id => groups.some(g => !g.deleted && g.accounts.some(a => a.id === id)));
                     cxt.patchState({ groups, accounts });
+                    cxt.dispatch(new GetSummary());
                     cxt.dispatch(new GetTransactions());
                 }
             }
@@ -439,6 +440,9 @@ export class AccState {
                 if (data) {
                     this.zone.run(() => this.alertService.open('Transaction created', { status: TuiNotification.Success }).subscribe());
                     patchStateTransactions(data, cxt, false);
+                    if (!!data.category && cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
+                        cxt.dispatch(new GetCategories());
+                    }
                 }
             }
         });

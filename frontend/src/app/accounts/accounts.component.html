@@ -22,7 +22,7 @@
             </td>
         </tr>
         <tr>
-            <td>&nbsp;</td>
+            <td><a tuiLink [pseudo]="true" (click)="newGroup()">new account</a></td>
             <td>&nbsp;</td>
             <td class="text-end">
                 <div *ngFor="let t of total$ | async">{{t.value | currency:t.currency}}</div>
