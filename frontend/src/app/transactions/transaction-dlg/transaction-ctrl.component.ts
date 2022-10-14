@@ -74,15 +74,11 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   get showAccount(): boolean {
-    return this.type !== TransactionType.Income;
-  }
-
-  get showBalance(): boolean {
-    return this.type === TransactionType.Correction;
+    return this.type === TransactionType.Expense || this.type === TransactionType.Transfer || (this.type === TransactionType.Correction && !!this.form.controls['account'].value);
   }
 
   get showRecipient(): boolean {
-    return this.type === TransactionType.Income || this.type === TransactionType.Transfer;
+    return this.type === TransactionType.Income || this.type === TransactionType.Transfer || (this.type === TransactionType.Correction && !!this.form.controls['recipient'].value);
   }
 
   get showCategory(): boolean {
@@ -232,7 +228,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   validate({ value }: FormControl): ValidationErrors | null {
-    const valid = (!this.showCredit || !!value.credit) && (!this.showDebit || !!value.debit) && (!this.newcategory || !!value.newcategory);
+    const valid = (!this.showCredit || !!value.credit) && (!this.showDebit || !!value.debit) && (!this.newcategory || !!value.newcategory) || (value.type === TransactionType.Correction);
     return { invalid: !valid };
   }
 
@@ -244,7 +240,10 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       const value = this.form.getRawValue();
       const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
       const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
-      this.form.patchValue({ account, recipient }, { emitEvent: false });
+      const debit = (value.type === TransactionType.Correction ? (account?.balance || recipient?.balance) : value.debit) || undefined;
+      const credit = (value.type === TransactionType.Correction && value.account ? -value.credit : value.credit) || undefined;
+  
+      this.form.patchValue({ account, debit, recipient, credit }, { emitEvent: false });
     } catch (err) {
       this.store.dispatch(new AppPrintError(err));
     }

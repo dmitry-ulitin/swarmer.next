@@ -5,7 +5,7 @@ import { map } from 'rxjs';
 import { Account } from '../models/account';
 import { Amount, Total } from '../models/balance';
 import { Group } from '../models/group';
-import { AccState, SelectAccounts, ToggleGropup } from './accounts.state';
+import { AccState, CreateGroup, SelectAccounts, ToggleGropup } from './accounts.state';
 
 @Component({
   selector: 'app-accounts',
@@ -58,5 +58,9 @@ export class AccountsComponent {
     event.stopPropagation();
     const accounts = event.ctrlKey ? (this.isAccountSelected(account) ? this.accounts.filter(a => a !== account.id) : [...this.accounts, account.id]) : [account.id];
     this.store.dispatch(new SelectAccounts(accounts));
+  }
+
+  newGroup(): void {
+    this.store.dispatch(new CreateGroup());
   }
 }

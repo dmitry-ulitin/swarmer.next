@@ -31,7 +31,7 @@ export class ImportDlgComponent {
     )).subscribe(changes => {
       if (this.data[changes.rowIndex].party) {
         this.categories.controls
-          .filter((control: AbstractControl, index: number) => !this.data[index].category && this.data[index].party === this.data[changes.rowIndex].party)
+          .filter((control: AbstractControl, index: number) => !control.value && this.data[index].type === this.data[changes.rowIndex].type && this.data[index].party === this.data[changes.rowIndex].party)
           .forEach(control => control.setValue(changes.data, { emitEvent: false }));
       }
     });

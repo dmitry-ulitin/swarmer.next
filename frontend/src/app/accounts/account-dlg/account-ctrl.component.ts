@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
-import { ControlValueAccessor, UntypedFormArray, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormArray, UntypedFormControl, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators, NG_VALIDATORS, FormControl, ValidationErrors } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
 import { takeUntil } from 'rxjs';
@@ -17,6 +17,11 @@ import { AccState } from '../accounts.state';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => AccountCtrlComponent),
       multi: true,
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: AccountCtrlComponent,
+      multi: true
     },
     TuiDestroyService
   ]
@@ -82,6 +87,11 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     if (!this.canDelete) {
       this.accounts.controls.filter(a => !a.get('deleted')?.value)[0].get('name')?.disable();
     }
+  }
+
+  validate({ value }: FormControl): ValidationErrors | null {
+    const valid = !!value?.fullname;
+    return { invalid: !valid };
   }
 
   writeValue(value: any): void {
