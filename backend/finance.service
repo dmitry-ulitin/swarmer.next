@@ -1,0 +1,12 @@
+[Unit]
+Description=Swarmer Finance Backend
+After=syslog.target
+
+[Service]
+User=ec2-user
+Environment="SPRING_PROFILES_ACTIVE=prod" "DATABASE_URL=jdbc:postgresql://swarmer-database.xxx.amazonaws.com/swarmerdb?user=postgres&password=xxx"
+ExecStart=/home/ec2-user/backend/finance-0.0.1-SNAPSHOT.jar
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
