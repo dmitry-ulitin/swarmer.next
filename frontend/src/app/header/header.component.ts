@@ -33,6 +33,7 @@ export class HeaderComponent {
   @Select(AppState.isAuthenticated) isAuthenticated$!: Observable<boolean>;
   @Select(AppState.claims) claims$!: Observable<any>;
   @ViewSelectSnapshot(AccState.selectedGroup) group!: Group | undefined;
+  @ViewSelectSnapshot(AccState.accounts) accounts!: Account[];
   account$ = this.store.select(AccState.selectedAccount);
   transactions_id$ = this.store.select(state => state.acc.transaction_id);
   

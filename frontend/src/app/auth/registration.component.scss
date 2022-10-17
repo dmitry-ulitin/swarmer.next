@@ -1,0 +1,11 @@
+form {
+    min-width: 25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.currency {
+    width: 5rem;
+}
