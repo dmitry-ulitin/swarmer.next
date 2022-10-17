@@ -1,26 +1,33 @@
 <div class="h-100 d-flex justify-content-center align-items-center">
-    <form [formGroup]="form" [tuiTextfieldSize]="'s'" style="min-width: 25rem;" (ngSubmit)="submit()">
-        <p>
+    <form [formGroup]="form" [tuiTextfieldSize]="'s'" (ngSubmit)="submit()" autocomplete="off">
+        <div>
             <label [tuiLabel]="'Email'">
                 <tui-input formControlName="email">Enter your email</tui-input>
             </label>
             <!-- <tui-field-error formControlName="email"></tui-field-error> -->
-        </p>
-        <p>
-            <label [tuiLabel]="'Name'">
+        </div>
+        <div class="d-flex">
+            <label [tuiLabel]="'Name'" class="flex-fill me-2">
                 <tui-input formControlName="name">{{defaultName}}</tui-input>
             </label>
-            <!-- <tui-field-error formControlName="name"></tui-field-error> -->
-        </p>
-        <p>
+            <label [tuiLabel]="'Currency'">
+                <tui-combo-box formControlName="currency" [tuiTextfieldSize]="'s'" class="currency" [strict]="false">
+                    <input tuiTextfield />
+                    <tui-data-list-wrapper *tuiDataList [items]="currencies | tuiFilterByInput" [size]="'s'">
+                    </tui-data-list-wrapper>
+                </tui-combo-box>
+            </label>
+        </div>
+        <div>
             <label [tuiLabel]="'Password'">
                 <tui-input-password formControlName="password">Create a password</tui-input-password>
             </label>
             <!-- <tui-field-error formControlName="password"></tui-field-error> -->
-        </p>
-        <p class="d-flex align-items-center">
-            <span class="flex-fill">Already have an account? <a [routerLink]="['/login']" routerLinkActive="router-link-active" >Sign in</a></span>
+        </div>
+        <div class="d-flex align-items-center">
+            <span class="flex-fill">Already have an account? <a [routerLink]="['/login']"
+                    routerLinkActive="router-link-active">Sign in</a></span>
             <button tuiButton [disabled]="form.invalid" [size]="'s'">Register</button>
-        </p>
+        </div>
     </form>
 </div>

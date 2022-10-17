@@ -2,7 +2,7 @@
 <div class="footer">
     <button *ngIf="showExpense" tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'" (click)="onExpense()"></button>
     <button *ngIf="showIncome" tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'" (click)="onIncome()"></button>
-    <button *ngIf="showTransfer" tuiIconButton type="button" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'" (click)="onTransfer()"></button>
+    <button *ngIf="showTransfer && ((accounts$ | async)?.length||0)>1" tuiIconButton type="button" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'" (click)="onTransfer()"></button>
     <span class="flex-fill"></span>
     <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onSubmit()" [disabled]="transaction.hasError('invalid')">Save</button>
     <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>

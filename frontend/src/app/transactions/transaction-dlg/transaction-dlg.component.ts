@@ -4,6 +4,7 @@ import { Store } from '@ngxs/store';
 import { TuiDialogContext, TUI_ICONS_PATH } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 import { firstValueFrom } from 'rxjs';
+import { AccState } from 'src/app/accounts/accounts.state';
 import { AppPrintError } from 'src/app/app.state';
 import { Transaction, TransactionType } from 'src/app/models/transaction';
 import { ApiService } from 'src/app/services/api.service';
@@ -29,6 +30,7 @@ export function iconsPath(name: string): string {
 })
 export class TransactionDlgComponent {
   transaction = new UntypedFormControl();
+  accounts$ = this.store.select(AccState.accounts);
 
   get type(): TransactionType {
     return this.transaction.value.type;

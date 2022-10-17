@@ -420,7 +420,7 @@ export class AccState {
             recipient = account;
             account = undefined;
         } else if (action.type === TransactionType.Correction) {
-            recipient = account;
+//            recipient = account;
         }
         let transaction: Transaction = {
             type: action.type,

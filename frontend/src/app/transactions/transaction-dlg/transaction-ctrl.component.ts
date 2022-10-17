@@ -62,7 +62,9 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   newcategory = false;
 
   get convertation(): boolean {
-    return this.form.controls['dcurrency'].value !== this.form.controls['ccurrency'].value;
+    const dcurrency = this.form.controls['dcurrency'].value;
+    const ccurrency = this.form.controls['ccurrency'].value;
+    return !!dcurrency && !!ccurrency && dcurrency !== ccurrency;
   }
 
   get showCredit(): boolean {
@@ -205,7 +207,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   onYesterday(): void {
     const opdate: TuiDay = this.form.controls['opdate'].value;
-    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }));
+    this.form.controls['opdate'].setValue(opdate.append({ day: -1 }));
   }
 
   onToday(): void {
@@ -214,7 +216,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
 
   onTomorrow(): void {
     const opdate: TuiDay = this.form.controls['opdate'].value;
-    this.form.controls['opdate'].setValue(opdate.append({ day: -1 }));
+    this.form.controls['opdate'].setValue(opdate.append({ day: 1 }));
   }
 
   onCreateCategory() {
@@ -228,7 +230,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   validate({ value }: FormControl): ValidationErrors | null {
-    const valid = (!this.showCredit || !!value.credit) && (!this.showDebit || !!value.debit) && (!this.newcategory || !!value.newcategory) || (value.type === TransactionType.Correction);
+    const valid = (!this.showCredit || (!!value.credit && !!value.ccurrency)) && (!this.showDebit || (!!value.debit && !!value.dcurrency)) && (!this.newcategory || !!value.newcategory) || (value.type === TransactionType.Correction);
     return { invalid: !valid };
   }
 
@@ -240,10 +242,9 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       const value = this.form.getRawValue();
       const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
       const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
-      const debit = (value.type === TransactionType.Correction ? (account?.balance || recipient?.balance) : value.debit) || undefined;
-      const credit = (value.type === TransactionType.Correction && value.account ? -value.credit : value.credit) || undefined;
+      const debit = (value.type === TransactionType.Correction ? ((account?.balance || recipient?.balance) + (value.credit || 0)) : value.debit) || undefined;
   
-      this.form.patchValue({ account, debit, recipient, credit }, { emitEvent: false });
+      this.form.patchValue({ account, debit, recipient }, { emitEvent: false });
     } catch (err) {
       this.store.dispatch(new AppPrintError(err));
     }
