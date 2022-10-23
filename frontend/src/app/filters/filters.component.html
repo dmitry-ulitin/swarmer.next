@@ -2,5 +2,6 @@
     <tui-input class="search" [formControl]="search" [tuiTextfieldIcon]="'tuiIconSearch'" [tuiTextfieldCleaner]="true" [tuiTextfieldSize]="'s'">
         <input tuiTextfield type="text" />
     </tui-input>
+    <app-range></app-range>
     <tui-tag *ngFor="let f of filters$ | async; let index=index;" [value]="f.name" [removable]="true" (edited)="removeFilter(f)" status="custom" class="support-{{ index + 1 }}"></tui-tag>
 </div>

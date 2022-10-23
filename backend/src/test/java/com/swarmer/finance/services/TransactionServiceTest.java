@@ -145,7 +145,7 @@ public class TransactionServiceTest {
 
     @Test
     void testGetSummary() {
-        var summary = transactionService.getSummary(user.getId(), List.of(account1.getId(), account2.getId()));
+        var summary = transactionService.getSummary(user.getId(), List.of(account1.getId(), account2.getId()), null, null);
         assertThat(summary).hasSize(2);
         var usd = summary.stream().filter(s -> "USD".equals(s.getCurrency())).findFirst();
         assertThat(usd.isPresent()).isTrue();
@@ -173,7 +173,7 @@ public class TransactionServiceTest {
 
     @Test
     void testGetTransactions() {
-        var trx = transactionService.getTransactions(user.getId(), 0, 0, List.of(), "duc");
+        var trx = transactionService.getTransactions(user.getId(), 0, 0, List.of(), "duc", null, null);
         assertThat(trx).hasSize(1);
         assertThat(trx.get(0).id()).isEqualTo(expense.getId());
     }
