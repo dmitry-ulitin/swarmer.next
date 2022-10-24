@@ -1,7 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { TuiDay } from '@taiga-ui/cdk';
 import { Observable } from 'rxjs';
 import { Category } from '../models/category';
+import { DateRange } from '../models/date-range';
 import { Group } from '../models/group';
 import { Summary } from '../models/summary';
 import { Transaction, TransactionImport } from '../models/transaction';
@@ -29,18 +31,22 @@ export class ApiService {
     return this.http.delete<void>(`/api/groups/${id}`);
   }
 
-  getTransactions(accounts: number[], search: string, offset: number, limit: number): Observable<Transaction[]> {
+  getTransactions(accounts: number[], search: string, range: DateRange, offset: number, limit: number): Observable<Transaction[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('search', search);
+    params = params.set('from', range?.from?.toString('YMD','-'));
+    params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
     params = params.set('offset', offset);
     params = params.set('limit', limit);
     return this.http.get<Transaction[]>('/api/transactions', {params: params});
   }
 
-  getSummary(accounts: number[]): Observable<Summary[]> {
+  getSummary(accounts: number[], range: DateRange): Observable<Summary[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
+    params = params.set('from', range?.from?.toString('YMD','-'));
+    params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
     return this.http.get<Summary[]>('/api/transactions/summary', {params: params});
   }
 

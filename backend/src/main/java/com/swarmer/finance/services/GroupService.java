@@ -31,7 +31,7 @@ public class GroupService {
 
     public List<GroupDto> getGroups(Long userId, LocalDateTime opdate) {
         var aids = aclService.findAccounts(userId).map(a -> a.getId()).toList();
-        var amounts = transactionService.getBalances(aids, opdate, null);
+        var amounts = transactionService.getBalances(aids, null, opdate, null);
         var balances = aids.stream().collect(Collectors.toMap(id -> id, id -> {
             Double balance = .0;
             balance -= amounts.stream().filter(b -> id.equals(b.getAccountId())).mapToDouble(a -> a.getDebit()).sum();

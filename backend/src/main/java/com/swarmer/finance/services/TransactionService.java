@@ -61,12 +61,12 @@ public class TransactionService {
     }
 
     public List<TransactionDto> getTransactions(Long userId, int offset, int limit, Collection<Long> accountIds,
-            String search) {
-        var trx = queryTransactions(userId, offset, limit, accountIds, search, null, null);
+            String search, LocalDateTime from, LocalDateTime to) {
+        var trx = queryTransactions(userId, offset, limit, accountIds, search, from, to);
         if (trx.isEmpty()) {
             return List.of();
         }
-        var rawBalnces = getBalances(accountIds, trx.get(trx.size() - 1).getOpdate(), trx.get(trx.size() - 1).getId());
+        var rawBalnces = getBalances(accountIds, null, trx.get(trx.size() - 1).getOpdate(), trx.get(trx.size() - 1).getId());
         Map<Long, Double> accBalances = new HashMap<>();
         var dto = new TransactionDto[trx.size()];
         for (int index = trx.size() - 1; index >= 0; index--) {
@@ -115,7 +115,7 @@ public class TransactionService {
         if (transaction.getRecipient() != null) {
             ai.add(transaction.getRecipient().getId());
         }
-        var balances = getBalances(ai, transaction.getOpdate(), transaction.getId());
+        var balances = getBalances(ai, null, transaction.getOpdate(), transaction.getId());
         if (transaction.getAccount() != null) {
             accountBalance = transaction.getAccount().getStart_balance();
             accountBalance -= balances.stream().filter(b -> transaction.getAccount().getId().equals(b.getAccountId()))
@@ -189,25 +189,29 @@ public class TransactionService {
     }
 
     public List<TransactionSum> getBalances(Collection<Long> ai) {
-        return getBalances(ai, null, null);
+        return getBalances(ai, null, null, null);
     }
 
     // select t.account.id, t.recipient.id, sum(t.debit), sum(t.credit) from
     // transactions t where t.account.id in :a or t.recipient.id in :a group by
     // t.account.id, t.recipient.id
-    public List<TransactionSum> getBalances(Collection<Long> ai, LocalDateTime opdate, Long id) {
+    public List<TransactionSum> getBalances(Collection<Long> ai, LocalDateTime from, LocalDateTime to, Long id) {
         var builder = entityManager.getCriteriaBuilder();
         var criteriaQuery = builder.createQuery(TransactionSum.class);
         var root = criteriaQuery.from(Transaction.class);
         var where = builder.or(root.get("account").get("id").in(ai), root.get("recipient").get("id").in(ai));
-        if (opdate != null) {
-            var lessThanOpdate = builder.lessThan(root.<LocalDateTime>get("opdate"), opdate);
+        if (from != null) {
+            var greaterThanOrEqualTo = builder.greaterThanOrEqualTo(root.<LocalDateTime>get("opdate"), from);
+            where = builder.and(where, greaterThanOrEqualTo);
+        }
+        if (to != null) {
+            var lessThanOpdate = builder.lessThan(root.<LocalDateTime>get("opdate"), to);
             if (id != null) {
                 lessThanOpdate = builder.or(lessThanOpdate,
-                        builder.and(builder.equal(root.<LocalDateTime>get("opdate"), opdate),
+                        builder.and(builder.equal(root.<LocalDateTime>get("opdate"), to),
                                 builder.lessThan(root.get("id"), id)));
             }
-            where = builder.and(lessThanOpdate);
+            where = builder.and(where, lessThanOpdate);
         }
         criteriaQuery.multiselect(root.get("account").get("id"), root.get("recipient").get("id"),
                 builder.sumAsDouble(root.get("debit")).alias("debit"),
@@ -217,7 +221,7 @@ public class TransactionService {
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
-    public Collection<Summary> getSummary(Long userId, Collection<Long> accountIds) {
+    public Collection<Summary> getSummary(Long userId, Collection<Long> accountIds, LocalDateTime from, LocalDateTime to) {
         Map<Long, Account> userAccounts = aclService.findAccounts(userId)
                 .collect(Collectors.toMap(a -> a.getId(), a -> a));
         Map<Long, Account> resultAccounts = (accountIds.isEmpty() ? userAccounts.values()
@@ -226,7 +230,7 @@ public class TransactionService {
         var result = resultAccounts.values().stream().map(a -> a.getCurrency())
                 .distinct()
                 .collect(Collectors.toMap(c -> c, c -> new Summary(c, .0, .0, .0, .0)));
-        var balances = getBalances(resultAccounts.keySet());
+        var balances = getBalances(resultAccounts.keySet(), from, to, null);
         for (var b : balances) {
             if (resultAccounts.containsKey(b.getAccountId())) {
                 var aCurrency = resultAccounts.get(b.getAccountId()).getCurrency();
@@ -470,7 +474,7 @@ public class TransactionService {
             where = builder.and(where, builder.greaterThanOrEqualTo(root.get("opdate"), from));
         }
         if (to != null) {
-            where = builder.and(where, builder.lessThanOrEqualTo(root.get("opdate"), to));
+            where = builder.and(where, builder.lessThan(root.get("opdate"), to));
         }
         criteriaQuery = criteriaQuery.where(where).orderBy(builder.desc(root.get("opdate")),
                 builder.desc(root.get("id")));

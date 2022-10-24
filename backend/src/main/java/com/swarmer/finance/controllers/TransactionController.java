@@ -1,6 +1,9 @@
 package com.swarmer.finance.controllers;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,45 +43,54 @@ public class TransactionController {
     List<TransactionDto> getTransactions(Authentication authentication,
             @RequestParam(required = false, defaultValue = "") Collection<Long> accounts,
             @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(required = false, defaultValue = "") String from,
+            @RequestParam(required = false, defaultValue = "") String to,
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false, defaultValue = "0") int limit) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
-        return transactionService.getTransactions(userId, offset, limit, accounts, search);
+        LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
+        LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
+        return transactionService.getTransactions(userId, offset, limit, accounts, search, fromDate, toDate);
     }
 
-	@GetMapping("/{id}")
-	TransactionDto getTransaction(@PathVariable("id") Long id, Authentication authentication) {
-        var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		return transactionService.getTransaction(id, userId);
-	}
+    @GetMapping("/{id}")
+    TransactionDto getTransaction(@PathVariable("id") Long id, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return transactionService.getTransaction(id, userId);
+    }
 
     @PostMapping
-	TransactionDto createTransaction(@RequestBody TransactionDto group, Authentication authentication) {
-        var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		return transactionService.createTransaction(group, userId);
-	}
+    TransactionDto createTransaction(@RequestBody TransactionDto group, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return transactionService.createTransaction(group, userId);
+    }
 
     @PutMapping
-	TransactionDto updateTransaction(@RequestBody TransactionDto group, Authentication authentication) {
-        var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		return transactionService.updateTransaction(group, userId);
-	}
+    TransactionDto updateTransaction(@RequestBody TransactionDto group, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return transactionService.updateTransaction(group, userId);
+    }
 
     @DeleteMapping("/{id}")
-	void deleteTransaction(@PathVariable("id") Long id, Authentication authentication) {
-        var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		transactionService.deleteTransaction(id, userId);
-	}
+    void deleteTransaction(@PathVariable("id") Long id, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        transactionService.deleteTransaction(id, userId);
+    }
 
     @GetMapping("/summary")
     Collection<Summary> getSummary(Authentication authentication,
+            @RequestParam(required = false, defaultValue = "") String from,
+            @RequestParam(required = false, defaultValue = "") String to,
             @RequestParam(required = false, defaultValue = "") Collection<Long> accounts) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
-        return transactionService.getSummary(userId, accounts);
+        LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
+        LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
+        return transactionService.getSummary(userId, accounts, fromDate, toDate);
     }
 
     @PostMapping("/import")
-    List<ImportDto> importFile(@RequestParam("file") MultipartFile file, @RequestParam("id") Long accountId, @RequestParam("bank") Long bankId, Authentication authentication) {
+    List<ImportDto> importFile(@RequestParam("file") MultipartFile file, @RequestParam("id") Long accountId,
+            @RequestParam("bank") Long bankId, Authentication authentication) {
         try {
             var userId = ((UserPrincipal) authentication.getPrincipal()).id();
             return transactionService.importFile(file.getInputStream(), accountId, bankId, userId);
@@ -88,7 +100,8 @@ public class TransactionController {
     }
 
     @PatchMapping("/import")
-    void  saveImport(@RequestBody List<ImportDto> records, @RequestParam("account") Long accountId, Authentication authentication) {
+    void saveImport(@RequestBody List<ImportDto> records, @RequestParam("account") Long accountId,
+            Authentication authentication) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         transactionService.saveImport(records, accountId, userId);
     }

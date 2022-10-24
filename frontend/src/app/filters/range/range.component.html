@@ -1,0 +1,18 @@
+<button *ngIf="value.hasPrev()" tuiIconButton type="button" appearance="icon" [size]="'s'" [icon]="'tuiIconChevronLeft'" (click)="prev()"></button>
+<tui-hosted-dropdown tuiDropdownAlign="left" [content]="dropdown" [(open)]="open">
+    <button tuiButton type="button" appearance="flat" [size]="'s'" [iconRight]="icon">
+        {{value.name}}
+    </button>
+</tui-hosted-dropdown>
+<button *ngIf="value.hasNext()" tuiIconButton type="button" appearance="icon" [size]="'s'" [icon]="'tuiIconChevronRight'" (click)="next()"></button>
+<ng-template #icon>
+    <tui-svg src="tuiIconChevronDown" class="icon" [class.icon_rotated]="open"></tui-svg>
+</ng-template>
+<ng-template #dropdown>
+    <tui-data-list>
+        <button *ngFor="let option of options" tuiOption (click)="onClick(option)">
+            {{ option.name }}
+            <tui-svg *ngIf="itemIsActive(option)" src="tuiIconCheck"></tui-svg>
+        </button>
+    </tui-data-list>
+</ng-template>
