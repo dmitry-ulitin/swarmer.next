@@ -202,7 +202,7 @@ public class TransactionService {
         var where = builder.or(root.get("account").get("id").in(ai), root.get("recipient").get("id").in(ai));
         if (from != null) {
             var greaterThanOrEqualTo = builder.greaterThanOrEqualTo(root.<LocalDateTime>get("opdate"), from);
-            where = builder.and(greaterThanOrEqualTo);
+            where = builder.and(where, greaterThanOrEqualTo);
         }
         if (to != null) {
             var lessThanOpdate = builder.lessThan(root.<LocalDateTime>get("opdate"), to);
@@ -211,7 +211,7 @@ public class TransactionService {
                         builder.and(builder.equal(root.<LocalDateTime>get("opdate"), to),
                                 builder.lessThan(root.get("id"), id)));
             }
-            where = builder.and(lessThanOpdate);
+            where = builder.and(where, lessThanOpdate);
         }
         criteriaQuery.multiselect(root.get("account").get("id"), root.get("recipient").get("id"),
                 builder.sumAsDouble(root.get("debit")).alias("debit"),
@@ -474,7 +474,7 @@ public class TransactionService {
             where = builder.and(where, builder.greaterThanOrEqualTo(root.get("opdate"), from));
         }
         if (to != null) {
-            where = builder.and(where, builder.lessThanOrEqualTo(root.get("opdate"), to));
+            where = builder.and(where, builder.lessThan(root.get("opdate"), to));
         }
         criteriaQuery = criteriaQuery.where(where).orderBy(builder.desc(root.get("opdate")),
                 builder.desc(root.get("id")));

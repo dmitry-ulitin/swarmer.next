@@ -22,8 +22,8 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JWTFilter filter) throws Exception {
         http.authorizeHttpRequests((authz) -> authz
-                .antMatchers("/api/register/**").permitAll()
-                .antMatchers("/api/login/**").permitAll()
+                .requestMatchers("/api/register/**").permitAll()
+                .requestMatchers("/api/login/**").permitAll()
                 .anyRequest().authenticated())
                 .cors().and()
                 .csrf().disable()

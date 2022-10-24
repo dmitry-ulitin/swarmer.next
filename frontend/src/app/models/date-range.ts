@@ -24,6 +24,10 @@ export class DateRange {
         return new DateRange(now.year.toString(), new TuiDay(now.year, 0, 1), now, RangeType.Year);
     }
 
+    hasPrev(): boolean {
+        return this.type == RangeType.Year || this.type == RangeType.Month;
+    }
+
     prev(): DateRange {
         if (this.type == RangeType.Year) {
             const from = this.from.append({year: -1});
@@ -37,17 +41,21 @@ export class DateRange {
         return this;
     }
 
+    hasNext(): boolean {
+        return (this.type == RangeType.Year || this.type == RangeType.Month) && this.to.dayBefore(TuiDay.currentLocal());
+    }
+
     next(): DateRange {
-        if (this.type == RangeType.Year) {
-            const from = this.from.append({year: 1});
-            const to = new TuiDay(from.year, 11, 31);
-            return new DateRange(from.year.toString(), from, to, RangeType.Year);
-        }  else if (this.type == RangeType.Month) {
-            const from = this.from.append({month: 1});
-            const to = new TuiDay(from.year, from.month, from.daysCount);
-            return new DateRange(from.toLocalNativeDate().toLocaleString('default', { month: 'long' }), from, to, RangeType.Month);
+        if (!this.hasNext()) {
+            return this;
         }
-        return this;
+        const from = this.type == RangeType.Year ? this.from.append({year: 1}) : this.from.append({month: 1});
+        let to = this.type == RangeType.Year ? new TuiDay(from.year, 11, 31) : new TuiDay(from.year, from.month, from.daysCount);
+        if (to.dayAfter(TuiDay.currentLocal())) {
+            to = TuiDay.currentLocal();
+        }
+        const name = this.type == RangeType.Year ? from.year.toString() : from.toLocalNativeDate().toLocaleString('default', { month: 'long' });
+        return new DateRange(name, from, to, this.type);
     }
 
     same(another: DateRange): boolean {
