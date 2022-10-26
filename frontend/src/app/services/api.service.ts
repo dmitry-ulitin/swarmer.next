@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { TuiDay } from '@taiga-ui/cdk';
 import { Observable } from 'rxjs';
 import { Category } from '../models/category';
+import { CategorySum } from '../models/category-sum';
 import { DateRange } from '../models/date-range';
 import { Group } from '../models/group';
 import { Summary } from '../models/summary';
@@ -48,6 +49,14 @@ export class ApiService {
     params = params.set('from', range?.from?.toString('YMD','-'));
     params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
     return this.http.get<Summary[]>('/api/transactions/summary', {params: params});
+  }
+
+  getExpences(accounts: number[], range: DateRange): Observable<CategorySum[]> {
+    let params = new HttpParams();
+    params = params.set('accounts', accounts.join(","));
+    params = params.set('from', range?.from?.toString('YMD','-'));
+    params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
+    return this.http.get<CategorySum[]>('/api/transactions/expences', {params: params});
   }
 
   getTransaction(id: number): Observable<Transaction> {

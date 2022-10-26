@@ -21,8 +21,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import com.swarmer.finance.dto.CategoryIdSum;
+import com.swarmer.finance.dto.CategorySum;
 import com.swarmer.finance.dto.ImportDto;
 import com.swarmer.finance.dto.Summary;
 import com.swarmer.finance.dto.TransactionDto;
@@ -66,7 +69,8 @@ public class TransactionService {
         if (trx.isEmpty()) {
             return List.of();
         }
-        var rawBalnces = getBalances(accountIds, null, trx.get(trx.size() - 1).getOpdate(), trx.get(trx.size() - 1).getId());
+        var rawBalnces = getBalances(accountIds, null, trx.get(trx.size() - 1).getOpdate(),
+                trx.get(trx.size() - 1).getId());
         Map<Long, Double> accBalances = new HashMap<>();
         var dto = new TransactionDto[trx.size()];
         for (int index = trx.size() - 1; index >= 0; index--) {
@@ -76,9 +80,11 @@ public class TransactionService {
                 accountBalance = accBalances.get(transaction.getAccount().getId());
                 if (accountBalance == null) {
                     accountBalance = transaction.getAccount().getStart_balance();
-                    accountBalance -= rawBalnces.stream().filter(b -> transaction.getAccount().getId().equals(b.getAccountId()))
+                    accountBalance -= rawBalnces.stream()
+                            .filter(b -> transaction.getAccount().getId().equals(b.getAccountId()))
                             .mapToDouble(b -> b.getDebit()).sum();
-                    accountBalance += rawBalnces.stream().filter(b -> transaction.getAccount().getId().equals(b.getRecipientId()))
+                    accountBalance += rawBalnces.stream()
+                            .filter(b -> transaction.getAccount().getId().equals(b.getRecipientId()))
                             .mapToDouble(b -> b.getCredit()).sum();
                 }
                 accountBalance -= transaction.getDebit();
@@ -221,7 +227,8 @@ public class TransactionService {
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
-    public Collection<Summary> getSummary(Long userId, Collection<Long> accountIds, LocalDateTime from, LocalDateTime to) {
+    public Collection<Summary> getSummary(Long userId, Collection<Long> accountIds, LocalDateTime from,
+            LocalDateTime to) {
         Map<Long, Account> userAccounts = aclService.findAccounts(userId)
                 .collect(Collectors.toMap(a -> a.getId(), a -> a));
         Map<Long, Account> resultAccounts = (accountIds.isEmpty() ? userAccounts.values()
@@ -264,6 +271,64 @@ public class TransactionService {
             }
         }
         return result.values();
+    }
+
+    public Collection<CategorySum> getCategoriesSummary(Long userId, TransactionType type, Collection<Long> accountIds,
+            LocalDateTime from,
+            LocalDateTime to) {
+        var ai = accountIds.isEmpty() ? aclService.findAccounts(userId).map(a -> a.getId()).toList() : accountIds;
+        var builder = entityManager.getCriteriaBuilder();
+        var criteriaQuery = builder.createQuery(CategoryIdSum.class);
+        var root = criteriaQuery.from(Transaction.class);
+        var where = type == TransactionType.EXPENSE
+                ? builder.and(root.get("account").get("id").in(ai), root.get("recipient").isNull())
+                : builder.or(root.get("account").isNull(), root.get("recipient").get("id").in(ai));
+        if (from != null) {
+            var greaterThanOrEqualTo = builder.greaterThanOrEqualTo(root.<LocalDateTime>get("opdate"), from);
+            where = builder.and(where, greaterThanOrEqualTo);
+        }
+        if (to != null) {
+            var lessThanOpdate = builder.lessThan(root.<LocalDateTime>get("opdate"), to);
+            where = builder.and(where, lessThanOpdate);
+        }
+        if (type == TransactionType.EXPENSE) {
+            criteriaQuery.multiselect(root.get("category").get("id"),
+                    root.get("account").get("currency"),
+                    builder.sumAsDouble(root.get("debit")).alias("amount"))
+                    .where(where)
+                    .groupBy(root.get("category"), root.get("account").get("currency"));
+        } else {
+            criteriaQuery.multiselect(root.get("category").get("id"),
+                    root.get("recipient").get("currency"),
+                    builder.sumAsDouble(root.get("credit")).alias("amount"))
+                    .where(where)
+                    .groupBy(root.get("category").get("id"), root.get("recipient").get("currency"));
+        }
+        var categoryIdSums = entityManager.createQuery(criteriaQuery).getResultList();
+        var categorySums = categoryIdSums.stream()
+                .map(r -> new CategorySum(r.getId() == null ? null : entityManager.find(Category.class, r.getId()),
+                        r.getCurrency(), r.getAmount()))
+                .toList();
+        // group by to parent category
+        for (var cs : categorySums) {
+            var category = cs.getCategory();
+            if (category != null) {
+                while (category.getLevel() > 1) {
+                    category = entityManager.find(Category.class, category.getParentId());
+                }
+                cs.setCategory(category);
+            } else {
+                cs.setCategory(entityManager.find(Category.class, Long.valueOf(type.getValue())));
+            }
+        }
+        var groups = categorySums.stream()
+                .collect(Collectors.groupingBy(cs -> Pair.of(cs.getCurrency(), cs.getCategory())));
+        return groups.entrySet().stream().map(e -> e.getValue().stream()
+                .reduce(new CategorySum(e.getKey().getSecond(), e.getKey().getFirst(), .0), (a, g) -> {
+                    a.setAmount(a.getAmount() + g.getAmount());
+                    return a;
+                })).sorted((a, b) -> a.getCategory().getFullName().compareToIgnoreCase(b.getCategory().getFullName()))
+                .toList();
     }
 
     public List<ImportDto> importFile(InputStream is, Long accountId, Long bankId, Long userId)

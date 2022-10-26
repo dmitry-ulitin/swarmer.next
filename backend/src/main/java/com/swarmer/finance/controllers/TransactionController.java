@@ -23,10 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.swarmer.finance.dto.CategorySum;
 import com.swarmer.finance.dto.ImportDto;
 import com.swarmer.finance.dto.Summary;
 import com.swarmer.finance.dto.TransactionDto;
 import com.swarmer.finance.dto.UserPrincipal;
+import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.services.TransactionService;
 
 @RestController
@@ -86,6 +88,17 @@ public class TransactionController {
         LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
         LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
         return transactionService.getSummary(userId, accounts, fromDate, toDate);
+    }
+
+    @GetMapping("/expences")
+    Collection<CategorySum> getSummaryExpences(Authentication authentication,
+            @RequestParam(required = false, defaultValue = "") String from,
+            @RequestParam(required = false, defaultValue = "") String to,
+            @RequestParam(required = false, defaultValue = "") Collection<Long> accounts) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
+        LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
+        return transactionService.getCategoriesSummary(userId, TransactionType.EXPENSE, accounts, fromDate, toDate);
     }
 
     @PostMapping("/import")

@@ -342,6 +342,7 @@ export class AccState {
         try {
             const state = cxt.getState();
             const summary = await firstValueFrom(this.api.getSummary(state.accounts, state.range));
+            const expences = await firstValueFrom(this.api.getExpences(state.accounts, state.range));
             cxt.patchState({ summary });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
