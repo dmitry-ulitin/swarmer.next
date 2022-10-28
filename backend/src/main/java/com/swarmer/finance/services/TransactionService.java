@@ -50,33 +50,40 @@ public class TransactionService {
     private final UserRepository userRepository;
     private final RuleRepository ruleRepository;
     private final AclService aclService;
+    private final CategoryService categoryService;
     private final EntityManager entityManager;
 
     public TransactionService(TransactionRepository transactionRepository, AccountRepository accountRepository,
             UserRepository userRepository, RuleRepository ruleRepository, AclService aclService,
-            EntityManager entityManager) {
+            CategoryService categoryService, EntityManager entityManager) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.ruleRepository = ruleRepository;
         this.aclService = aclService;
+        this.categoryService = categoryService;
         this.entityManager = entityManager;
     }
 
-    public List<TransactionDto> getTransactions(Long userId, int offset, int limit, Collection<Long> accountIds,
-            String search, LocalDateTime from, LocalDateTime to) {
-        var trx = queryTransactions(userId, offset, limit, accountIds, search, from, to);
+    public List<TransactionDto> getTransactions(Long userId, Collection<Long> accountIds,
+            String search, Long categoryId, LocalDateTime from, LocalDateTime to, int offset, int limit) {
+        var ai = accountIds.isEmpty() ? aclService.findAccounts(userId).map(a -> a.getId()).toList()
+                : new ArrayList<>(accountIds);
+        var categories = categoryService.getCategoriesFilter(userId, categoryId);
+        var trx = queryTransactions(ai, search, categories, from, to, offset, limit);
         if (trx.isEmpty()) {
             return List.of();
         }
-        var rawBalnces = getBalances(accountIds, null, trx.get(trx.size() - 1).getOpdate(),
-                trx.get(trx.size() - 1).getId());
+        var calcBalances = (search == null || search.isBlank()) && categoryId == null;
+        List<TransactionSum> rawBalnces = calcBalances ? getBalances(ai, null, trx.get(trx.size() - 1).getOpdate(),
+                trx.get(trx.size() - 1).getId()) : List.of();
         Map<Long, Double> accBalances = new HashMap<>();
         var dto = new TransactionDto[trx.size()];
         for (int index = trx.size() - 1; index >= 0; index--) {
             var transaction = trx.get(index);
             Double accountBalance = null;
-            if (transaction.getAccount() != null) {
+            Double recipientBalance = null;
+            if (transaction.getAccount() != null && calcBalances) {
                 accountBalance = accBalances.get(transaction.getAccount().getId());
                 if (accountBalance == null) {
                     accountBalance = transaction.getAccount().getStart_balance();
@@ -90,8 +97,7 @@ public class TransactionService {
                 accountBalance -= transaction.getDebit();
                 accBalances.put(transaction.getAccount().getId(), accountBalance);
             }
-            Double recipientBalance = null;
-            if (transaction.getRecipient() != null) {
+            if (transaction.getRecipient() != null && calcBalances) {
                 recipientBalance = accBalances.get(transaction.getRecipient().getId());
                 if (recipientBalance == null) {
                     recipientBalance = transaction.getRecipient().getStart_balance();
@@ -282,7 +288,7 @@ public class TransactionService {
         var root = criteriaQuery.from(Transaction.class);
         var where = type == TransactionType.EXPENSE
                 ? builder.and(root.get("account").get("id").in(ai), root.get("recipient").isNull())
-                : builder.or(root.get("account").isNull(), root.get("recipient").get("id").in(ai));
+                : builder.and(root.get("account").isNull(), root.get("recipient").get("id").in(ai));
         if (from != null) {
             var greaterThanOrEqualTo = builder.greaterThanOrEqualTo(root.<LocalDateTime>get("opdate"), from);
             where = builder.and(where, greaterThanOrEqualTo);
@@ -342,7 +348,7 @@ public class TransactionService {
                 var csvParser = new CSVParser(fileReader, format)) {
             var records = csvParser.getRecords().stream().map(r -> csv2trx(bankId, r)).toList();
             var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
-            var trx = queryTransactions(null, 0, 0, List.of(accountId), null, minOpdate, null);
+            var trx = queryTransactions(List.of(accountId), null, null, minOpdate, null, 0, 0);
             var rules = ruleRepository.findByOwnerId(userId);
 
             return records.stream().map(r -> {
@@ -520,10 +526,8 @@ public class TransactionService {
         return typedQuery.getResultList();
     }
 
-    private List<Transaction> queryTransactions(Long userId, int offset, int limit, Collection<Long> accountIds,
-            String search, LocalDateTime from, LocalDateTime to) {
-        var ai = accountIds.isEmpty() ? aclService.findAccounts(userId).map(a -> a.getId()).toList()
-                : new ArrayList<>(accountIds);
+    private List<Transaction> queryTransactions(Collection<Long> ai,
+            String search, List<Long> categories, LocalDateTime from, LocalDateTime to, int offset, int limit) {
         var builder = entityManager.getCriteriaBuilder();
         var criteriaQuery = builder.createQuery(Transaction.class);
         var root = criteriaQuery.from(Transaction.class);
@@ -534,6 +538,9 @@ public class TransactionService {
             var party = builder.like(builder.upper(root.get("party")), pattern);
             var category = builder.like(builder.upper(root.join("category", JoinType.LEFT).get("name")), pattern);
             where = builder.and(where, builder.or(category, details, party));
+        }
+        if (categories != null && !categories.isEmpty()) {
+            where = builder.and(where, root.get("category").get("id").in(categories));
         }
         if (from != null) {
             where = builder.and(where, builder.greaterThanOrEqualTo(root.get("opdate"), from));

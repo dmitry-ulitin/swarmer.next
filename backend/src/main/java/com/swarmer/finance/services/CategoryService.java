@@ -39,6 +39,28 @@ public class CategoryService {
         return result;
     }
     
+    public List<Long> getCategoriesFilter(Long userId, Long categoryId) {
+        List<Long> result = new ArrayList<>();
+        if (categoryId == null) {
+            return result;
+        }
+        var coowners = aclService.findUsers(userId);
+        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
+            .sorted((c1, c2) -> c1.getRootId().equals(c2.getRootId()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getRootId().compareTo(c2.getRootId()))
+            .collect(Collectors.toList());
+
+        int index = 0;
+        while(index<categories.size() && !categories.get(index).getId().equals(categoryId)) index++;
+        if (index>categories.size()) {
+            result.add(categoryId);
+            return result;
+        }
+        var fullName = categories.get(index).getFullName();
+        while(index>0 && categories.get(index - 1).getFullName().equals(fullName)) index--;
+        while(index<categories.size() && (categories.get(index).getFullName().equals(fullName) || categories.get(index).getFullName().startsWith(fullName + " / "))) result.add(categories.get(index++).getId());
+        return result;
+    }
+    
     public Category addNewCategory(Category category) {
         return categoryRepository.save(category);
     }
