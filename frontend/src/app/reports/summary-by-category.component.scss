@@ -1,0 +1,12 @@
+.t-row {
+  display: flex;
+}
+
+.t-left {
+  flex: 1;
+}
+
+.t-right {
+  padding-left: 2rem;
+  text-align: right;
+}

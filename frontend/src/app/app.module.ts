@@ -38,6 +38,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { CategoryCtrlComponent } from './transactions/transaction-dlg/category-ctrl/category-ctrl.component';
 import { RegistrationComponent } from './auth/registration.component';
 import { RangeComponent } from './filters/range/range.component';
+import { SummaryByCategoryComponent } from './reports/summary-by-category.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -59,7 +60,8 @@ registerLocaleData(localeRu, 'ru');
     FiltersComponent,
     CategoryCtrlComponent,
     RegistrationComponent,
-    RangeComponent
+    RangeComponent,
+    SummaryByCategoryComponent
   ],
   imports: [
     BrowserModule,

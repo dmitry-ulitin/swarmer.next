@@ -39,3 +39,15 @@ tr.shared {
 tui-dialog[data-size='l'] {
   width: 90vw !important;
 }
+
+.type0 {
+  color: #8f8100;
+}
+
+.type1, .debit {
+  color: #b40000;
+}
+
+.type2, .credit {
+  color: #14aa00;
+}
