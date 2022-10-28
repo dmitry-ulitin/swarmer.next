@@ -1,5 +1,5 @@
 <div class="t-row" *ngFor="let e of expenses$ | async; let i = index">
-    <div class="t-left"><ng-template [ngIf]="true">{{e.name}}</ng-template></div>
+    <div class="t-left" (click)="setCategory(e.category)"><a tuiLink>{{e.category.fullname}}</a></div>
     <div class="t-right debit">
         <div *ngFor="let a of e.amounts" class="debit">{{a.value | currency:a.currency}}</div>
     </div>
