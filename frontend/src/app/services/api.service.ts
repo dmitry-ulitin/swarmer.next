@@ -51,12 +51,12 @@ export class ApiService {
     return this.http.get<Summary[]>('/api/transactions/summary', {params: params});
   }
 
-  getExpences(accounts: number[], range: DateRange): Observable<CategorySum[]> {
+  getExpenses(accounts: number[], range: DateRange): Observable<CategorySum[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('from', range?.from?.toString('YMD','-'));
     params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
-    return this.http.get<CategorySum[]>('/api/transactions/expences', {params: params});
+    return this.http.get<CategorySum[]>('/api/transactions/expenses', {params: params});
   }
 
   getTransaction(id: number): Observable<Transaction> {

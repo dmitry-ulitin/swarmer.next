@@ -90,8 +90,8 @@ public class TransactionController {
         return transactionService.getSummary(userId, accounts, fromDate, toDate);
     }
 
-    @GetMapping("/expences")
-    Collection<CategorySum> getSummaryExpences(Authentication authentication,
+    @GetMapping("/expenses")
+    Collection<CategorySum> getSummaryExpenses(Authentication authentication,
             @RequestParam(required = false, defaultValue = "") String from,
             @RequestParam(required = false, defaultValue = "") String to,
             @RequestParam(required = false, defaultValue = "") Collection<Long> accounts) {

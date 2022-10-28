@@ -19,6 +19,7 @@ import * as moment from 'moment';
 import { Summary } from '../models/summary';
 import { Filter } from '../models/filter';
 import { DateRange } from '../models/date-range';
+import { CategorySum } from '../models/category-sum';
 
 const GET_TRANSACTIONS_LIMIT: number = 100;
 
@@ -122,6 +123,7 @@ export interface AccStateModel {
     search: string;
     range: DateRange;
     summary: Summary[];
+    expenses: CategorySum[];
     loaded: boolean;
 }
 
@@ -137,6 +139,7 @@ export interface AccStateModel {
         search: '',
         range: DateRange.last30(),
         summary: [],
+        expenses: [],
         loaded: false
     }
 })
@@ -342,8 +345,8 @@ export class AccState {
         try {
             const state = cxt.getState();
             const summary = await firstValueFrom(this.api.getSummary(state.accounts, state.range));
-            const expences = await firstValueFrom(this.api.getExpences(state.accounts, state.range));
-            cxt.patchState({ summary });
+            const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
+            cxt.patchState({ summary, expenses });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
