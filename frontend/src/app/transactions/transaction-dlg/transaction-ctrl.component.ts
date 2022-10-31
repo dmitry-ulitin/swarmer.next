@@ -230,7 +230,9 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   }
 
   validate({ value }: FormControl): ValidationErrors | null {
-    const valid = (!this.showCredit || (!!value.credit && !!value.ccurrency)) && (!this.showDebit || (!!value.debit && !!value.dcurrency)) && (!this.newcategory || !!value.newcategory) || (value.type === TransactionType.Correction);
+    const ccurrency = this.form.controls['ccurrency'].value;
+    const dcurrency = this.form.controls['dcurrency'].value;
+    const valid = (!this.showCredit || (!!value.credit && !!ccurrency)) && (!this.showDebit || (!!value.debit && !!dcurrency)) && (!this.newcategory || !!value.newcategory) || (value.type === TransactionType.Correction);
     return { invalid: !valid };
   }
 
