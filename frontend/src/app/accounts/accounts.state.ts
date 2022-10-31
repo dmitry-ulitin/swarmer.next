@@ -103,6 +103,11 @@ export class GetCategories {
     static readonly type = '[Acc] Get Categories';
 }
 
+export class SetCategory {
+    static readonly type = '[Acc] Set Category';
+    constructor(public category: Category | null) { }
+}
+
 export class SetSearch {
     static readonly type = '[Acc] Set Search';
     constructor(public search: string) { }
@@ -114,16 +119,21 @@ export class SetRange {
 }
 
 export interface AccStateModel {
+    // groups
     groups: Group[];
     expanded: number[];
     accounts: number[];
+    // transactions
     transactions: TransactionView[];
     transaction_id: number | null;
-    categories: Category[];
-    search: string;
-    range: DateRange;
     summary: Summary[];
     expenses: CategorySum[];
+    // filters
+    search: string;
+    range: DateRange;
+    category: Category | null;
+
+    categories: Category[];
     loaded: boolean;
 }
 
@@ -135,11 +145,12 @@ export interface AccStateModel {
         accounts: [],
         transactions: [],
         transaction_id: null,
-        categories: [],
-        search: '',
-        range: DateRange.last30(),
         summary: [],
         expenses: [],
+        search: '',
+        range: DateRange.last30(),
+        category: null,
+        categories: [],
         loaded: false
     }
 })
@@ -208,7 +219,7 @@ export class AccState {
     }
 
     ngxsOnInit(ctx: StateContext<AccState>) {
-        ctx.dispatch([new GetGroups(), new GetTransactions(), new GetCategories()]);
+        ctx.dispatch([new GetGroups(), new GetTransactions(), new GetSummary(), new GetCategories()]);
     }
 
     @Action([AppLoginSuccess, GetGroups], { cancelUncompleted: true })
@@ -270,6 +281,7 @@ export class AccState {
                     }
                     cxt.patchState({ groups, accounts });
                     cxt.dispatch(new GetTransactions());
+                    cxt.dispatch(new GetSummary());
                 }
             }
         });
@@ -312,7 +324,7 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, 0, GET_TRANSACTIONS_LIMIT));
+            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.category?.id, 0, GET_TRANSACTIONS_LIMIT));
             const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => transaction2View(t, selected));
             const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
@@ -327,7 +339,7 @@ export class AccState {
         try {
             const state = cxt.getState();
             if (!state.loaded) {
-                const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.transactions.length, GET_TRANSACTIONS_LIMIT));
+                const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.category?.id, state.transactions.length, GET_TRANSACTIONS_LIMIT));
                 const loaded = transactions.length < GET_TRANSACTIONS_LIMIT;
                 const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
                 const tv = state.transactions.concat(transactions.map(t => transaction2View(t, selected)));
@@ -340,7 +352,7 @@ export class AccState {
     }
 
 
-    @Action([AppLoginSuccess, GetSummary, GetTransactions], { cancelUncompleted: true })
+    @Action([AppLoginSuccess, GetSummary], { cancelUncompleted: true })
     async getSummary(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
@@ -356,6 +368,7 @@ export class AccState {
     selectAccounts(cxt: StateContext<AccStateModel>, action: SelectAccounts) {
         cxt.patchState({ accounts: action.accounts });
         cxt.dispatch(new GetTransactions());
+        cxt.dispatch(new GetSummary());
     }
 
     @Action(DeselectAccounts)
@@ -363,6 +376,7 @@ export class AccState {
         const state = cxt.getState();
         cxt.patchState({ accounts: state.accounts.filter(a => !action.accounts.includes(a)) });
         cxt.dispatch(new GetTransactions());
+        cxt.dispatch(new GetSummary());
     }
 
     @Action(EditTransaction)
@@ -429,7 +443,7 @@ export class AccState {
             recipient = account;
             account = undefined;
         } else if (action.type === TransactionType.Correction) {
-//            recipient = account;
+            //            recipient = account;
         }
         let transaction: Transaction = {
             type: action.type,
@@ -472,6 +486,7 @@ export class AccState {
                 await firstValueFrom(this.api.saveTransactions(id, transactions));
                 cxt.dispatch(new GetGroups());
                 cxt.dispatch(new GetTransactions());
+                cxt.dispatch(new GetSummary());
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -494,10 +509,17 @@ export class AccState {
         cxt.dispatch(new GetTransactions());
     }
 
+    @Action(SetCategory, { cancelUncompleted: true })
+    setCategory(cxt: StateContext<AccStateModel>, action: SetCategory) {
+        cxt.patchState({ category: action.category });
+        cxt.dispatch(new GetTransactions());
+    }
+
     @Action(SetRange, { cancelUncompleted: true })
     setRange(cxt: StateContext<AccStateModel>, action: SetRange) {
         cxt.patchState({ range: action.range });
         cxt.dispatch(new GetTransactions());
+        cxt.dispatch(new GetSummary());
     }
 }
 
