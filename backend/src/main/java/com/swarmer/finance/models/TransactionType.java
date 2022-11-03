@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum TransactionType {
     TRANSFER(0), EXPENSE(1), INCOME(2), CORRECTION(3);
-    private final int value;
-    private TransactionType(int value) {
+    private final long value;
+    private TransactionType(long value) {
         this.value = value;
     }
 
     @JsonValue
-    public int getValue() {
+    public long getValue() {
         return value;
     }
 }

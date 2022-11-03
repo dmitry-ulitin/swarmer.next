@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,10 +47,12 @@ public class TransactionServiceTest {
                         .0, false, LocalDateTime.now(), LocalDateTime.now());
         private final Account account2 = new Account(null, group, "", "RUB",
                         .0, false, LocalDateTime.now(), LocalDateTime.now());
-        private final Category education = Category.builder().name("Education").parentId(1L)
+        private final Category education = Category.builder().name("Education")
+                        .parentId(TransactionType.EXPENSE.getValue())
                         .created(LocalDateTime.now())
                         .updated(LocalDateTime.now()).build();
-        private final Category salary = Category.builder().name("Salary").parentId(2L).created(LocalDateTime.now())
+        private final Category salary = Category.builder().name("Salary").parentId(TransactionType.INCOME.getValue())
+                        .created(LocalDateTime.now())
                         .updated(LocalDateTime.now()).build();
         private final Transaction income = Transaction.builder().owner(user)
                         .opdate(LocalDateTime.of(2022, 1, 1, 0, 0, 0))
@@ -89,7 +92,7 @@ public class TransactionServiceTest {
                 em.persist(salary);
                 group.setAccounts(List.of(account1, account2));
                 em.persist(group);
-                correction.setCategory(em.find(Category.class, 3L));
+                correction.setCategory(em.find(Category.class, TransactionType.CORRECTION.getValue()));
                 em.persist(income);
                 em.persist(transfer);
                 em.persist(expense);
@@ -137,10 +140,19 @@ public class TransactionServiceTest {
         }
 
         @Test
-        void testDeleteTransaction() {
+        void testDeleteTransactionExpense() {
                 transactionService.deleteTransaction(expense.getId(), user.getId());
                 assertThat(em.contains(correction)).isTrue();
                 assertThat(correction.getDebit()).isEqualTo(40000.);
+        }
+
+        @Test
+        void testDeleteTransactionTransfer() {
+                transactionService.deleteTransaction(transfer.getId(), user.getId());
+                assertThat(em.contains(correction)).isTrue();
+                assertThat(correction.getDebit()).isEqualTo(20000.);
+                assertThat(correction.getAccount()).isNull();
+                assertThat(correction.getRecipient()).isNotNull();
         }
 
         @Test
@@ -177,6 +189,16 @@ public class TransactionServiceTest {
         }
 
         @Test
+        void testGetSummaryFrom() {
+                var summary = transactionService.getSummary(user.getId(), List.of(account1.getId(), account2.getId()),
+                                LocalDateTime.of(2022, 1, 5, 0, 0, 0), null);
+                assertThat(summary).hasSize(2);
+                var usd = summary.stream().filter(s -> "USD".equals(s.getCurrency())).findFirst();
+                assertThat(usd.isPresent()).isTrue();
+                assertThat(usd.get().getCredit()).isEqualTo(0.);
+        }
+
+        @Test
         void testGetTransaction() {
                 var actual = transactionService.getTransaction(transfer.getId(), user.getId());
                 assertThat(actual.id()).isEqualTo(transfer.getId());
@@ -192,13 +214,37 @@ public class TransactionServiceTest {
 
         @Test
         void testGetTransactions() {
+                var trx = transactionService.getTransactions(user.getId(), List.of(account2.getId()), "", null, null,
+                                null, 0, 0);
+                assertThat(trx).hasSize(3);
+                assertThat(trx.stream().map(TransactionDto::id).collect(Collectors.toList()))
+                                .containsExactly(correction.getId(), expense.getId(), transfer.getId());
+        }
+
+        @Test
+        void testGetTransactionsFrom() {
+                var trx = transactionService.getTransactions(user.getId(), List.of(), null, null,
+                                LocalDateTime.of(2022, 1, 5, 0, 0, 0), null, 0, 0);
+                assertThat(trx).hasSize(3);
+                assertThat(trx.stream().map(TransactionDto::id).collect(Collectors.toList()))
+                                .containsExactly(correction.getId(), expense.getId(), transfer.getId());
+        }
+
+        @Test
+        void testGetTransactionsSearch() {
                 var trx = transactionService.getTransactions(user.getId(), List.of(), "duc", null, null, null, 0, 0);
                 assertThat(trx).hasSize(1);
                 assertThat(trx.get(0).id()).isEqualTo(expense.getId());
         }
 
         @Test
-        void testUpdateTransaction() {
+        void testGetTransactionsSearchEmpty() {
+                var trx = transactionService.getTransactions(user.getId(), List.of(), "ducduc", null, null, null, 0, 0);
+                assertThat(trx).hasSize(0);
+        }
+
+        @Test
+        void testUpdateTransactionExpense() {
                 var dto = transactionService.getTransaction(expense.getId(), user.getId());
                 var amount = dto.debit() + 10000.;
                 var updated = new TransactionDto(dto.id(), dto.ownerId(), dto.opdate(), dto.type(),
@@ -208,10 +254,52 @@ public class TransactionServiceTest {
                 assertThat(actual.debit()).isEqualTo(updated.debit());
                 assertThat(actual.party()).isEqualTo(updated.party());
                 assertThat(actual.details()).isEqualTo(updated.details());
-                // correction must decrease to 20000
+                // correction must decrease from 30000 to 20000
                 assertThat(em.contains(correction)).isTrue();
                 assertThat(correction.getDebit()).isEqualTo(20000.);
                 assertThat(correction.getAccount()).isNotNull();
                 assertThat(correction.getRecipient()).isNull();
+        }
+
+        @Test
+        void testUpdateTransactionTransfer() {
+                var dto = transactionService.getTransaction(transfer.getId(), user.getId());
+                var debit = dto.debit() + 100.;
+                var credit = dto.credit() + 10000.;
+                var updated = new TransactionDto(dto.id(), dto.ownerId(), dto.opdate(), dto.type(),
+                                dto.account(), debit, dto.recipient(), credit, dto.category(), dto.currency(),
+                                "new party", "new details");
+                var actual = transactionService.updateTransaction(updated, user.getId());
+                assertThat(actual.debit()).isEqualTo(updated.debit());
+                assertThat(actual.party()).isEqualTo(updated.party());
+                assertThat(actual.details()).isEqualTo(updated.details());
+                // correction must increase from 30000 to 40000
+                assertThat(em.contains(correction)).isTrue();
+                assertThat(correction.getDebit()).isEqualTo(40000.);
+                assertThat(correction.getAccount()).isNotNull();
+                assertThat(correction.getRecipient()).isNull();
+        }
+
+        @Test
+        void testGetCategoriesSummaryExpense() {
+                var summaries = transactionService.getCategoriesSummary(user.getId(), TransactionType.EXPENSE,
+                                List.of(account1.getId(), account2.getId()),
+                                LocalDateTime.of(2022, 1, 1, 0, 0, 0), LocalDateTime.of(2022, 1, 10, 23, 59, 59));
+                assertThat(summaries).hasSize(1);
+                var summary = summaries.stream().findFirst();
+                assertThat(summary.get().getCategory().getId()).isEqualTo(education.getId());
+                assertThat(summary.get().getAmount()).isEqualTo(expense.getDebit());
+                assertThat(summary.get().getCurrency()).isEqualTo(expense.getAccount().getCurrency());
+        }
+
+        @Test
+        void testGetCategoriesSummaryIncome() {
+                var summaries = transactionService.getCategoriesSummary(user.getId(), TransactionType.INCOME,
+                                List.of(account1.getId(), account2.getId()),
+                                LocalDateTime.of(2022, 1, 1, 0, 0, 0), LocalDateTime.of(2022, 1, 10, 23, 59, 59));
+                assertThat(summaries).hasSize(1);
+                var summary = summaries.stream().findFirst();
+                assertThat(summary.get().getAmount()).isEqualTo(income.getCredit());
+                assertThat(summary.get().getCurrency()).isEqualTo(income.getRecipient().getCurrency());
         }
 }
