@@ -7,12 +7,14 @@ import com.swarmer.finance.models.Category;
 import com.swarmer.finance.models.TransactionType;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ImportDto {
     private Long id;
     @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss[XXX]")

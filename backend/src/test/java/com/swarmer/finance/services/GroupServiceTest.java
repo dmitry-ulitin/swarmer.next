@@ -22,7 +22,6 @@ import com.swarmer.finance.repositories.AccountRepository;
 import com.swarmer.finance.repositories.AclRepository;
 import com.swarmer.finance.repositories.CategoryRepository;
 import com.swarmer.finance.repositories.GroupRepository;
-import com.swarmer.finance.repositories.RuleRepository;
 import com.swarmer.finance.repositories.TransactionRepository;
 import com.swarmer.finance.repositories.UserRepository;
 
@@ -50,11 +49,11 @@ public class GroupServiceTest {
         @Autowired
         public GroupServiceTest(GroupRepository groupRepository, UserRepository userRepository,
                         TransactionRepository transactionRepository, AccountRepository accountRepository,
-                        AclRepository aclRepository, RuleRepository ruleRepository, CategoryRepository categoryRepository, EntityManager em) {
+                        AclRepository aclRepository, CategoryRepository categoryRepository, EntityManager em) {
                 var aclService = new AclService(aclRepository, groupRepository);
                 var categoryService = new CategoryService(categoryRepository, aclService);
                 var transactionService = new TransactionService(transactionRepository, accountRepository,
-                                userRepository, ruleRepository, aclService, categoryService, em);
+                                userRepository, aclService, categoryService, em);
                 groupService = new GroupService(groupRepository, userRepository, transactionService, aclService);
                 this.em = em;
         }
