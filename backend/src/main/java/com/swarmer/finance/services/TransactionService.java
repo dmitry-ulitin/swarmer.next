@@ -324,7 +324,7 @@ public class TransactionService {
     public void saveImport(List<ImportDto> records, Long accountId, Long userId) {
         var owner = userRepository.findById(userId).orElseThrow();
         var account = accountRepository.findById(accountId).orElseThrow();
-        var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
+        var minOpdate = records.stream().filter(ImportDto::isSelected).map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
         var corrections = getCorrections(accountId, minOpdate, null);
         for (var dto : records) {
             if (dto.getId() != null && !dto.isSelected()) {
