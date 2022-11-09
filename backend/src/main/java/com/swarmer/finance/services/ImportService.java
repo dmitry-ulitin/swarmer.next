@@ -43,7 +43,7 @@ public class ImportService {
                 var csvParser = new CSVParser(fileReader, format)) {
             var records = csvParser.getRecords().stream().map(r -> csv2trx(bankId, r)).toList();
             var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
-            var trx = transactionService.queryTransactions(List.of(accountId), null, null, minOpdate, null, 0, 0);
+            var trx = transactionService.queryTransactions(userId, List.of(accountId), null, null, minOpdate, null, 0, 0);
             var rules = ruleRepository.findByOwnerId(userId);
 
             return records.stream().map(r -> {
