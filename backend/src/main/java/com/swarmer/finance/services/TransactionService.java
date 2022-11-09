@@ -53,8 +53,7 @@ public class TransactionService {
             String search, Long categoryId, LocalDateTime from, LocalDateTime to, int offset, int limit) {
         var ai = accountIds.isEmpty() ? aclService.findAccounts(userId).map(a -> a.getId()).toList()
                 : new ArrayList<>(accountIds);
-        var categories = categoryService.getCategoriesFilter(userId, categoryId);
-        var trx = queryTransactions(ai, search, categories, from, to, offset, limit);
+        var trx = queryTransactions(userId, ai, search, categoryId, from, to, offset, limit);
         if (trx.isEmpty()) {
             return List.of();
         }
@@ -448,8 +447,8 @@ public class TransactionService {
         return typedQuery.getResultList();
     }
 
-    public List<Transaction> queryTransactions(Collection<Long> ai,
-            String search, List<Long> categories, LocalDateTime from, LocalDateTime to, int offset, int limit) {
+    public List<Transaction> queryTransactions(Long userId, Collection<Long> ai,
+            String search, Long categoryId, LocalDateTime from, LocalDateTime to, int offset, int limit) {
         var builder = entityManager.getCriteriaBuilder();
         var criteriaQuery = builder.createQuery(Transaction.class);
         var root = criteriaQuery.from(Transaction.class);
@@ -461,8 +460,21 @@ public class TransactionService {
             var category = builder.like(builder.upper(root.join("category", JoinType.LEFT).get("name")), pattern);
             where = builder.and(where, builder.or(category, details, party));
         }
-        if (categories != null && !categories.isEmpty()) {
-            where = builder.and(where, root.get("category").get("id").in(categories));
+        if (categoryId != null) {
+            if (categoryId == -TransactionType.EXPENSE.getValue()) {
+                where = builder.and(where, root.get("category").isNull(), root.get("recipient").isNull());
+            } else if (categoryId == -TransactionType.INCOME.getValue()) {
+                where = builder.and(where, root.get("category").isNull(), root.get("account").isNull());
+            } else if (categoryId == TransactionType.EXPENSE.getValue()) {
+                where = builder.and(where, root.get("recipient").isNull());
+            } else if (categoryId == TransactionType.INCOME.getValue()) {
+                where = builder.and(where, root.get("account").isNull());
+            } else if (categoryId == TransactionType.TRANSFER.getValue()) {
+                where = builder.and(where, root.get("account").isNotNull(), root.get("recipient").isNotNull());
+            } else {
+                var categories = categoryService.getCategoriesFilter(userId, categoryId);
+                where = builder.and(where, root.get("category").get("id").in(categories));
+            }
         }
         if (from != null) {
             where = builder.and(where, builder.greaterThanOrEqualTo(root.get("opdate"), from));
