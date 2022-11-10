@@ -18,6 +18,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.dto.ImportDto;
+import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.ConditionType;
 import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.repositories.RuleRepository;
@@ -32,14 +33,14 @@ public class ImportService {
         this.ruleRepository = ruleRepository;
     }
 
-    public List<ImportDto> importFile(InputStream is, Long accountId, Long bankId, Long userId)
+    public List<ImportDto> importFile(InputStream is, BankType bankId, Long accountId, Long userId)
             throws IOException {
         var format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).setIgnoreHeaderCase(true)
                 .setTrim(true).build();
-        if (bankId == 2) {
+        if (bankId == BankType.TINKOFF) {
             format = format.builder().setDelimiter(';').build();
         }
-        try (var fileReader = new BufferedReader(new InputStreamReader(is, bankId == 2 ? "cp1251" : "UTF-8"));
+        try (var fileReader = new BufferedReader(new InputStreamReader(is, bankId == BankType.TINKOFF ? "cp1251" : "UTF-8"));
                 var csvParser = new CSVParser(fileReader, format)) {
             var records = csvParser.getRecords().stream().map(r -> csv2trx(bankId, r)).toList();
             var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
@@ -95,8 +96,8 @@ public class ImportService {
         }
     }
 
-    private ImportDto csv2trx(Long bankId, CSVRecord r) {
-        if (bankId == 1) {
+    private ImportDto csv2trx(BankType bankId, CSVRecord r) {
+        if (bankId == BankType.LHV) {
             var type = "D".equals(r.get(7)) ? TransactionType.EXPENSE : TransactionType.INCOME;
             var opdate = LocalDate.parse(r.get(2), DateTimeFormatter.ISO_DATE).atStartOfDay();
             var debit = Math.abs(Double.parseDouble(r.get(8)));
@@ -105,7 +106,7 @@ public class ImportService {
             var party = r.get(4);
             var details = r.get(11);
             return new ImportDto(null, opdate, type, debit, credit, null, currency, party, details, true);
-        } else if (bankId == 2) {
+        } else if (bankId == BankType.TINKOFF) {
             NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
             try {
                 var debit = nf.parse(r.get(4)).doubleValue();
