@@ -28,6 +28,7 @@ import com.swarmer.finance.dto.ImportDto;
 import com.swarmer.finance.dto.Summary;
 import com.swarmer.finance.dto.TransactionDto;
 import com.swarmer.finance.dto.UserPrincipal;
+import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.services.ImportService;
 import com.swarmer.finance.services.TransactionService;
@@ -110,7 +111,8 @@ public class TransactionController {
             @RequestParam("bank") Long bankId, Authentication authentication) {
         try {
             var userId = ((UserPrincipal) authentication.getPrincipal()).id();
-            return importService.importFile(file.getInputStream(), accountId, bankId, userId);
+            var bank = BankType.fromValue(bankId);
+            return importService.importFile(file.getInputStream(), bank, accountId, userId);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad input file", e);
         }

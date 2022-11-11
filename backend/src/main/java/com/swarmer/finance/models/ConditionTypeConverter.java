@@ -6,7 +6,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
-public class ConditionTypeConverter  implements AttributeConverter<ConditionType, Integer> {
+public class ConditionTypeConverter implements AttributeConverter<ConditionType, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(ConditionType attribute) {
