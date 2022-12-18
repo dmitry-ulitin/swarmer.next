@@ -15,11 +15,11 @@ export class LoginComponent {
     username: new UntypedFormControl(''),
     password: new UntypedFormControl('')
   });
-  returnUrl = this.route.snapshot.queryParams.returnUrl || '/';
+  returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
 
   constructor(private store: Store, private route: ActivatedRoute) { }
 
   submit(): void {
-    this.store.dispatch(new AppLogin(this.form.controls.username.value, this.form.controls.password.value, this.returnUrl));
+    this.store.dispatch(new AppLogin(this.form.controls['username'].value, this.form.controls['password'].value, this.returnUrl));
   }
 }

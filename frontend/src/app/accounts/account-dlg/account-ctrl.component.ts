@@ -41,7 +41,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
   });
 
   get accounts(): UntypedFormArray {
-    return this.form.controls.accounts as UntypedFormArray;
+    return this.form.controls['accounts'] as UntypedFormArray;
   }
 
   getAccount(index: number): UntypedFormGroup {
