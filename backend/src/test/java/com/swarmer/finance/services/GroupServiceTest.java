@@ -8,9 +8,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestPropertySource;
 
 import com.swarmer.finance.dto.AccountDto;
@@ -30,6 +30,7 @@ import jakarta.persistence.EntityManager;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.properties")
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 public class GroupServiceTest {
         private final GroupService groupService;
         private final EntityManager em;
@@ -46,7 +47,7 @@ public class GroupServiceTest {
                         .0, false,
                         LocalDateTime.now(), LocalDateTime.now());
 
-        @Autowired
+//        @Autowired
         public GroupServiceTest(GroupRepository groupRepository, UserRepository userRepository,
                         TransactionRepository transactionRepository, AccountRepository accountRepository,
                         AclRepository aclRepository, CategoryRepository categoryRepository, EntityManager em) {

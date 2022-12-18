@@ -435,10 +435,10 @@ export class AccState {
     @Action(CreateTransaction)
     addTransaction(cxt: StateContext<AccStateModel>, action: CreateTransaction) {
         const state = cxt.getState();
-        let account: Account | undefined = state.accounts.length > 0 ? getAccount(state.groups, state.accounts[0]) : state.groups[0]?.accounts[0];
+        let account: Account | undefined = state.groups.reduce((acc, g) => (acc || g.accounts.find(a => !a.deleted && (!state.accounts.length || state.accounts.includes(a.id)))), undefined as Account | undefined);
         let recipient: Account | undefined = undefined;
         if (action.type === TransactionType.Transfer) {
-            recipient = AccState.accounts(state).find(a => a.id !== account?.id && a.currency === account?.currency);
+            recipient = AccState.accounts(state).find(a => a.id !== account?.id && !a.deleted && a.currency === account?.currency);
         } else if (action.type === TransactionType.Income) {
             recipient = account;
             account = undefined;
