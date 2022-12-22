@@ -1,0 +1,38 @@
+<form [formGroup]=form>
+    <div class="conditions">
+        <tui-select class="field" formControlName="field" [valueContent]="optionContent" [tuiTextfieldSize]="'s'">
+            <tui-data-list-wrapper *tuiDataList [items]="fields" [itemContent]="optionContent" [size]="'s'">
+            </tui-data-list-wrapper>
+        </tui-select>
+        <tui-select class="condition" formControlName="condition" [valueContent]="optionContent"
+            [tuiTextfieldSize]="'s'">
+            <tui-data-list-wrapper *tuiDataList [items]="conditions" [itemContent]="optionContent" [size]="'s'">
+            </tui-data-list-wrapper>
+        </tui-select>
+        <ng-template #optionContent let-option>
+            {{option.name}}
+        </ng-template>
+        <tui-input class="value" formControlName="value" [tuiTextfieldSize]="'s'">
+            condition
+            <input tuiTextfield autocomplete="off" />
+        </tui-input>
+    </div>
+    <tui-select class="flex-fill" formControlName="category" [valueContent]="categoryValue"  [identityMatcher]="matcher" [tuiTextfieldSize]="'s'"
+        [tuiTextfieldCleaner]="false">
+        no category
+        <tui-data-list-wrapper *tuiDataList [items]="(categories$ | async) | tuiFilter: filter"
+            [itemContent]="categoryContent" [size]="'s'">
+        </tui-data-list-wrapper>
+    </tui-select>
+    <ng-template #categoryValue let-category>
+        {{category.fullname}}
+    </ng-template>
+    <ng-template #categoryContent let-category>
+        <div [class]="'category-level-' + category.level">{{category.name}}</div>
+    </ng-template>
+</form>
+<div class="footer">
+    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onSubmit()"
+        [disabled]="form.invalid">Save</button>
+    <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
+</div>

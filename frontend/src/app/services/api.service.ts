@@ -6,6 +6,7 @@ import { Category } from '../models/category';
 import { CategorySum } from '../models/category-sum';
 import { DateRange } from '../models/date-range';
 import { Group } from '../models/group';
+import { Rule } from '../models/rule';
 import { Summary } from '../models/summary';
 import { Transaction, TransactionImport } from '../models/transaction';
 
@@ -82,6 +83,14 @@ export class ApiService {
 
   saveTransactions(acc: number, transactions: TransactionImport[]): Observable<void> {
     return this.http.patch<void>(`/api/transactions/import?account=${acc}`, transactions);
+  }
+
+  getRules(): Observable<Rule[]> {
+    return this.http.get<Rule[]>('/api/transactions/rules');
+  }
+
+  getRule(id: number): Observable<Rule> {
+    return this.http.get<Rule>(`/api/transactions/rules/${id}`);
   }
 
   getCategories(): Observable<Category[]> {

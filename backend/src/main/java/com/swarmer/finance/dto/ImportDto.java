@@ -22,6 +22,7 @@ public class ImportDto {
     private TransactionType type;
     private Double debit;
     private Double credit;
+    private RuleDto rule;
     private Category category;
     private String currency;
     private String party;

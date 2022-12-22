@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.swarmer.finance.dto.CategorySum;
 import com.swarmer.finance.dto.ImportDto;
+import com.swarmer.finance.dto.RuleDto;
 import com.swarmer.finance.dto.Summary;
 import com.swarmer.finance.dto.TransactionDto;
 import com.swarmer.finance.dto.UserPrincipal;
@@ -124,4 +125,17 @@ public class TransactionController {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         transactionService.saveImport(records, accountId, userId);
     }
+
+    @GetMapping("/rules")
+    List<RuleDto> getRules(Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return importService.getRules(userId);
+    }
+
+    @GetMapping("/rules/{id}")
+    RuleDto getRule(@PathVariable("id") Long id, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return importService.getRuleById(id, userId);
+    }
+    
 }
