@@ -476,12 +476,12 @@ export class AccState {
         try {
             const state = cxt.getState();
             const id = action.id || state.accounts[0];
-            const value = await lastValueFrom(this.dialogService.open<{ bank: number, file: File }>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }));
+            const value = await lastValueFrom(this.dialogService.open<{ bank: number, file: File }>(new PolymorpheusComponent(InputFileDlgComponent, this.injector), { dismissible: false }), { defaultValue: null });
             if (!value) {
                 return;
             }
-            let transactions = await lastValueFrom(this.api.importTransactions(id, value.bank, value.file));
-            transactions = await lastValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }));
+            let transactions: TransactionImport[] | null = await lastValueFrom(this.api.importTransactions(id, value.bank, value.file));
+            transactions = await lastValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }), { defaultValue: null });
             if (transactions) {
                 await lastValueFrom(this.api.saveTransactions(id, transactions));
                 cxt.dispatch(new GetGroups());
