@@ -18,8 +18,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.dto.ImportDto;
+import com.swarmer.finance.dto.RuleDto;
 import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.ConditionType;
+import com.swarmer.finance.models.Rule;
 import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.repositories.RuleRepository;
 
@@ -31,6 +33,36 @@ public class ImportService {
     public ImportService(TransactionService transactionService, RuleRepository ruleRepository) {
         this.transactionService = transactionService;
         this.ruleRepository = ruleRepository;
+    }
+
+    public List<RuleDto> getRules(Long userId) {
+        return ruleRepository.findByOwnerId(userId).stream().map(r -> RuleDto.from(r)).toList();
+    }
+
+    public RuleDto getRuleById(Long ruleId, Long userId) {
+        return ruleRepository.findById(ruleId).map(r -> RuleDto.from(r)).orElse(null);
+    }
+
+    public RuleDto addRule(RuleDto rule, Long userId) {
+        var entity = new Rule();
+        entity.setOwnerId(userId);
+        entity.setTransactionType(rule.category().getParentId() == 1 ? TransactionType.EXPENSE : TransactionType.INCOME);
+        entity.setConditionType(rule.conditionType());
+        entity.setConditionValue(rule.conditionValue());
+        entity.setCategory(rule.category());
+        entity.setCreated(LocalDateTime.now());
+        entity.setUpdated(LocalDateTime.now());
+        return RuleDto.from(ruleRepository.save(entity));
+    }
+
+    public RuleDto updateRule(RuleDto rule, Long userId) {
+        var entity = ruleRepository.findById(rule.id()).orElseThrow();
+        entity.setTransactionType(rule.category().getParentId() == 1 ? TransactionType.EXPENSE : TransactionType.INCOME);
+        entity.setConditionType(rule.conditionType());
+        entity.setConditionValue(rule.conditionValue());
+        entity.setCategory(rule.category());
+        entity.setUpdated(LocalDateTime.now());
+        return RuleDto.from(ruleRepository.save(entity));
     }
 
     public List<ImportDto> importFile(InputStream is, BankType bankId, Long accountId, Long userId)
@@ -89,6 +121,7 @@ public class ImportService {
                             .findFirst().orElse(null);
                 }
                 if (rule != null) {
+                    r.setRule(RuleDto.from(rule));
                     r.setCategory(rule.getCategory());
                 }
                 return r;
@@ -105,7 +138,7 @@ public class ImportService {
             var currency = r.get(13);
             var party = r.get(4);
             var details = r.get(11);
-            return new ImportDto(null, opdate, type, debit, credit, null, currency, party, details, true);
+            return new ImportDto(null, opdate, type, debit, credit, null, null, currency, party, details, true);
         } else if (bankId == BankType.TINKOFF) {
             NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
             try {
@@ -116,7 +149,7 @@ public class ImportService {
                 var currency = r.get(5);
                 var party = r.get(11);
                 var details = r.get(9);
-                return new ImportDto(null, opdate, type, Math.abs(debit), Math.abs(credit), null, currency, party,
+                return new ImportDto(null, opdate, type, Math.abs(debit), Math.abs(credit), null, null, currency, party,
                         details,
                         true);
             } catch (ParseException e) {

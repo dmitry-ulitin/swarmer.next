@@ -39,6 +39,7 @@ import { CategoryCtrlComponent } from './transactions/transaction-dlg/category-c
 import { RegistrationComponent } from './auth/registration.component';
 import { RangeComponent } from './filters/range/range.component';
 import { SummaryByCategoryComponent } from './reports/summary-by-category.component';
+import { RuleDlgComponent } from './import/rule-dlg/rule-dlg.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -61,7 +62,8 @@ registerLocaleData(localeRu, 'ru');
     CategoryCtrlComponent,
     RegistrationComponent,
     RangeComponent,
-    SummaryByCategoryComponent
+    SummaryByCategoryComponent,
+    RuleDlgComponent
   ],
   imports: [
     BrowserModule,

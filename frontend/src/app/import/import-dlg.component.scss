@@ -26,6 +26,12 @@ table {
 
 .category {
     min-width: 20rem;
+    border-right: none;
+    padding-right: 0;
+}
+
+.rule {
+    padding-left: 0;
 }
 
 .credit {

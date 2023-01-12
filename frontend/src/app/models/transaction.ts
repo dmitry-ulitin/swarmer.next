@@ -1,5 +1,6 @@
 import { Category } from './category';
 import { Account } from './account';
+import { Rule } from './rule';
 
 export enum TransactionType {
     Transfer = 0,
@@ -27,5 +28,6 @@ export interface Transaction {
 
 export interface TransactionImport extends Transaction {
     selected: boolean;
+    rule: Rule;
 }
 

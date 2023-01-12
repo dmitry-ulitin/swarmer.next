@@ -23,7 +23,7 @@ public class CategoryController {
 
     @GetMapping
     @Transactional
-	Iterable<Category> getGroups(Authentication authentication) {
+	Iterable<Category> getCategories(Authentication authentication) {
         var userId = ((UserPrincipal)authentication.getPrincipal()).id();
 		return categoryService.getCategories(userId);
 	}

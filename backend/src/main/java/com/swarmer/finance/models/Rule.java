@@ -2,6 +2,8 @@ package com.swarmer.finance.models;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,7 +25,7 @@ public class Rule {
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "rule_seq")
 	@SequenceGenerator(name = "rule_seq", sequenceName = "rules_id_seq", allocationSize = 1)
     Long id;   
-	@ManyToOne User owner;
+	@JsonProperty("owner_id") Long ownerId;
     TransactionType transactionType;
     ConditionType conditionType;
     String conditionValue;

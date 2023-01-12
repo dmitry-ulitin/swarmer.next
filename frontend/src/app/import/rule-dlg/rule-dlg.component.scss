@@ -1,0 +1,33 @@
+.footer {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.conditions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.field {
+    width: 6rem;
+}
+
+.condition {
+    width: 8rem;
+}
+
+.value {
+    flex: 1 auto;
+}
+
+.category-level-2 {
+    margin-left: 1rem;
+}
+
+.category-level-3 {
+    margin-left: 2rem;
+}

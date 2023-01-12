@@ -2,6 +2,7 @@
 swarmer.db
 swarmerdb.sql
 dump.sql
+chatgpt.txt
 /db
 dist/
 
