@@ -93,6 +93,18 @@ export class ApiService {
     return this.http.get<Rule>(`/api/transactions/rules/${id}`);
   }
 
+  addRule(rule: Rule): Observable<Rule> {
+    return this.http.post<Rule>('/api/transactions/rules', rule);
+  }
+
+  updateRule(rule: Rule): Observable<Rule> {
+    return this.http.put<Rule>('/api/transactions/rules', rule);
+  }
+
+  saveRule(rule: Rule): Observable<Rule> {
+    return !!rule.id ? this.updateRule(rule) : this.addRule(rule);
+  }
+
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories');
   }

@@ -137,5 +137,16 @@ public class TransactionController {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         return importService.getRuleById(id, userId);
     }
+
+    @PostMapping("/rules")
+    RuleDto addRule(RuleDto rule, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return importService.addRule(rule, userId);
+    }
     
+    @PutMapping("/rules")
+    RuleDto updateRule(RuleDto rule, Authentication authentication) {
+        var userId = ((UserPrincipal) authentication.getPrincipal()).id();
+        return importService.updateRule(rule, userId);
+    }
 }

@@ -58,7 +58,7 @@ export class RuleDlgComponent {
     if (!this.form.value.value || !this.form.value.category) {
       return;
     }
-    const conditionType = this.form.value.field?.id == 0 ? (this.form.value.condition?.id == 0 ? 1 : 2) : (this.form.value.condition?.id == 0 ? 3 : 4);
+    const conditionType = this.form.value.field?.id == 1 ? (this.form.value.condition?.id == 1 ? 1 : 2) : (this.form.value.condition?.id == 1 ? 3 : 4);
     const rule: Rule = { id: this.form.value.id, conditionType: conditionType, conditionValue: this.form.value.value, category: this.form.value.category };
     this.context.completeWith(rule);
   }

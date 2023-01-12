@@ -5,8 +5,9 @@ import { TuiDialogContext, TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 import { lastValueFrom, map, merge } from 'rxjs';
+import { AppPrintError } from '../app.state';
 import { Category } from '../models/category';
-import { Rule } from '../models/rule';
+import { ConditionType, Rule } from '../models/rule';
 import { TransactionImport, TransactionType } from '../models/transaction';
 import { ApiService } from '../services/api.service';
 import { RuleDlgComponent } from './rule-dlg/rule-dlg.component';
@@ -48,7 +49,29 @@ export class ImportDlgComponent implements OnInit {
   }
 
   async onRule(index: number) {
-    const rule = await lastValueFrom(this.dialogService.open<Rule>(new PolymorpheusComponent(RuleDlgComponent, this.injector), { data: { rule: this.data[index].rule, transaction: this.data[index] }, dismissible: false }));
+    try {
+      let rule = await lastValueFrom(this.dialogService.open<Rule>(new PolymorpheusComponent(RuleDlgComponent, this.injector), { data: { rule: this.data[index].rule, transaction: this.data[index] }, dismissible: false }), { defaultValue: null });
+      if (rule) {
+        //        rule = await lastValueFrom(this.api.saveRule(rule));
+        this.data[index].rule = rule;
+        this.data[index].category = rule.category;
+        this.categories.controls[index].setValue(rule.category);
+        this.categories.controls
+          .filter((control: AbstractControl, i: number) => {
+            if (!control.value) {
+              const data = this.data[i];
+              return !!data.party &&
+                (rule?.conditionType == ConditionType.PARTY_EQUALS && data.party == rule?.conditionValue || rule?.conditionType == ConditionType.PARTY_CONTAINS && data.party?.includes(rule?.conditionValue || ''))
+                || !!data.details &&
+                (rule?.conditionType == ConditionType.DETAILS_EQUALS && data.details == rule?.conditionValue || rule?.conditionType == ConditionType.DETAILS_CONTAINS && data.details?.includes(rule?.conditionValue || ''));
+            }
+            return false;
+          })
+          .forEach(control => control.setValue(rule?.category, { emitEvent: false }));
+      }
+    } catch (err) {
+      this.store.dispatch(new AppPrintError(err));
+    }
   }
 
   onCheck(event: any, index: number) {

@@ -21,6 +21,7 @@ import com.swarmer.finance.dto.ImportDto;
 import com.swarmer.finance.dto.RuleDto;
 import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.ConditionType;
+import com.swarmer.finance.models.Rule;
 import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.repositories.RuleRepository;
 
@@ -40,6 +41,28 @@ public class ImportService {
 
     public RuleDto getRuleById(Long ruleId, Long userId) {
         return ruleRepository.findById(ruleId).map(r -> RuleDto.from(r)).orElse(null);
+    }
+
+    public RuleDto addRule(RuleDto rule, Long userId) {
+        var entity = new Rule();
+        entity.setOwnerId(userId);
+        entity.setTransactionType(rule.category().getParentId() == 1 ? TransactionType.EXPENSE : TransactionType.INCOME);
+        entity.setConditionType(rule.conditionType());
+        entity.setConditionValue(rule.conditionValue());
+        entity.setCategory(rule.category());
+        entity.setCreated(LocalDateTime.now());
+        entity.setUpdated(LocalDateTime.now());
+        return RuleDto.from(ruleRepository.save(entity));
+    }
+
+    public RuleDto updateRule(RuleDto rule, Long userId) {
+        var entity = ruleRepository.findById(rule.id()).orElseThrow();
+        entity.setTransactionType(rule.category().getParentId() == 1 ? TransactionType.EXPENSE : TransactionType.INCOME);
+        entity.setConditionType(rule.conditionType());
+        entity.setConditionValue(rule.conditionValue());
+        entity.setCategory(rule.category());
+        entity.setUpdated(LocalDateTime.now());
+        return RuleDto.from(ruleRepository.save(entity));
     }
 
     public List<ImportDto> importFile(InputStream is, BankType bankId, Long accountId, Long userId)
