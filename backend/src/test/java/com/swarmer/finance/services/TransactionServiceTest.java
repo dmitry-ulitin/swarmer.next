@@ -139,6 +139,9 @@ public class TransactionServiceTest {
                 em.persist(correctionRUB);
 
                 em.flush();
+                em.refresh(salary);
+                em.refresh(refund);
+                em.refresh(education);
                 em.refresh(car);
                 em.refresh(fuel);
         }
