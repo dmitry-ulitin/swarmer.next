@@ -22,7 +22,7 @@ public class CategoryService {
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
         var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
-            .sorted((c1, c2) -> c1.getRootId().equals(c2.getRootId()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getRootId().compareTo(c2.getRootId()))
+            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getType().compareTo(c2.getType()))
             .collect(Collectors.toList());
         Category prev = null;
         List<Category> result = new ArrayList<>();
@@ -46,7 +46,7 @@ public class CategoryService {
         }
         var coowners = aclService.findUsers(userId);
         var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
-            .sorted((c1, c2) -> c1.getRootId().equals(c2.getRootId()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getRootId().compareTo(c2.getRootId()))
+            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getType().compareTo(c2.getType()))
             .collect(Collectors.toList());
 
         int index = 0;

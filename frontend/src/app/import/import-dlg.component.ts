@@ -22,7 +22,7 @@ export class ImportDlgComponent implements OnInit {
   data: TransactionImport[] = [];
   rules: Rule[] = [];
   categories$ = this.store.select(state => state.acc.categories);
-  readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.root_id == type;
+  readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.type == type;
 
   categories!: UntypedFormArray;
   category(index: number) {

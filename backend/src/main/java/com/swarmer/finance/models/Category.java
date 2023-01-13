@@ -1,6 +1,7 @@
 package com.swarmer.finance.models;
 
 import java.time.LocalDateTime;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,8 +37,13 @@ public class Category {
 	@JsonIgnore	LocalDateTime created;
 	@JsonIgnore	LocalDateTime updated;
 
-	@JsonProperty("root_id") public Long getRootId() {
-		return parent == null ? id : parent.getRootId();
+	@JsonProperty("type") public TransactionType getType() {
+		var root = this;
+		while (root.getParent() != null) {
+			root = root.getParent();
+		}
+		final var rootId = root.getId();
+		return Stream.of(TransactionType.values()).filter(c -> rootId == c.getValue()).findFirst().orElseThrow(IllegalArgumentException::new);
 	}
 
 	@JsonProperty("level") public Long getLevel() {

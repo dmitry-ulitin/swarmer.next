@@ -20,14 +20,14 @@ export class SummaryComponent {
   constructor(private store: Store) { }
 
   onExpenses() {
-    this.store.dispatch(new SetCategory({id: TransactionType.Expense, name: "Expenses", fullname: "Expenses", level: 0, root_id: null, parent_id: null}));
+    this.store.dispatch(new SetCategory({id: TransactionType.Expense, name: "Expenses", fullname: "Expenses", level: 0, type: TransactionType.Expense, parent_id: null}));
   }
 
   onIncome() {
-    this.store.dispatch(new SetCategory({id: TransactionType.Income, name: "Income", fullname: "Income", level: 0, root_id: null, parent_id: null}));
+    this.store.dispatch(new SetCategory({id: TransactionType.Income, name: "Income", fullname: "Income", level: 0, type: TransactionType.Income, parent_id: null}));
   }
 
   onTransfers() {
-    this.store.dispatch(new SetCategory({id: TransactionType.Transfer, name: "Transfers", fullname: "Transfers", level: 0, root_id: null, parent_id: null}));
+    this.store.dispatch(new SetCategory({id: TransactionType.Transfer, name: "Transfers", fullname: "Transfers", level: 0, type: TransactionType.Transfer, parent_id: null}));
   }
 }

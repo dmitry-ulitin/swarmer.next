@@ -46,7 +46,7 @@ public class ImportService {
     public RuleDto addRule(RuleDto rule, Long userId) {
         var entity = new Rule();
         entity.setOwnerId(userId);
-        entity.setTransactionType(rule.category().getParentId() == 1 ? TransactionType.EXPENSE : TransactionType.INCOME);
+        entity.setTransactionType(rule.category().getType());
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
         entity.setCategory(rule.category());
@@ -57,7 +57,7 @@ public class ImportService {
 
     public RuleDto updateRule(RuleDto rule, Long userId) {
         var entity = ruleRepository.findById(rule.id()).orElseThrow();
-        entity.setTransactionType(rule.category().getParentId() == 1 ? TransactionType.EXPENSE : TransactionType.INCOME);
+        entity.setTransactionType(rule.category().getType());
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
         entity.setCategory(rule.category());

@@ -19,7 +19,7 @@ import { Transaction, TransactionType } from 'src/app/models/transaction';
 export class RuleDlgComponent {
   transaction: Partial<Transaction> = { type: TransactionType.Expense };
   categories$ = this.store.select(state => state.acc.categories);
-  readonly filter = (category: Category): boolean => category.level > 0 && category.root_id == this.transaction.type;
+  readonly filter = (category: Category): boolean => category.level > 0 && category.type == this.transaction.type;
   readonly matcher = (c1: Category, c2: Category): boolean => c1.id === c2.id;
   fields = [{ id: 1, name: 'party' }, { id: 2, name: 'details' }];
   conditions = [{ id: 1, name: 'equals' }, { id: 2, name: 'contains' }];
