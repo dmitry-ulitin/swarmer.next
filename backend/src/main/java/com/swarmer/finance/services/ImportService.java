@@ -46,7 +46,6 @@ public class ImportService {
     public RuleDto addRule(RuleDto rule, Long userId) {
         var entity = new Rule();
         entity.setOwnerId(userId);
-        entity.setTransactionType(rule.category().getType());
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
         entity.setCategory(rule.category());
@@ -57,7 +56,6 @@ public class ImportService {
 
     public RuleDto updateRule(RuleDto rule, Long userId) {
         var entity = ruleRepository.findById(rule.id()).orElseThrow();
-        entity.setTransactionType(rule.category().getType());
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
         entity.setCategory(rule.category());
@@ -95,27 +93,27 @@ public class ImportService {
                     return r;
                 }
                 var rule = rules
-                        .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
+                        .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
                                 && rl.getConditionType() == ConditionType.PARTY_EQUALS
                                 && rl.getConditionValue().equals(r.getParty()))
                         .findFirst().orElse(null);
                 if (rule == null) {
                     rule = rules
-                            .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
+                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
                                     && rl.getConditionType() == ConditionType.DETAILS_EQUALS
                                     && rl.getConditionValue().equals(r.getDetails()))
                             .findFirst().orElse(null);
                 }
                 if (rule == null) {
                     rule = rules
-                            .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
+                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
                                     && rl.getConditionType() == ConditionType.PARTY_CONTAINS && r.getParty() != null
                                     && r.getParty().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
                             .findFirst().orElse(null);
                 }
                 if (rule == null) {
                     rule = rules
-                            .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
+                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
                                     && rl.getConditionType() == ConditionType.DETAILS_CONTAINS && r.getDetails() != null
                                     && r.getDetails().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
                             .findFirst().orElse(null);
