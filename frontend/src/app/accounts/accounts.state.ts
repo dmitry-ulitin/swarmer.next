@@ -450,7 +450,7 @@ export class AccState {
             opdate: moment().format(),
             account: account,
             recipient: recipient,
-            category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, root_id: null, parent_id: null } : null,
+            category: action.type === TransactionType.Correction ? { id: TransactionType.Correction, name: 'Correction', fullname: 'Correction', level: 0, type: TransactionType.Correction, parent_id: null } : null,
             currency: account?.currency || recipient?.currency || 'EUR',
             debit: 0,
             credit: 0,

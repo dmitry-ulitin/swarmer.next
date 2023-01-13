@@ -58,7 +58,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
   accounts: Account[] = this.store.selectSnapshot(AccState.accounts);
   currencies: string[] = this.store.selectSnapshot(AccState.currencies);
   categories: Category[] = this.store.selectSnapshot(state => state.acc.categories);
-  readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.root_id == type;
+  readonly matcher = (category: Category, type: TransactionType): boolean => category.level > 0 && category.type == type;
   newcategory = false;
 
   get convertation(): boolean {
