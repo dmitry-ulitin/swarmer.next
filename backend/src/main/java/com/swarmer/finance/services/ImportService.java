@@ -23,15 +23,18 @@ import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.ConditionType;
 import com.swarmer.finance.models.Rule;
 import com.swarmer.finance.models.TransactionType;
+import com.swarmer.finance.repositories.CategoryRepository;
 import com.swarmer.finance.repositories.RuleRepository;
 
 @Service
 public class ImportService {
     private final TransactionService transactionService;
+    private final CategoryRepository categoryRepository;
     private final RuleRepository ruleRepository;
 
-    public ImportService(TransactionService transactionService, RuleRepository ruleRepository) {
+    public ImportService(TransactionService transactionService, CategoryRepository categoryRepository, RuleRepository ruleRepository) {
         this.transactionService = transactionService;
+        this.categoryRepository = categoryRepository;
         this.ruleRepository = ruleRepository;
     }
 
@@ -46,10 +49,9 @@ public class ImportService {
     public RuleDto addRule(RuleDto rule, Long userId) {
         var entity = new Rule();
         entity.setOwnerId(userId);
-        entity.setTransactionType(rule.category().getType());
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
-        entity.setCategory(rule.category());
+        entity.setCategory(categoryRepository.findById(rule.category().getId()).orElseThrow());
         entity.setCreated(LocalDateTime.now());
         entity.setUpdated(LocalDateTime.now());
         return RuleDto.from(ruleRepository.save(entity));
@@ -57,10 +59,9 @@ public class ImportService {
 
     public RuleDto updateRule(RuleDto rule, Long userId) {
         var entity = ruleRepository.findById(rule.id()).orElseThrow();
-        entity.setTransactionType(rule.category().getType());
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
-        entity.setCategory(rule.category());
+        entity.setCategory(categoryRepository.findById(rule.category().getId()).orElseThrow());
         entity.setUpdated(LocalDateTime.now());
         return RuleDto.from(ruleRepository.save(entity));
     }
@@ -80,6 +81,36 @@ public class ImportService {
             var rules = ruleRepository.findByOwnerId(userId);
 
             return records.stream().map(r -> {
+                var rule = rules
+                        .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                                && rl.getConditionType() == ConditionType.PARTY_EQUALS
+                                && rl.getConditionValue().equals(r.getParty()))
+                        .findFirst().orElse(null);
+                if (rule == null) {
+                    rule = rules
+                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                                    && rl.getConditionType() == ConditionType.DETAILS_EQUALS
+                                    && rl.getConditionValue().equals(r.getDetails()))
+                            .findFirst().orElse(null);
+                }
+                if (rule == null) {
+                    rule = rules
+                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                                    && rl.getConditionType() == ConditionType.PARTY_CONTAINS && r.getParty() != null
+                                    && r.getParty().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
+                            .findFirst().orElse(null);
+                }
+                if (rule == null) {
+                    rule = rules
+                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                                    && rl.getConditionType() == ConditionType.DETAILS_CONTAINS && r.getDetails() != null
+                                    && r.getDetails().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
+                            .findFirst().orElse(null);
+                }
+                if (rule != null) {
+                    r.setRule(RuleDto.from(rule));
+                    r.setCategory(rule.getCategory());
+                }
                 var stored = trx.stream()
                         .filter(t -> t.getOpdate().toLocalDate().equals(r.getOpdate().toLocalDate())
                                 && (t.getAccount() != null
@@ -92,37 +123,6 @@ public class ImportService {
                     r.setSelected(false);
                     r.setCategory(stored.getCategory());
                     trx.remove(stored);
-                    return r;
-                }
-                var rule = rules
-                        .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
-                                && rl.getConditionType() == ConditionType.PARTY_EQUALS
-                                && rl.getConditionValue().equals(r.getParty()))
-                        .findFirst().orElse(null);
-                if (rule == null) {
-                    rule = rules
-                            .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
-                                    && rl.getConditionType() == ConditionType.DETAILS_EQUALS
-                                    && rl.getConditionValue().equals(r.getDetails()))
-                            .findFirst().orElse(null);
-                }
-                if (rule == null) {
-                    rule = rules
-                            .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
-                                    && rl.getConditionType() == ConditionType.PARTY_CONTAINS && r.getParty() != null
-                                    && r.getParty().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
-                            .findFirst().orElse(null);
-                }
-                if (rule == null) {
-                    rule = rules
-                            .stream().filter(rl -> rl.getTransactionType().equals(r.getType())
-                                    && rl.getConditionType() == ConditionType.DETAILS_CONTAINS && r.getDetails() != null
-                                    && r.getDetails().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
-                            .findFirst().orElse(null);
-                }
-                if (rule != null) {
-                    r.setRule(RuleDto.from(rule));
-                    r.setCategory(rule.getCategory());
                 }
                 return r;
             }).toList();

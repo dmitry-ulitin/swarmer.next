@@ -139,13 +139,13 @@ public class TransactionController {
     }
 
     @PostMapping("/rules")
-    RuleDto addRule(RuleDto rule, Authentication authentication) {
+    RuleDto addRule(@RequestBody RuleDto rule, Authentication authentication) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         return importService.addRule(rule, userId);
     }
     
     @PutMapping("/rules")
-    RuleDto updateRule(RuleDto rule, Authentication authentication) {
+    RuleDto updateRule(@RequestBody RuleDto rule, Authentication authentication) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         return importService.updateRule(rule, userId);
     }

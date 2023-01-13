@@ -26,7 +26,6 @@ public class Rule {
 	@SequenceGenerator(name = "rule_seq", sequenceName = "rules_id_seq", allocationSize = 1)
     Long id;   
 	@JsonProperty("owner_id") Long ownerId;
-    TransactionType transactionType;
     ConditionType conditionType;
     String conditionValue;
     @ManyToOne Category category;
