@@ -52,7 +52,7 @@ export class ImportDlgComponent implements OnInit {
     try {
       let rule = await lastValueFrom(this.dialogService.open<Rule>(new PolymorpheusComponent(RuleDlgComponent, this.injector), { data: { rule: this.data[index].rule, transaction: this.data[index] }, dismissible: false }), { defaultValue: null });
       if (rule) {
-        //        rule = await lastValueFrom(this.api.saveRule(rule));
+        rule = await lastValueFrom(this.api.saveRule(rule));
         this.data[index].rule = rule;
         this.data[index].category = rule.category;
         this.categories.controls[index].setValue(rule.category);

@@ -23,15 +23,18 @@ import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.ConditionType;
 import com.swarmer.finance.models.Rule;
 import com.swarmer.finance.models.TransactionType;
+import com.swarmer.finance.repositories.CategoryRepository;
 import com.swarmer.finance.repositories.RuleRepository;
 
 @Service
 public class ImportService {
     private final TransactionService transactionService;
+    private final CategoryRepository categoryRepository;
     private final RuleRepository ruleRepository;
 
-    public ImportService(TransactionService transactionService, RuleRepository ruleRepository) {
+    public ImportService(TransactionService transactionService, CategoryRepository categoryRepository, RuleRepository ruleRepository) {
         this.transactionService = transactionService;
+        this.categoryRepository = categoryRepository;
         this.ruleRepository = ruleRepository;
     }
 
@@ -48,7 +51,7 @@ public class ImportService {
         entity.setOwnerId(userId);
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
-        entity.setCategory(rule.category());
+        entity.setCategory(categoryRepository.findById(rule.category().getId()).orElseThrow());
         entity.setCreated(LocalDateTime.now());
         entity.setUpdated(LocalDateTime.now());
         return RuleDto.from(ruleRepository.save(entity));
@@ -58,7 +61,7 @@ public class ImportService {
         var entity = ruleRepository.findById(rule.id()).orElseThrow();
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
-        entity.setCategory(rule.category());
+        entity.setCategory(categoryRepository.findById(rule.category().getId()).orElseThrow());
         entity.setUpdated(LocalDateTime.now());
         return RuleDto.from(ruleRepository.save(entity));
     }
@@ -78,20 +81,6 @@ public class ImportService {
             var rules = ruleRepository.findByOwnerId(userId);
 
             return records.stream().map(r -> {
-                var stored = trx.stream()
-                        .filter(t -> t.getOpdate().toLocalDate().equals(r.getOpdate().toLocalDate())
-                                && (t.getAccount() != null
-                                        && t.getAccount().getId().equals(accountId) && t.getDebit() == r.getDebit()
-                                        || t.getRecipient() != null && t.getRecipient().getId().equals(accountId)
-                                                && t.getCredit() == r.getCredit()))
-                        .findFirst().orElse(null);
-                if (stored != null) {
-                    r.setId(stored.getId());
-                    r.setSelected(false);
-                    r.setCategory(stored.getCategory());
-                    trx.remove(stored);
-                    return r;
-                }
                 var rule = rules
                         .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
                                 && rl.getConditionType() == ConditionType.PARTY_EQUALS
@@ -121,6 +110,19 @@ public class ImportService {
                 if (rule != null) {
                     r.setRule(RuleDto.from(rule));
                     r.setCategory(rule.getCategory());
+                }
+                var stored = trx.stream()
+                        .filter(t -> t.getOpdate().toLocalDate().equals(r.getOpdate().toLocalDate())
+                                && (t.getAccount() != null
+                                        && t.getAccount().getId().equals(accountId) && t.getDebit() == r.getDebit()
+                                        || t.getRecipient() != null && t.getRecipient().getId().equals(accountId)
+                                                && t.getCredit() == r.getCredit()))
+                        .findFirst().orElse(null);
+                if (stored != null) {
+                    r.setId(stored.getId());
+                    r.setSelected(false);
+                    r.setCategory(stored.getCategory());
+                    trx.remove(stored);
                 }
                 return r;
             }).toList();
