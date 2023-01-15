@@ -26,7 +26,12 @@ public record GroupDto(
 				&& (group.getOwner().getId().equals(userId) || acl.getUser().getId().equals(userId)));
 		var shared = !group.getOwner().getId().equals(userId)
 				&& group.getAcls().stream().noneMatch(acl -> acl.getAdmin());
-		var fullname = shared ? (group.getName() + " (" + group.getOwner().getName() + ")") : group.getName();
+		var fullname = group.getName();
+		if (shared) {
+			var acl = group.getAcls().stream().filter(a -> a.getUserId().equals(userId)).findFirst().orElse(null);
+			fullname = acl != null && acl.getName() != null ? acl.getName()
+					: (group.getName() + " (" + group.getOwner().getName() + ")");
+		}
 		var permissions = group.getAcls().stream().map(acl -> Permission.from(acl))
 				.collect(java.util.stream.Collectors.toList());
 		var accounts = group.getAccounts().stream()
