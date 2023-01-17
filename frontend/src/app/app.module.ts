@@ -32,7 +32,7 @@ import { AccountDialogComponent } from './accounts/account-dlg/account-dlg.compo
 import { InputFileDlgComponent } from './import/input-file-dlg.component';
 import { ImportDlgComponent } from './import/import-dlg.component';
 import { TuiTableModule } from '@taiga-ui/addon-table';
-import { TuiFilterPipeModule } from '@taiga-ui/cdk';
+import { TuiFilterPipeModule, TuiLetModule } from '@taiga-ui/cdk';
 import { FiltersComponent } from './filters/filters.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { CategoryCtrlComponent } from './transactions/transaction-dlg/category-ctrl/category-ctrl.component';
@@ -100,6 +100,7 @@ registerLocaleData(localeRu, 'ru');
     TuiFilterPipeModule,
     TuiPrimitiveTextfieldModule,
     TuiTableModule,
+    TuiLetModule,
     
     NgxsModule.forRoot([AppState, AccState]),
     NgxsStoragePluginModule.forRoot({ key: 'app.token' }),

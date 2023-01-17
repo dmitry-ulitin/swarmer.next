@@ -28,6 +28,7 @@ table.accounts td:last-child {
 
 table.permissions tr td {
     text-align: center;
+    padding: 0;
 }
 
 table.permissions tr:first-child td {
@@ -50,12 +51,11 @@ table.permissions tr td:last-child {
     padding-right: 0;
     text-align: right;
 }
-div.checkbox {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 .tui-form__buttons {
     margin-top: 1rem;
+}
+
+.rights {
+    width: 6rem;
 }

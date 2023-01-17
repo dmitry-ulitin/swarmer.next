@@ -108,4 +108,10 @@ export class ApiService {
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories');
   }
+
+  getUsers(query: string): Observable<string[]> {
+    let params = new HttpParams();
+    params = params.set('query', query);
+    return this.http.get<string[]>('/api/groups/users', {params: params});
+  }
 }

@@ -155,4 +155,9 @@ public class GroupService {
         groupEntity.setUpdated(LocalDateTime.now());
         groupRepository.save(groupEntity);
     }
+
+    public List<String> findUsers(String query) {
+        return userRepository.findFirst10ByEmailContainingIgnoreCase(query).stream().map(u -> u.getEmail())
+                .toList();
+    }
 }

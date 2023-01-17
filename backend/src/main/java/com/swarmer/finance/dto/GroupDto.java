@@ -1,6 +1,5 @@
 package com.swarmer.finance.dto;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -10,15 +9,14 @@ import com.swarmer.finance.models.AccountGroup;
 public record GroupDto(
 		Long id,
 		@JsonProperty("owner_id") Long ownerId,
+		String ownerEmail,
 		String fullname,
 		@JsonProperty("is_owner") Boolean owner,
 		@JsonProperty("is_coowner") Boolean coowner,
 		@JsonProperty("is_shared") Boolean shared,
 		List<AccountDto> accounts,
 		List<Permission> permissions,
-		Boolean deleted,
-		LocalDateTime created,
-		LocalDateTime updated) {
+		Boolean deleted) {
 	public static GroupDto from(AccountGroup group, Long userId, Map<Long, Double> balances) {
 		var owner = group.getOwner().getId().equals(userId)
 				&& group.getAcls().stream().noneMatch(acl -> acl.getAdmin());
@@ -41,14 +39,13 @@ public record GroupDto(
 		return new GroupDto(
 				group.getId(),
 				group.getOwner().getId(),
+				group.getOwner().getEmail(),
 				fullname,
 				owner,
 				coowner,
 				shared,
 				accounts,
 				permissions,
-				group.getDeleted(),
-				group.getCreated(),
-				group.getUpdated());
+				group.getDeleted());
 	}
 }

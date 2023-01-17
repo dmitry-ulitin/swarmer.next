@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
 import { ControlValueAccessor, FormArray, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators, NG_VALIDATORS, ValidationErrors, UntypedFormArray } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { TuiDestroyService } from '@taiga-ui/cdk';
-import { takeUntil } from 'rxjs';
+import { debounceTime, filter, map, of, switchMap, takeUntil, tap } from 'rxjs';
 import { AppState } from 'src/app/app.state';
+import { ApiService } from 'src/app/services/api.service';
 import { Group } from '../../models/group';
 import { AccState } from '../accounts.state';
 
@@ -29,6 +30,13 @@ import { AccState } from '../accounts.state';
 export class AccountCtrlComponent implements ControlValueAccessor {
   currencies = this.store.selectSnapshot(AccState.currencies);
   userCurrency = this.store.selectSnapshot(AppState.claims)?.currency || 'RUB';
+  userEmail = `${this.store.selectSnapshot(AppState.claims)?.email || ''}`;
+  options = [{ id: 0, name: 'read' }, { id: 1, name: 'write' }, { id: 3, name: 'admin' }];
+  rights = new FormControl(this.options[0]);
+  query = new FormControl('');
+  users$ = this.query.valueChanges.pipe(tap(v => this.selected=''),debounceTime(500), switchMap(q => !!q && q.length > 2 ? this.api.getUsers(q || '') : of([])),
+    map(a => a.filter(u => u !== this.form.value.ownerEmail && !this.permissions.controls.find(p => p.value.user.email === u))));
+  selected = '';
 
   form = new FormGroup({
     'id': new FormControl(),
@@ -36,6 +44,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     'is_owner': new FormControl(true),
     'is_coowner': new FormControl(false),
     'is_shared': new FormControl(false),
+    'ownerEmail': new FormControl(this.userEmail),
     'accounts': new UntypedFormArray([]),
     'permissions': new UntypedFormArray([])
   });
@@ -52,11 +61,15 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     return this.form.controls['permissions'] as UntypedFormArray;
   }
 
+  get isOwnerOrCoowner(): boolean {
+    return !!this.form.value.is_owner || !!this.form.value.is_coowner;
+  }
+
   getPermission(index: number): FormGroup {
     return this.permissions.controls[index] as FormGroup;
   }
 
-  constructor(private store: Store, destroy$: TuiDestroyService) {
+  constructor(private store: Store, private api: ApiService, destroy$: TuiDestroyService) {
     this.form.valueChanges.pipe(takeUntil(destroy$)).subscribe(value => this.onChange(value));
   }
 
@@ -72,7 +85,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       this.accounts.controls.forEach(c => c.get('start_balance')?.disable());
       this.accounts.controls.forEach(c => c.get('currency')?.disable());
     }
-    (value?.permissions || [null]).forEach(p => this.onAddPermission(p));
+    (value?.permissions || [null]).forEach(p => this.addPermission(p));
   }
 
   get canDelete(): boolean {
@@ -98,8 +111,15 @@ export class AccountCtrlComponent implements ControlValueAccessor {
     }
   }
 
-  onAddPermission(p: any): void {
-    const group = new FormGroup({
+  onAddPermission(): void {
+    const option = this.rights.value || this.options[0];
+    this.addPermission({ user: { email: this.selected }, is_readonly: option.id === 0, is_admin: option.id === 3 });
+    this.query.setValue('');
+    this.rights.setValue(this.options[0]);
+  }
+  
+  addPermission(p: any): void {
+    this.permissions.push(new FormGroup({
       'user': new FormGroup({
         'id': new FormControl(p?.user?.id),
         'email': new FormControl(p?.user?.email),
@@ -108,8 +128,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       'is_readonly': new FormControl(!!p?.is_readonly && !p?.is_admin),
       'is_write': new FormControl(!p?.is_readonly || !!p?.is_admin),
       'is_admin': new FormControl(p?.is_admin),
-    });
-    this.permissions.push(group);
+    }));
   }
 
   onToggleAdmin(event: any, index: number): void {
@@ -124,6 +143,10 @@ export class AccountCtrlComponent implements ControlValueAccessor {
 
   onRemovePermission(index: number): void {
     this.permissions.removeAt(index);
+  }
+
+  onSelectedUser(user: string): void {
+    this.selected = user;
   }
 
   validate({ value }: FormControl): ValidationErrors | null {
