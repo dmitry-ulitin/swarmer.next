@@ -41,9 +41,12 @@ public class GroupService {
         }));
 
         var userGroups = groupRepository.findByOwnerIdInOrderById(List.of(userId)).stream()
-                .map(g -> GroupDto.from(g, userId, balances)).toList();
+                .map(g -> GroupDto.from(g, userId, balances))
+                .sorted((a, b) -> a.id().compareTo(b.id()))
+                .toList();
         var sharedGroups = aclService.findByUserId(userId)
                 .map(a -> GroupDto.from(a.getGroup(), userId, balances))
+                .sorted((a, b) -> a.id().compareTo(b.id()))
                 .collect(Collectors.toList());
 
         var allGroups = userGroups.stream().filter(GroupDto::owner).collect(Collectors.toList());
@@ -98,7 +101,9 @@ public class GroupService {
 
     public GroupDto updateGroup(GroupDto dto, Long userId) {
         var entity = groupRepository.findById(dto.id()).orElseThrow();
-        entity.setName(dto.fullname());
+        if (entity.getId().equals(userId)) {
+            entity.setName(dto.fullname());
+        }
         entity.setUpdated(LocalDateTime.now());
         entity = groupRepository.save(entity);
         for (var account : dto.accounts()) {
@@ -127,6 +132,10 @@ public class GroupService {
                                 permission.readonly(), null,
                                 null, LocalDateTime.now(), LocalDateTime.now()));
             } else {
+                if (acl.getUserId().equals(userId)) {
+                    var fullname = permission.admin() ? entity.getName() : (entity.getName() + " (" + entity.getOwner().getName() + ")");
+                    acl.setName(dto.fullname().equals(fullname) ? null : dto.fullname());
+                }
                 acl.setAdmin(permission.admin());
                 acl.setReadonly(permission.readonly());
                 acl.setUpdated(LocalDateTime.now());
@@ -145,5 +154,10 @@ public class GroupService {
         groupEntity.setDeleted(true);
         groupEntity.setUpdated(LocalDateTime.now());
         groupRepository.save(groupEntity);
+    }
+
+    public List<String> findUsers(String query) {
+        return userRepository.findFirst10ByEmailContainingIgnoreCase(query).stream().map(u -> u.getEmail())
+                .toList();
     }
 }

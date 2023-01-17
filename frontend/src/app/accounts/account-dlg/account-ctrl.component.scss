@@ -9,23 +9,53 @@ td {
     padding: 0 0.1rem 0.5rem 0.1rem;
 }
 
-table td:first-child {
+table.accounts td:first-child {
     padding-left: 0;
     width: 50%;
 }
 
-table td:nth-child(2n) {
+table.accounts td:nth-child(2n) {
     width: 25%;
 }
 
-table td:nth-child(3n) {
+table.accounts td:nth-child(3n) {
     width: 25%;
 }
 
-table td:last-child {
+table.accounts td:last-child {
     padding-right: 0;
+}
+
+table.permissions tr td {
+    text-align: center;
+    padding: 0;
+}
+
+table.permissions tr:first-child td {
+    text-align: center;
+    font-size: .7rem;
+}
+
+table.permissions tr:first-child td {
+    padding: 0;
+    line-height: .7rem;
+    vertical-align: bottom;
+}
+
+table.permissions tr td:first-child {
+    padding-left: 0;
+    text-align: left;
+}
+
+table.permissions tr td:last-child {
+    padding-right: 0;
+    text-align: right;
 }
 
 .tui-form__buttons {
     margin-top: 1rem;
+}
+
+.rights {
+    width: 6rem;
 }

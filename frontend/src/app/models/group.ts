@@ -11,6 +11,7 @@ export interface Group {
     accounts: Account[];
     permissions?: Permission[];
     deleted?: boolean;
+    ownerEmail?: string;
 }
 
 export interface Permission {

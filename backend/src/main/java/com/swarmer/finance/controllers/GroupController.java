@@ -64,4 +64,9 @@ public class GroupController {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         groupService.deleteGroup(groupId, userId);
     }
+
+    @GetMapping(value="users")
+    public Iterable<String> findUsers(@RequestParam String query) {
+        return groupService.findUsers(query);
+    }    
 }

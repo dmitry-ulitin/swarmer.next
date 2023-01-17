@@ -71,9 +71,8 @@ public class GroupServiceTest {
         void testCreateGroup() {
                 var acc1 = new AccountDto(null, null, null, "USD", null, 1000.0, false);
                 var acc2 = new AccountDto(null, null, null, "RUB", null, 1000.0, true);
-                var grp = new GroupDto(null, null, "Test Group 2", false, false, false, List.of(acc1, acc2), List.of(),
-                                false,
-                                LocalDateTime.now(), LocalDateTime.now());
+                var grp = new GroupDto(null, null, null, "Test Group 2", false, false, false, List.of(acc1, acc2), List.of(),
+                                false);
                 var actual = groupService.createGroup(grp, user.getId());
 
                 assertThat(actual.id()).isNotNull();
@@ -98,8 +97,8 @@ public class GroupServiceTest {
                 accounts.add(new AccountDto(null, null, null, "RUB", null, 1000.0, false));
                 accounts.add(new AccountDto(null, null, null, "RUB", null, 1000.0, true));
                 var permissions = dto.permissions();
-                var updated = new GroupDto(dto.id(), dto.ownerId(), "New name", dto.owner(), dto.coowner(),
-                                dto.shared(), accounts, permissions, dto.deleted(), dto.created(), dto.updated());
+                var updated = new GroupDto(dto.id(), dto.ownerId(), user.getEmail(), "New name", dto.owner(), dto.coowner(),
+                                dto.shared(), accounts, permissions, dto.deleted());
                 var actual = groupService.updateGroup(updated, user.getId());
                 assertThat(actual.fullname()).isEqualTo(updated.fullname());
                 assertThat(actual.accounts()).hasSize(3);
