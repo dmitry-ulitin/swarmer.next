@@ -555,7 +555,7 @@ function transaction2View(t: Transaction, selected: { [key: number]: boolean }):
 function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccStateModel>, remove: boolean) {
     const state = cxt.getState();
     const transactions = state.transactions.slice();
-    const index = remove ? transactions.findIndex(t => t.id === transaction.id) : Math.max(transactions.findIndex(t => transaction.opdate > t.opdate), 0);
+    const index = remove ? transactions.findIndex(t => t.id === transaction.id) : Math.max(transactions.findIndex(t => transaction.opdate == t.opdate && (transaction.id || 0) > (t.id || 0) || transaction.opdate > t.opdate), 0);
     if (index >= 0) {
         // patch transactions balances
         const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));

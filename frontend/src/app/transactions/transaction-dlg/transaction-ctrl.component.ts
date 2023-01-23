@@ -3,7 +3,7 @@ import { ControlValueAccessor, UntypedFormControl, UntypedFormGroup, NG_VALUE_AC
 import { Store } from '@ngxs/store';
 import { TuiDay, TuiDestroyService } from '@taiga-ui/cdk';
 import { firstValueFrom, map, takeUntil } from 'rxjs';
-import { AccState } from 'src/app/accounts/accounts.state';
+import { AccState, TransactionView } from 'src/app/accounts/accounts.state';
 import { Category } from 'src/app/models/category';
 import { TransactionType } from 'src/app/models/transaction';
 import * as moment from 'moment';
@@ -125,7 +125,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
           this.form.controls['account'].setValue(recipient, { emitEvent: false });
           this.form.controls['dcurrency'].setValue(recipient?.currency, { emitEvent: false });
         }
-        if (category?.root_id !== type) {
+        if (category?.type !== type) {
           this.form.controls['category'].setValue(null, { emitEvent: false });
         }
       } else if (type === TransactionType.Income) {
@@ -135,20 +135,23 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
           this.form.controls['recipient'].setValue(account, { emitEvent: false });
           this.form.controls['ccurrency'].setValue(account?.currency, { emitEvent: false });
         }
-        if (category?.root_id !== type) {
+        if (category?.type !== type) {
           this.form.controls['category'].setValue(null, { emitEvent: false });
         }
       } else if (type === TransactionType.Correction) {
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].disable();
       } else if (type === TransactionType.Transfer) {
+        const transactions = store.selectSnapshot(state => state.acc.transactions);
         this.form.controls['ccurrency'].disable();
         this.form.controls['dcurrency'].disable();
         if (account && (!recipient || account.id === recipient.id)) {
-          recipient = this.accounts.find(a => a.id !== account?.id && a.currency === account?.currency);
+          recipient = transactions.find((t: TransactionView) => t.type === TransactionType.Transfer && t.account?.id === account.id)?.recipient ??
+            this.accounts.find(a => a.id !== account?.id && a.currency === account?.currency);
           this.form.controls['recipient'].setValue(recipient, { emitEvent: false });
         } else if (recipient && (!account || recipient.id === account.id)) {
-          account = this.accounts.find(a => a.id !== recipient?.id && a.currency === recipient?.currency);
+          account = transactions.find((t: TransactionView) => t.type === TransactionType.Transfer && t.recipient?.id === recipient.id)?.account ??
+            this.accounts.find(a => a.id !== recipient?.id && a.currency === recipient?.currency);
           this.form.controls['account'].setValue(account, { emitEvent: false });
         }
         this.form.controls['dcurrency'].setValue(account.currency, { emitEvent: false });
@@ -182,7 +185,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       value.opdate = moment(value.opdate).format('YYYY-MM-DD') + ' ' + this.timePart;
       if (this.newcategory) {
         let parent = value.category;
-        value.category = { id: null, name: value.newcategory, fullname: (parent ? (parent.fullname + ' / ') : '') + value.newcategory, level: parent ? parent.level + 1 : 1, root_id: value.type, parent_id: parent ? parent.id : value.type }
+        value.category = { id: null, name: value.newcategory, fullname: (parent ? (parent.fullname + ' / ') : '') + value.newcategory, level: parent ? parent.level + 1 : 1, type: value.type, parent_id: parent ? parent.id : value.type }
       }
       this.onChange(value);
     });
@@ -245,7 +248,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
       const account = this.accounts.find(a => a.id === value.account?.id) || value.account;
       const recipient = this.accounts.find(a => a.id === value.recipient?.id) || value.recipient;
       const debit = (value.type === TransactionType.Correction ? ((account?.balance || recipient?.balance) + (value.credit || 0)) : value.debit) || undefined;
-  
+
       this.form.patchValue({ account, debit, recipient }, { emitEvent: false });
     } catch (err) {
       this.store.dispatch(new AppPrintError(err));
