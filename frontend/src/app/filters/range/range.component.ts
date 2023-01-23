@@ -12,7 +12,7 @@ import { DateRange } from 'src/app/models/date-range';
 })
 export class RangeComponent {
   @ViewChild(TuiHostedDropdownComponent) component?: TuiHostedDropdownComponent;
-  options = [DateRange.last30(), DateRange.last90(), DateRange.month(), DateRange.year()];
+  options = [DateRange.last30(), DateRange.last90(), DateRange.lastYear(), DateRange.month(), DateRange.year()];
   value = this.options[0];
   open = false;
 
