@@ -85,6 +85,9 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       this.accounts.controls.forEach(c => c.get('start_balance')?.disable());
       this.accounts.controls.forEach(c => c.get('currency')?.disable());
     }
+    if (!this.isOwnerOrCoowner) {
+      this.accounts.controls.forEach(c => c.get('name')?.disable());
+    }
     (value?.permissions || [null]).forEach(p => this.addPermission(p));
   }
 
@@ -101,7 +104,9 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       'balance': new FormControl(acc?.balance),
       'deleted': new FormControl(acc?.deleted)
     }));
-    this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
+    if (this.isOwnerOrCoowner) {
+      this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
+    }
   }
 
   onRemoveAccount(index: number): void {

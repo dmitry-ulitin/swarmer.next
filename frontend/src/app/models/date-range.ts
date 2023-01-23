@@ -14,6 +14,10 @@ export class DateRange {
         return new DateRange("Last 30 days", TuiDay.currentLocal().append({ day: -30 }), TuiDay.currentLocal(), RangeType.Custom);
     }
 
+    static last90(): DateRange {
+        return new DateRange("Last 90 days", TuiDay.currentLocal().append({ day: -90 }), TuiDay.currentLocal(), RangeType.Custom);
+    }
+
     static month(): DateRange {
         const now = TuiDay.currentLocal();
         return new DateRange(now.toLocalNativeDate().toLocaleString('default', { month: 'long' }), new TuiDay(now.year, now.month, 1), now, RangeType.Month);

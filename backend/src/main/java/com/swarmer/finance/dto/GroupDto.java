@@ -35,6 +35,7 @@ public record GroupDto(
 		var accounts = group.getAccounts().stream()
 				.map(account -> AccountDto.from(account, userId,
 						account.getStart_balance() + balances.getOrDefault(account.getId(), .0)))
+				.sorted((a, b) -> a.id().compareTo(b.id()))
 				.collect(java.util.stream.Collectors.toList());
 		return new GroupDto(
 				group.getId(),
