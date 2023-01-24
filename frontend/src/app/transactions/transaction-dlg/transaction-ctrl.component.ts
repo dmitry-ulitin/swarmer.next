@@ -197,7 +197,7 @@ export class TransactionCtrlComponent implements ControlValueAccessor {
     this.timePart = moment(opdate).format().substring(11);
     const ccurrency = value.account?.currency || value.currency || value.recipient?.currency;
     const dcurrency = value.recipient?.currency || value.currency || value.account?.currency;
-    const debit = (value.type === TransactionType.Correction ? (value.account_balance || value.recipient_balance || value.account?.balance || value.recipient?.balance) : value.debit) || undefined;
+    const debit = (value.type === TransactionType.Correction ? (value.account?.balance || value.recipient?.balance) : value.debit) || undefined;
     const credit = (value.type === TransactionType.Correction && value.account ? -value.credit : value.credit) || undefined;
     const category = this.categories.find(c => c.id === value.category?.id) || value.category;
     const account = this.accounts.find(a => a.id === value.account?.id) || value.account;

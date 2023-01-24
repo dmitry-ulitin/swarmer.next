@@ -15,7 +15,12 @@ export class DateRange {
     }
 
     static last90(): DateRange {
-        return new DateRange("Last 90 days", TuiDay.currentLocal().append({ day: -90 }), TuiDay.currentLocal(), RangeType.Custom);
+        return new DateRange("Last 3 Months", TuiDay.currentLocal().append({ month: -3 }), TuiDay.currentLocal(), RangeType.Custom);
+    }
+
+    static lastYear(): DateRange {
+        const now = TuiDay.currentLocal();
+        return new DateRange("Last Year", TuiDay.currentLocal().append({ year: -1 }), TuiDay.currentLocal(), RangeType.Custom);
     }
 
     static month(): DateRange {
