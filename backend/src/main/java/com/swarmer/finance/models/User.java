@@ -3,6 +3,7 @@ package com.swarmer.finance.models;
 import java.time.LocalDateTime;
 import java.util.Collection;
 
+import org.hibernate.annotations.Formula;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,6 +35,9 @@ public class User implements UserDetails {
 	private	String currency;
 	private LocalDateTime created;
 	private LocalDateTime updated;
+
+	@Formula("REGEXP_REPLACE(email,'@.*','')")
+	private String emailname;
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

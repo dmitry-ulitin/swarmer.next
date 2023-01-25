@@ -157,7 +157,7 @@ public class GroupService {
     }
 
     public List<String> findUsers(String query) {
-        return userRepository.findFirst10ByEmailContainingIgnoreCase(query).stream().map(u -> u.getEmail())
+        return userRepository.findFirst10ByEmailnameContainingIgnoreCase(query).stream().map(u -> u.getEmail())
                 .toList();
     }
 }

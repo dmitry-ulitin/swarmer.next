@@ -42,7 +42,7 @@ class AuthController {
 		String encodedPass = passwordEncoder.encode(userToCreate.password());
 		String currency = userToCreate.currency() == null || userToCreate.currency().isBlank() ? "EUR" : userToCreate.currency();
 		var user = new User(null, userToCreate.email(), encodedPass, true, userToCreate.name(), currency,
-				LocalDateTime.now(), LocalDateTime.now());
+				LocalDateTime.now(), LocalDateTime.now(), null);
 		user = userRepository.save(user);
 		user = userRepository.findById(user.getId()).orElse(null);
 		var token = generateToken(user);

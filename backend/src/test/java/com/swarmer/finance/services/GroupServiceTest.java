@@ -36,8 +36,7 @@ public class GroupServiceTest {
         private final EntityManager em;
 
         private final User user = new User(null, "test@test.com", "{noop}123456", true, "Test", "USD",
-                        LocalDateTime.now(),
-                        LocalDateTime.now());
+                        LocalDateTime.now(), LocalDateTime.now(), "test");
         private final AccountGroup group = new AccountGroup(null, user, List.of(), null, "Test Group 1", false,
                         LocalDateTime.now(), LocalDateTime.now());
         private final Account account1 = new Account(null, group, "", "USD",
