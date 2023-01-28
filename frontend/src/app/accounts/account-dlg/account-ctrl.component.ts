@@ -30,7 +30,7 @@ import { AccState } from '../accounts.state';
 export class AccountCtrlComponent implements ControlValueAccessor {
   currencies = this.store.selectSnapshot(AccState.currencies);
   userCurrency = this.store.selectSnapshot(AppState.claims)?.currency || 'RUB';
-  userEmail = `${this.store.selectSnapshot(AppState.claims)?.email || ''}`;
+  userEmail = `${this.store.selectSnapshot(AppState.claims)?.sub || ''}`;
   options = [{ id: 0, name: 'read' }, { id: 1, name: 'write' }, { id: 3, name: 'admin' }];
   rights = new FormControl(this.options[0]);
   query = new FormControl('');
@@ -75,7 +75,7 @@ export class AccountCtrlComponent implements ControlValueAccessor {
 
   patch(value: Group): void {
     this.form.reset({}, { emitEvent: false });
-    this.form.patchValue(value || {});
+    this.form.patchValue(value || {is_owner: true, ownerEmail: this.userEmail});
     this.accounts.clear();
     (value?.accounts || [null]).forEach(a => this.onAddAccount(a));
     if (!this.canDelete) {
@@ -85,7 +85,10 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       this.accounts.controls.forEach(c => c.get('start_balance')?.disable());
       this.accounts.controls.forEach(c => c.get('currency')?.disable());
     }
-    (value?.permissions || [null]).forEach(p => this.addPermission(p));
+    if (!this.isOwnerOrCoowner) {
+      this.accounts.controls.forEach(c => c.get('name')?.disable());
+    }
+    (value?.permissions || []).forEach(p => this.addPermission(p));
   }
 
   get canDelete(): boolean {
@@ -101,7 +104,9 @@ export class AccountCtrlComponent implements ControlValueAccessor {
       'balance': new FormControl(acc?.balance),
       'deleted': new FormControl(acc?.deleted)
     }));
-    this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
+    if (this.isOwnerOrCoowner) {
+      this.accounts.controls.filter(a => !a.get('deleted')?.value)[0]?.get('name')?.enable();
+    }
   }
 
   onRemoveAccount(index: number): void {

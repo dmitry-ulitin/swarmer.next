@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,9 @@ public class TransactionService {
         var ai = accountIds.isEmpty() ? aclService.findAccounts(userId).map(a -> a.getId()).toList()
                 : new ArrayList<>(accountIds);
         var trx = queryTransactions(userId, ai, search, categoryId, from, to, offset, limit);
+        ai = LongStream.concat(trx.stream().filter(t -> t.getAccount() != null).mapToLong(t -> t.getAccount().getId()),
+                trx.stream().filter(t -> t.getRecipient() != null).mapToLong(t -> t.getRecipient().getId())).distinct()
+                .boxed().toList();
         if (trx.isEmpty()) {
             return List.of();
         }
@@ -323,7 +327,8 @@ public class TransactionService {
     public void saveImport(List<ImportDto> records, Long accountId, Long userId) {
         var owner = userRepository.findById(userId).orElseThrow();
         var account = accountRepository.findById(accountId).orElseThrow();
-        var minOpdate = records.stream().filter(ImportDto::isSelected).map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
+        var minOpdate = records.stream().filter(ImportDto::isSelected).map(r -> r.getOpdate())
+                .min((a, b) -> a.compareTo(b)).orElseThrow();
         var corrections = getCorrections(accountId, minOpdate, null);
         for (var dto : records) {
             if (dto.getId() != null && !dto.isSelected()) {

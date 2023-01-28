@@ -544,53 +544,55 @@ function patchGroupBalance(groups: Group[], account: Account | null | undefined,
 
 function transaction2View(t: Transaction, selected: { [key: number]: boolean }): TransactionView {
     const name = t.account && t.recipient ? t.account.fullname + ' => ' + t.recipient.fullname : t.category?.name || "-";
-    const account_balance = t.account_balance || t.account?.balance;
-    const recipient_balance = t.recipient_balance || t.recipient?.balance;
-    const useRecipient = t.recipient && (!account_balance || recipient_balance && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]));
+    const useRecipient = t.recipient && (typeof t.account?.balance !== 'number' || typeof t.recipient?.balance === 'number' && selected[t.recipient?.id] && (!t.account || !selected[t.account?.id]));
     const amount = (t.account && !useRecipient) ? { value: t.debit, currency: t.account.currency } : (t.recipient ? { value: t.credit, currency: t.recipient.currency } : { value: t.credit, currency: t.currency });
     const acc = useRecipient ? t.recipient : t.account;
-    return { ...t, account_balance, recipient_balance, name, amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: useRecipient ? recipient_balance : account_balance } };
+    return { ...t, name, amount, balance: { fullname: acc?.fullname, currency: acc?.currency, balance: acc?.balance } };
 }
 
 function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccStateModel>, remove: boolean) {
     const state = cxt.getState();
     const transactions = state.transactions.slice();
-    const index = remove ? transactions.findIndex(t => t.id === transaction.id) : Math.max(transactions.findIndex(t => transaction.opdate > t.opdate), 0);
+    const index = remove ? transactions.findIndex(t => t.id === transaction.id) : Math.max(transactions.findIndex(t => transaction.opdate == t.opdate && (transaction.id || 0) > (t.id || 0) || transaction.opdate > t.opdate), 0);
     if (index >= 0) {
         // patch transactions balances
         const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
         for (let i = index - 1; i >= 0; i--) {
-            let patch = 0;
+            let apatch = 0;
+            let rpatch = 0;
             const trx = { ...transactions[i] };
-            if (trx.account && trx.account?.id === transaction.account?.id || trx.recipient && trx.recipient?.id === transaction.account?.id) {
-                patch = -transaction.debit;
+            if (trx.account && trx.account?.id === transaction.account?.id) {
+                apatch = -transaction.debit;
             }
-            if (trx.account && trx.account?.id === transaction.recipient?.id || trx.recipient && trx.recipient?.id === transaction.recipient?.id) {
-                patch = transaction.credit;
+            if (trx.recipient && trx.recipient?.id === transaction.account?.id) {
+                rpatch = -transaction.debit;
+            }
+            if (trx.account && trx.account?.id === transaction.recipient?.id) {
+                apatch = transaction.credit;
+            }
+            if (trx.recipient && trx.recipient?.id === transaction.recipient?.id) {
+                rpatch = transaction.credit;
             }
             if (remove) {
-                patch = -patch;
+                apatch = -apatch;
+                rpatch = -rpatch;
             }
-            if (typeof trx.account_balance === 'number' && (trx.account?.id === transaction.account?.id || trx.account?.id === transaction.recipient?.id)) {
-                trx.account_balance += patch;
+            if (!!trx.account && typeof trx.account.balance === 'number' && (trx.account?.id === transaction.account?.id || trx.account?.id === transaction.recipient?.id)) {
+                trx.account.balance += apatch;
             }
-            if (typeof trx.recipient_balance === 'number' && (trx.recipient?.id === transaction.account?.id || trx.recipient?.id === transaction.recipient?.id)) {
-                trx.recipient_balance += patch;
+            if (!!trx.recipient && typeof trx.recipient.balance === 'number' && (trx.recipient?.id === transaction.account?.id || trx.recipient?.id === transaction.recipient?.id)) {
+                trx.recipient.balance += rpatch;
             }
             if (trx.category?.id == TransactionType.Correction) {
-                trx.credit += patch;
+                trx.credit += rpatch;
                 if (trx.credit < 0) {
                     trx.credit = -trx.credit;
                     if (trx.recipient) {
                         trx.account = trx.recipient;
-                        trx.account_balance = trx.recipient_balance;
                         trx.recipient = undefined;
-                        trx.recipient_balance = undefined;
                     } else if (trx.account) {
                         trx.recipient = trx.account;
-                        trx.recipient_balance = trx.account_balance;
                         trx.account = undefined;
-                        trx.account_balance = undefined;
                     }
                 }
                 trx.debit = trx.credit;

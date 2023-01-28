@@ -13,10 +13,8 @@ export interface Transaction {
     id?: number | null;
     opdate: string;
     account?: Account | null;
-    account_balance?: number;
     credit: number;
     recipient?: Account | null;
-    recipient_balance?: number;
     debit: number;
     category?: Category | null;
     currency: string;

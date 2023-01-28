@@ -101,7 +101,7 @@ public class GroupService {
 
     public GroupDto updateGroup(GroupDto dto, Long userId) {
         var entity = groupRepository.findById(dto.id()).orElseThrow();
-        if (entity.getId().equals(userId)) {
+        if (entity.getOwner().getId().equals(userId)) {
             entity.setName(dto.fullname());
         }
         entity.setUpdated(LocalDateTime.now());
@@ -157,7 +157,7 @@ public class GroupService {
     }
 
     public List<String> findUsers(String query) {
-        return userRepository.findFirst10ByEmailContainingIgnoreCase(query).stream().map(u -> u.getEmail())
+        return userRepository.findFirst10ByEmailnameContainingIgnoreCase(query).stream().map(u -> u.getEmail())
                 .toList();
     }
 }

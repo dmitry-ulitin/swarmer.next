@@ -9,5 +9,5 @@ import com.swarmer.finance.models.User;
 
 public interface UserRepository extends CrudRepository<User, Long> {
 	Optional<User> findByEmail(String email);
-	List<User> findFirst10ByEmailContainingIgnoreCase(String query);
+	List<User> findFirst10ByEmailnameContainingIgnoreCase(String query);
 }
