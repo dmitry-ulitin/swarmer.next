@@ -51,6 +51,7 @@ public class TransactionController {
             @RequestParam(required = false, defaultValue = "") Collection<Long> accounts,
             @RequestParam(required = false, defaultValue = "") String search,
             @RequestParam(required = false, defaultValue = "") Long category,
+            @RequestParam(required = false, defaultValue = "") String currency,
             @RequestParam(required = false, defaultValue = "") String from,
             @RequestParam(required = false, defaultValue = "") String to,
             @RequestParam(required = false, defaultValue = "0") int offset,
@@ -58,7 +59,7 @@ public class TransactionController {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
         LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
-        return transactionService.getTransactions(userId, accounts, search, category, fromDate, toDate, offset, limit);
+        return transactionService.getTransactions(userId, accounts, search, category, currency, fromDate, toDate, offset, limit);
     }
 
     @GetMapping("/{id}")

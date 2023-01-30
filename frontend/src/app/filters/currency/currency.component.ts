@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { TuiHostedDropdownComponent, TUI_ICONS_PATH } from '@taiga-ui/core';
-import { AccState } from 'src/app/accounts/accounts.state';
+import { AccState, SetCurrency } from 'src/app/accounts/accounts.state';
 
 const MAPPER: Record<string, string> = {
   tuiIconCollapse: 'monetization_on_24'
@@ -35,6 +35,6 @@ export class CurrencyComponent {
     this.open = false;
     this.component?.nativeFocusableElement?.focus();
     this.value = option;
-//    this.store.dispatch(new SetRange(this.value));
+    this.store.dispatch(new SetCurrency(this.value));
   }
 }

@@ -277,7 +277,7 @@ public class TransactionServiceTest {
         @Test
         void testGetTransactions() {
                 var trx = transactionService.getTransactions(user.getId(), List.of(bankRUB.getId()), "", null, null,
-                                null, 0, 0);
+                                null, null, 0, 0);
                 assertThat(trx).hasSize(3);
                 assertThat(trx.stream().map(TransactionDto::id).collect(Collectors.toList()))
                                 .containsExactly(correctionRUB.getId(), expense.getId(), transfer.getId());
@@ -285,7 +285,7 @@ public class TransactionServiceTest {
 
         @Test
         void testGetTransactionsFromTo() {
-                var trx = transactionService.getTransactions(user.getId(), List.of(), null, null,
+                var trx = transactionService.getTransactions(user.getId(), List.of(), null, null, null,
                                 LocalDateTime.of(2022, 1, 5, 0, 0, 0), LocalDateTime.of(2022, 1, 26, 0, 0, 0), 0, 0);
                 assertThat(trx).hasSize(2);
                 assertThat(trx.stream().map(TransactionDto::id).collect(Collectors.toList()))
@@ -295,7 +295,7 @@ public class TransactionServiceTest {
         @Test
         void testGetTransactionsByCategory() {
                 var trx = transactionService.getTransactions(user.getId(), List.of(), null, car.getId(),
-                                null, null, 0, 0);
+                                null, null, null, 0, 0);
                 assertThat(trx).hasSize(1);
                 assertThat(trx.stream().map(TransactionDto::id).collect(Collectors.toList()))
                                 .containsExactly(expense.getId());
@@ -303,14 +303,14 @@ public class TransactionServiceTest {
 
         @Test
         void testGetTransactionsSearch() {
-                var trx = transactionService.getTransactions(user.getId(), List.of(), "uel", null, null, null, 0, 0);
+                var trx = transactionService.getTransactions(user.getId(), List.of(), "uel", null, null, null, null, 0, 0);
                 assertThat(trx).hasSize(1);
                 assertThat(trx.get(0).id()).isEqualTo(expense.getId());
         }
 
         @Test
         void testGetTransactionsSearchEmpty() {
-                var trx = transactionService.getTransactions(user.getId(), List.of(), "ducduc", null, null, null, 100,
+                var trx = transactionService.getTransactions(user.getId(), List.of(), "ducduc", null, null, null, null, 100,
                                 50);
                 assertThat(trx).hasSize(0);
         }

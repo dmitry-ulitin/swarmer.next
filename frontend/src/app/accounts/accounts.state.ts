@@ -118,6 +118,11 @@ export class SetRange {
     constructor(public range: DateRange) { }
 }
 
+export class SetCurrency {
+    static readonly type = '[Acc] Set Currency';
+    constructor(public currency: string | null) { }
+}
+
 export interface AccStateModel {
     // groups
     groups: Group[];
@@ -132,6 +137,7 @@ export interface AccStateModel {
     search: string;
     range: DateRange;
     category: Category | null;
+    currency: string | null;
 
     categories: Category[];
     loaded: boolean;
@@ -150,6 +156,7 @@ export interface AccStateModel {
         search: '',
         range: DateRange.last30(),
         category: null,
+        currency: null,
         categories: [],
         loaded: false
     }
@@ -324,7 +331,7 @@ export class AccState {
     async getTransactions(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.category?.id, 0, GET_TRANSACTIONS_LIMIT));
+            const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.category?.id, state.currency, 0, GET_TRANSACTIONS_LIMIT));
             const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
             const tv = transactions.map(t => transaction2View(t, selected));
             const transaction_id = tv.find(t => t.id === state.transaction_id)?.id;
@@ -339,7 +346,7 @@ export class AccState {
         try {
             const state = cxt.getState();
             if (!state.loaded) {
-                const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.category?.id, state.transactions.length, GET_TRANSACTIONS_LIMIT));
+                const transactions = await firstValueFrom(this.api.getTransactions(state.accounts, state.search, state.range, state.category?.id, state.currency, state.transactions.length, GET_TRANSACTIONS_LIMIT));
                 const loaded = transactions.length < GET_TRANSACTIONS_LIMIT;
                 const selected: { [key: number]: boolean } = Object.assign({}, ...state.accounts.map(a => ({ [a]: true })));
                 const tv = state.transactions.concat(transactions.map(t => transaction2View(t, selected)));
@@ -524,6 +531,12 @@ export class AccState {
         cxt.patchState({ range: action.range });
         cxt.dispatch(new GetTransactions());
         cxt.dispatch(new GetSummary());
+    }
+
+    @Action(SetCurrency, { cancelUncompleted: true })
+    setCurrency(cxt: StateContext<AccStateModel>, action: SetCurrency) {
+        cxt.patchState({ currency: action.currency });
+        cxt.dispatch(new GetTransactions());
     }
 }
 
