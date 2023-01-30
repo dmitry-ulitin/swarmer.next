@@ -1,0 +1,40 @@
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
+import { TuiHostedDropdownComponent, TUI_ICONS_PATH } from '@taiga-ui/core';
+import { AccState } from 'src/app/accounts/accounts.state';
+
+const MAPPER: Record<string, string> = {
+  tuiIconCollapse: 'monetization_on_24'
+};
+
+export function iconsPath(name: string): string {
+  return MAPPER[name] ? `assets/icons/${MAPPER[name]}.svg#${MAPPER[name]}` : `assets/taiga-ui/icons/${name}.svg#${name}`;
+}
+
+@Component({
+  selector: 'app-currency',
+  templateUrl: './currency.component.html',
+  styleUrls: ['./currency.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: TUI_ICONS_PATH,
+      useValue: iconsPath,
+    },
+  ]
+})
+export class CurrencyComponent {
+  @ViewChild(TuiHostedDropdownComponent) component?: TuiHostedDropdownComponent;
+  currencies$ = this.store.select(AccState.currencies);
+  value: string | null = null;
+  open = false;
+
+  constructor(private store: Store) { }
+
+  onClick(option: string | null) {
+    this.open = false;
+    this.component?.nativeFocusableElement?.focus();
+    this.value = option;
+//    this.store.dispatch(new SetRange(this.value));
+  }
+}
