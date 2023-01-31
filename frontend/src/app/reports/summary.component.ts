@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { map } from 'rxjs';
-import { SetCategory } from '../accounts/accounts.state';
+import { SetCategory, SetCurrency } from '../accounts/accounts.state';
 import { Summary } from '../models/summary';
 import { TransactionType } from '../models/transaction';
 
@@ -18,6 +18,10 @@ export class SummaryComponent {
   transfers$ = this.store.select(state => state.acc.summary).pipe(map(summary => summary.filter((s: Summary) => (s.transfers_credit-s.transfers_debit))));
 
   constructor(private store: Store) { }
+
+  onCurrency(currency: string) {
+    this.store.dispatch(new SetCurrency(currency));
+  }
 
   onExpenses() {
     this.store.dispatch(new SetCategory({id: TransactionType.Expense, name: "Expenses", fullname: "Expenses", level: 0, type: TransactionType.Expense, parent_id: null}));

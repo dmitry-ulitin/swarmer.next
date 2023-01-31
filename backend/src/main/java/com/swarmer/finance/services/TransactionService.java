@@ -51,9 +51,13 @@ public class TransactionService {
     }
 
     public List<TransactionDto> getTransactions(Long userId, Collection<Long> accountIds,
-            String search, Long categoryId, LocalDateTime from, LocalDateTime to, int offset, int limit) {
+            String search, Long categoryId, String currency, LocalDateTime from, LocalDateTime to, int offset, int limit) {
         var ai = accountIds.isEmpty() ? aclService.findAccounts(userId).map(a -> a.getId()).toList()
                 : new ArrayList<>(accountIds);
+        if (currency != null && !currency.isBlank()) {
+            ai = accountRepository.findByIdIn(ai).stream().filter(a -> currency.equals(a.getCurrency()))
+                    .map(a -> a.getId()).toList();
+        }
         var trx = queryTransactions(userId, ai, search, categoryId, from, to, offset, limit);
         ai = LongStream.concat(trx.stream().filter(t -> t.getAccount() != null).mapToLong(t -> t.getAccount().getId()),
                 trx.stream().filter(t -> t.getRecipient() != null).mapToLong(t -> t.getRecipient().getId())).distinct()

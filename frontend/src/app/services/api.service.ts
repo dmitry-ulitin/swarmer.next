@@ -33,13 +33,14 @@ export class ApiService {
     return this.http.delete<void>(`/api/groups/${id}`);
   }
 
-  getTransactions(accounts: number[], search: string, range: DateRange, category: number | undefined, offset: number, limit: number): Observable<Transaction[]> {
+  getTransactions(accounts: number[], search: string, range: DateRange, category: number | undefined, currency: string | null, offset: number, limit: number): Observable<Transaction[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('search', search);
-    params = params.set('category', category || '');
-    params = params.set('from', range?.from?.toString('YMD','-'));
-    params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
+    params = params.set('category', typeof category === 'number' ? category : '');
+    params = params.set('currency', currency || '');
+    params = params.set('from', range?.from?.toString('YMD','-') || '');
+    params = params.set('to', range?.to?.toString('YMD','-') || '');
     params = params.set('offset', offset);
     params = params.set('limit', limit);
     return this.http.get<Transaction[]>('/api/transactions', {params: params});
@@ -48,16 +49,16 @@ export class ApiService {
   getSummary(accounts: number[], range: DateRange): Observable<Summary[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
-    params = params.set('from', range?.from?.toString('YMD','-'));
-    params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
+    params = params.set('from', range?.from?.toString('YMD','-') || '');
+    params = params.set('to', range?.to?.toString('YMD','-') || '');
     return this.http.get<Summary[]>('/api/transactions/summary', {params: params});
   }
 
   getExpenses(accounts: number[], range: DateRange): Observable<CategorySum[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
-    params = params.set('from', range?.from?.toString('YMD','-'));
-    params = params.set('to', range?.to?.daySame(TuiDay.currentLocal())? '' : range?.to?.toString('YMD','-'));
+    params = params.set('from', range?.from?.toString('YMD','-') || '');
+    params = params.set('to', range?.to?.toString('YMD','-') || '');
     return this.http.get<CategorySum[]>('/api/transactions/expenses', {params: params});
   }
 

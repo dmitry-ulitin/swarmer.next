@@ -4,5 +4,6 @@
     </tui-input>
     <app-range></app-range>
     <tui-tag *ngIf="category$ | async" [value]="(category$ | async)?.fullname" [removable]="true" (edited)="removeCategory()" status="custom" class="support-20"></tui-tag>
+    <tui-tag *ngIf="currency$ | async" [value]="(currency$ | async)" [removable]="true" (edited)="removeCurrency()" status="custom" class="support-19"></tui-tag>
     <tui-tag *ngFor="let f of filters$ | async; let index=index;" [value]="f.name" [removable]="true" (edited)="removeFilter(f)" status="custom" class="support-{{ index + 1 }}"></tui-tag>
 </div>

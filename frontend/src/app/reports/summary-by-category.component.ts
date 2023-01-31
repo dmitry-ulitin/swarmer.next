@@ -12,7 +12,7 @@ import { CategorySum } from '../models/category-sum';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SummaryByCategoryComponent {
-  expenses$ = this.store.select(state => state.acc.expenses).pipe(map((expenses: CategorySum[]) => (Object.values(expenses.reduce((a: any, e) => {
+  expenses$ = this.store.select(state => state.acc.expenses.filter((e: CategorySum) => !state.acc.currency || e.currency===state.acc.currency)).pipe(map((expenses: CategorySum[]) => (Object.values(expenses.reduce((a: any, e) => {
     const key = e.category?.id || 0;
     const s = a[key] || { category: {...e.category, id: key<3 ? -key : key, fullname: key<3 ? "No Category" : e.category?.fullname}, amounts: [] };
     s.amounts.push({ value: e.amount, currency: e.currency });
