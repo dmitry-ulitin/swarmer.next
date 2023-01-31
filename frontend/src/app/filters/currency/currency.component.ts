@@ -25,8 +25,8 @@ export function iconsPath(name: string): string {
 })
 export class CurrencyComponent {
   @ViewChild(TuiHostedDropdownComponent) component?: TuiHostedDropdownComponent;
-  currencies$ = this.store.select(AccState.currencies);
-  value: string | null = null;
+  currencies$ = this.store.select(AccState.summaryCurrencies);
+  value$ = this.store.select(state => state.acc.currency);;
   open = false;
 
   constructor(private store: Store) { }
@@ -34,7 +34,6 @@ export class CurrencyComponent {
   onClick(option: string | null) {
     this.open = false;
     this.component?.nativeFocusableElement?.focus();
-    this.value = option;
-    this.store.dispatch(new SetCurrency(this.value));
+    this.store.dispatch(new SetCurrency(option));
   }
 }

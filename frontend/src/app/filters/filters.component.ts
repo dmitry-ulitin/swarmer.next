@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { debounceTime } from 'rxjs';
-import { AccState, DeselectAccounts, SetCategory, SetSearch } from '../accounts/accounts.state';
+import { AccState, DeselectAccounts, SetCategory, SetCurrency, SetSearch } from '../accounts/accounts.state';
 import { Filter } from '../models/filter';
 
 @Component({
@@ -15,6 +15,7 @@ export class FiltersComponent {
   search = new FormControl('');
   filters$ = this.store.select(AccState.accountFilters);
   category$ = this.store.select(state => state.acc.category);
+  currency$ = this.store.select(state => state.acc.currency);
 
   constructor(private store: Store) {
     this.search.valueChanges.pipe(debounceTime(500)).subscribe(value => {
@@ -28,5 +29,9 @@ export class FiltersComponent {
 
   removeCategory() {
     this.store.dispatch(new SetCategory(null));
+  }
+
+  removeCurrency() {
+    this.store.dispatch(new SetCurrency(null));
   }
 }

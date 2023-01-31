@@ -37,7 +37,7 @@ export class ApiService {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('search', search);
-    params = params.set('category', category || '');
+    params = params.set('category', typeof category === 'number' ? category : '');
     params = params.set('currency', currency || '');
     params = params.set('from', range?.from?.toString('YMD','-') || '');
     params = params.set('to', range?.to?.toString('YMD','-') || '');

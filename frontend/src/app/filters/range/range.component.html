@@ -9,7 +9,7 @@
     <tui-svg src="tuiIconChevronDown" class="icon" [class.icon_rotated]="open"></tui-svg>
 </ng-template>
 <ng-template #dropdown>
-    <tui-data-list>
+    <tui-data-list [size]="'s'">
         <button *ngFor="let option of options" tuiOption (click)="onClick(option)">
             {{ option.name }}
             <tui-svg *ngIf="itemIsActive(option)" src="tuiIconCheck"></tui-svg>

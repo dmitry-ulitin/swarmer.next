@@ -225,6 +225,11 @@ export class AccState {
         return state.groups.reduce((acc, g) => acc.concat(g.accounts), [] as Account[]).filter(a => !a.deleted).map(a => a.currency).filter((v, i, a) => a.indexOf(v) === i);
     }
 
+    @Selector()
+    static summaryCurrencies(state: AccStateModel): string[] {
+        return state.summary.filter(s => !!s.credit || !!s.debit || !!s.transfers_credit || !!s.transfers_debit).map(s => s.currency).filter((v, i, a) => a.indexOf(v) === i);
+    }
+
     ngxsOnInit(ctx: StateContext<AccState>) {
         ctx.dispatch([new GetGroups(), new GetTransactions(), new GetSummary(), new GetCategories()]);
     }
@@ -366,6 +371,13 @@ export class AccState {
             const summary = await firstValueFrom(this.api.getSummary(state.accounts, state.range));
             const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
             cxt.patchState({ summary, expenses });
+            if (!!state.currency) {
+                const currencies = summary.filter(s => !!s.credit || !!s.debit || !!s.transfers_credit || !!s.transfers_debit).map(s => s.currency).filter((v, i, a) => a.indexOf(v) === i);
+                if (!currencies.includes(state.currency)) {
+                    cxt.patchState({ currency: null });
+                    cxt.dispatch(new GetTransactions());
+                }
+            }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
@@ -374,6 +386,13 @@ export class AccState {
     @Action(SelectAccounts)
     selectAccounts(cxt: StateContext<AccStateModel>, action: SelectAccounts) {
         cxt.patchState({ accounts: action.accounts });
+        const state = cxt.getState();
+        if (!!state.currency) {
+            const currencies = AccState.selectedAccounts(state).map(a => a.currency);
+            if (!currencies.includes(state.currency)) {
+                cxt.patchState({ currency: null });
+            }
+        }
         cxt.dispatch(new GetTransactions());
         cxt.dispatch(new GetSummary());
     }
