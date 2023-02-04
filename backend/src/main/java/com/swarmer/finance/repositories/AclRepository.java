@@ -10,4 +10,5 @@ import com.swarmer.finance.models.AclId;
 public interface AclRepository extends CrudRepository<Acl, AclId> {
     Stream<Acl> findByUserId(Long userId);
     Stream<Acl> findByGroupOwnerIdOrderByGroupId(Long ownerId);
+    void deleteByUserIdAndGroupId(Long userId, Long groupId);
 }

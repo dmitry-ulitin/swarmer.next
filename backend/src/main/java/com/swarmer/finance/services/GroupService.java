@@ -153,6 +153,9 @@ public class GroupService {
                 acl.setUpdated(LocalDateTime.now());
             }
         }
+        entity.getAcls().stream().filter(
+                a -> !dto.permissions().stream().anyMatch(p -> p.user().email().equals(a.getUser().getEmail())))
+                .forEach(a -> aclService.deleteByUserIdAndGroupId(a.getUserId(), a.getGroupId()));
         entity.setAcls(entity.getAcls().stream().filter(
                 a -> dto.permissions().stream().anyMatch(p -> p.user().email().equals(a.getUser().getEmail())))
                 .collect(Collectors.toList()));
