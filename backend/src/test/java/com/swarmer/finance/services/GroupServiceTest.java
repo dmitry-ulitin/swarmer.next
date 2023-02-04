@@ -54,7 +54,7 @@ public class GroupServiceTest {
                 var categoryService = new CategoryService(categoryRepository, aclService);
                 var transactionService = new TransactionService(transactionRepository, accountRepository,
                                 userRepository, aclService, categoryService, em);
-                groupService = new GroupService(groupRepository, userRepository, transactionService, aclService);
+                groupService = new GroupService(groupRepository, accountRepository, userRepository, transactionService, aclService);
                 this.em = em;
         }
 

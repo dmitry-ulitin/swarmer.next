@@ -503,4 +503,8 @@ public class TransactionService {
         var trx = typedQuery.getResultList();
         return trx;
     }
+    
+    boolean existsByAccountId(Long accountId) {
+        return transactionRepository.existsByAccountIdOrRecipientId(accountId, accountId);
+    }
 }
