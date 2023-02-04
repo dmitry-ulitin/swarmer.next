@@ -30,7 +30,8 @@ public class CategoryController {
 
     @PostMapping
     @Transactional
-	Category addNewCategory(@RequestBody Category category) {
-		return categoryService.addNewCategory(category);
+	Category addNewCategory(@RequestBody Category category, Authentication authentication) {
+        var userId = ((UserPrincipal)authentication.getPrincipal()).id();
+		return categoryService.saveCategory(category, userId);
 	}
 }
