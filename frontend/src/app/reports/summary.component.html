@@ -8,5 +8,7 @@
 </div>
 <div class="t-row" *ngFor="let s of transfers$ | async; let i = index">
     <div class="t-left"><ng-template [ngIf]="i==0"><a tuiLink (click)="onTransfers()">Transfers</a></ng-template></div>
-    <div class="t-right" [class.credit]="s.transfers_credit>s.transfers_debit" [class.debit]="s.transfers_credit<s.transfers_debit">{{(s.transfers_credit-s.transfers_debit) | currency:s.currency}}</div>
+    <div class="t-right" [class.credit]="s.transfers_credit>s.transfers_debit" [class.debit]="s.transfers_credit<s.transfers_debit">
+        <a tuiLink (click)="onCurrency(s.currency)">{{(s.transfers_credit-s.transfers_debit) | currency:s.currency}}</a>
+    </div>
 </div>

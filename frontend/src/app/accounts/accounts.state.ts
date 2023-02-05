@@ -408,25 +408,23 @@ export class AccState {
     @Action(EditTransaction)
     async editTransaction(cxt: StateContext<AccStateModel>, action: EditTransaction) {
         try {
-            const transaction_id = action.id || cxt.getState().transaction_id;
+            const state = cxt.getState();
+            const transaction_id = action.id || state.transaction_id;
             if (transaction_id) {
                 const transaction = await firstValueFrom(this.api.getTransaction(transaction_id));
-                this.zone.run(() => {
-                    this.dialogService.open(
-                        new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
-                    ).subscribe({
-                        next: (data: any) => {
-                            if (data) {
-                                this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
-                                patchStateTransactions(transaction, cxt, true);
-                                patchStateTransactions(data, cxt, false);
-                                if (!!data.category && cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
-                                    cxt.dispatch(new GetCategories());
-                                }
-                            }
-                        }
-                    });
-                });
+                const data = await firstValueFrom(this.dialogService.open<Transaction | undefined>(
+                    new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
+                ));
+                if (data) {
+                    this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
+                    patchStateTransactions(transaction, cxt, true);
+                    patchStateTransactions(data, cxt, false);
+                    if (!!data.category && state.categories.findIndex(c => c.id === data.category?.id) < 0) {
+                        cxt.dispatch(new GetCategories());
+                    }
+                    const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
+                    cxt.patchState({ expenses });
+                }
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -451,6 +449,8 @@ export class AccState {
                     await firstValueFrom(this.api.deleteTransaction(transaction_id));
                     this.zone.run(() => this.alertService.open('Transaction deleted').subscribe());
                     patchStateTransactions(trx, cxt, true);
+                    const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
+                    cxt.patchState({ expenses });
                 }
             }
         } catch (err) {
@@ -459,7 +459,7 @@ export class AccState {
     }
 
     @Action(CreateTransaction)
-    addTransaction(cxt: StateContext<AccStateModel>, action: CreateTransaction) {
+    async addTransaction(cxt: StateContext<AccStateModel>, action: CreateTransaction) {
         const state = cxt.getState();
         const accounts = AccState.accounts(state);
         let account: Account | null | undefined = accounts.find(a => a.id === state.accounts[0])
@@ -486,19 +486,18 @@ export class AccState {
             credit: 0,
             details: ''
         };
-        this.dialogService.open(
+        const data = await firstValueFrom(this.dialogService.open<Transaction | undefined>(
             new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
-        ).subscribe({
-            next: (data: any) => {
-                if (data) {
-                    this.zone.run(() => this.alertService.open('Transaction created', { status: TuiNotification.Success }).subscribe());
-                    patchStateTransactions(data, cxt, false);
-                    if (!!data.category && cxt.getState().categories.findIndex(c => c.id == data.category.id) < 0) {
-                        cxt.dispatch(new GetCategories());
-                    }
-                }
+        ));
+        if (data) {
+            this.zone.run(() => this.alertService.open('Transaction created', { status: TuiNotification.Success }).subscribe());
+            patchStateTransactions(data, cxt, false);
+            if (state.categories.findIndex(c => c.id === data.category?.id) < 0) {
+                cxt.dispatch(new GetCategories());
             }
-        });
+            const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
+            cxt.patchState({ expenses });
+        }
     }
 
     @Action(ImportTransactions)
@@ -642,7 +641,25 @@ function patchStateTransactions(transaction: Transaction, cxt: StateContext<AccS
     patchGroupBalance(groups, transaction.account, remove ? transaction.debit : -transaction.debit);
     patchGroupBalance(groups, transaction.recipient, remove ? -transaction.credit : transaction.credit);
     const transaction_id = remove && transaction.id === state.transaction_id ? null : (remove ? state.transaction_id : transaction.id);
-    cxt.patchState({ transactions, groups, transaction_id });
+    // patch summary
+    const summary = state.summary.slice();
+    for (let s of summary) {
+        if (!!transaction.account?.id) {
+            if (!!transaction.recipient?.id) {
+                if (transaction.account.currency === s.currency && state.accounts.includes(transaction.account.id) && !state.accounts.includes(transaction.recipient.id)) {
+                    s.transfers_debit += remove ? -transaction.debit : transaction.debit;
+                } else if (transaction.recipient.currency === s.currency && !state.accounts.includes(transaction.account.id) && state.accounts.includes(transaction.recipient.id)) {
+                    s.transfers_credit += remove ? -transaction.credit : transaction.credit;
+                }
+            } else if (transaction.account.currency === s.currency) {
+                s.debit += remove ? -transaction.debit : transaction.debit;
+            }
+        } else if (!!transaction.recipient?.id && transaction.recipient.currency === s.currency) {
+            s.credit += remove ? -transaction.credit : transaction.credit;
+        }
+    }
+    // patch state
+    cxt.patchState({ transactions, groups, transaction_id, summary });
 }
 
 function getAccount(groups: Group[], id: number): Account | undefined {
