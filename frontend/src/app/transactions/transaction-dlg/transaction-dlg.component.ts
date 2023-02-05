@@ -41,11 +41,11 @@ export class TransactionDlgComponent {
   }
 
   get showIncome(): boolean {
-    return this.type === TransactionType.Transfer && this.transaction.value.category?.type === TransactionType.Income;
+    return this.type === TransactionType.Transfer && (this.transaction.value.category?.type === TransactionType.Income || !this.transaction.value.category);
   }
 
   get showExpense(): boolean {
-    return this.type === TransactionType.Transfer && this.transaction.value.category?.type === TransactionType.Expense;
+    return this.type === TransactionType.Transfer && (this.transaction.value.category?.type === TransactionType.Expense || !this.transaction.value.category);
   }
 
   constructor(
