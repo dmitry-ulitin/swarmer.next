@@ -48,7 +48,7 @@
     <div class="d-flex" *ngIf="showCategory && newcategory">
         <app-category-ctrl formControlName="newcategory" [tuiTextfieldSize]="'s'" class="flex-fill" [prefix]="categoryParent">
             category name</app-category-ctrl>
-        <button tuiIconButton type="button" icon="tuiIconUndo" [size]="'s'" [appearance]="'icon'"
+        <button tuiIconButton type="button" icon="tuiIconCloseLarge" [size]="'s'" [appearance]="'icon'"
             (click)="onCancelCategory()"></button>
     </div>
     <ng-template #categoryValue let-category>

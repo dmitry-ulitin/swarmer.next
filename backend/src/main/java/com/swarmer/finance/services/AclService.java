@@ -24,6 +24,10 @@ public class AclService {
         return aclRepository.findByUserId(userId);
     }
 
+    public void deleteByUserIdAndGroupId(Long userId, Long groupId) {
+        aclRepository.deleteByUserIdAndGroupId(userId, groupId);
+    }
+
     public List<Long> findUsers(Long userId) {
         return Stream.concat(
                 Stream.concat(

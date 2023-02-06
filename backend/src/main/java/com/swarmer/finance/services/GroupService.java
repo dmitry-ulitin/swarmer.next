@@ -11,20 +11,23 @@ import com.swarmer.finance.models.Account;
 import com.swarmer.finance.models.AccountGroup;
 import com.swarmer.finance.models.Acl;
 import com.swarmer.finance.repositories.GroupRepository;
+import com.swarmer.finance.repositories.AccountRepository;
 import com.swarmer.finance.repositories.UserRepository;
 
 @Service
 public class GroupService {
     private final GroupRepository groupRepository;
+    private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final TransactionService transactionService;
     private final AclService aclService;
 
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository,
+    public GroupService(GroupRepository groupRepository, AccountRepository accountRepository, UserRepository userRepository,
             TransactionService transactionService,
             AclService aclService) {
-        this.userRepository = userRepository;
         this.groupRepository = groupRepository;
+        this.accountRepository = accountRepository;
+        this.userRepository = userRepository;
         this.transactionService = transactionService;
         this.aclService = aclService;
     }
@@ -105,7 +108,7 @@ public class GroupService {
             entity.setName(dto.fullname());
         }
         entity.setUpdated(LocalDateTime.now());
-        entity = groupRepository.save(entity);
+        // save accounts
         for (var account : dto.accounts()) {
             if (account.id() == null) {
                 if ((account.deleted() == null || !account.deleted())) {
@@ -119,9 +122,18 @@ public class GroupService {
                         .findFirst().orElseThrow();
                 accountEntity.setName(account.name());
                 accountEntity.setUpdated(LocalDateTime.now());
-                accountEntity.setDeleted(account.deleted() != null && account.deleted());
+                if (account.deleted() != null && account.deleted()) {
+                    if (transactionService.existsByAccountId(account.id())) {
+//                        throw new RuntimeException("Account has transactions");
+                        accountEntity.setDeleted(true);
+                    } else {
+                        entity.getAccounts().remove(accountEntity);
+                        accountRepository.delete(accountEntity);
+                    }
+                }
             }
         }
+        // save permissions
         for (var permission : dto.permissions()) {
             var user = userRepository.findByEmail(permission.user().email()).orElseThrow();
             var acl = entity.getAcls().stream().filter(a -> user.getId().equals(a.getUserId())).findFirst()
@@ -141,6 +153,9 @@ public class GroupService {
                 acl.setUpdated(LocalDateTime.now());
             }
         }
+        entity.getAcls().stream().filter(
+                a -> !dto.permissions().stream().anyMatch(p -> p.user().email().equals(a.getUser().getEmail())))
+                .forEach(a -> aclService.deleteByUserIdAndGroupId(a.getUserId(), a.getGroupId()));
         entity.setAcls(entity.getAcls().stream().filter(
                 a -> dto.permissions().stream().anyMatch(p -> p.user().email().equals(a.getUser().getEmail())))
                 .collect(Collectors.toList()));

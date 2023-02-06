@@ -144,6 +144,10 @@ public class TransactionService {
         var entity = new Transaction();
         entity.setOwner(userRepository.findById(userId).orElseThrow());
         entity.setCreated(LocalDateTime.now());
+        if (dto.category() != null) {
+            var category = categoryService.getCategory(dto.category(), entity.getOwner().getId());
+            entity.setCategory(category);
+        }
         dto2entity(dto, entity);
         transactionRepository.save(entity);
         if (entity.getAccount() != null) {
@@ -166,6 +170,10 @@ public class TransactionService {
                     false);
         }
         entity.setOwner(userRepository.findById(userId).orElseThrow());
+        if (dto.category() != null) {
+            var category = categoryService.getCategory(dto.category(), entity.getOwner().getId());
+            entity.setCategory(category);
+        }
         dto2entity(dto, entity);
         transactionRepository.save(entity);
         if (entity.getAccount() != null) {
@@ -388,20 +396,10 @@ public class TransactionService {
             entity.setRecipient(accountRepository.findById(dto.recipient().id()).orElseThrow());
         }
         entity.setCredit(dto.credit());
-        entity.setCategory(dto.category());
         entity.setCurrency(dto.currency());
         entity.setParty(dto.party());
         entity.setDetails(dto.details());
         entity.setUpdated(LocalDateTime.now());
-        if (entity.getCategory() != null) {
-            if (entity.getCategory().getId() == null) {
-                entity.getCategory().setOwnerId(entity.getOwner().getId());
-                entity.getCategory().setUpdated(LocalDateTime.now());
-                entity.getCategory().setCreated(LocalDateTime.now());
-            } else {
-                entity.setCategory(entityManager.find(Category.class, entity.getCategory().getId()));
-            }
-        }
     }
 
     private void updateCorrections(Long accountId, Double amount, LocalDateTime opdate, Long id, Boolean removeZeros) {
@@ -502,5 +500,9 @@ public class TransactionService {
         }
         var trx = typedQuery.getResultList();
         return trx;
+    }
+    
+    boolean existsByAccountId(Long accountId) {
+        return transactionRepository.existsByAccountIdOrRecipientId(accountId, accountId);
     }
 }

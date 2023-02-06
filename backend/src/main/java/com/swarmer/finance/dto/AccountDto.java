@@ -15,7 +15,7 @@ public record AccountDto(
         var accfullname = account.getGroup().getName();
         if (account.getName() != null && !account.getName().isBlank()) {
             accfullname += " " + account.getName();
-        } else if (account.getGroup().getAccounts().size() > 1) {
+        } else if (account.getGroup().getAccounts().stream().filter(a -> a.getDeleted() == null || !a.getDeleted()).count() > 1) {
             accfullname += " " + account.getCurrency();
         }
 		var shared = !account.getGroup().getOwner().getId().equals(userId) && account.getGroup().getAcls().stream().noneMatch(acl -> acl.getAdmin());		

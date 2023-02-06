@@ -1,6 +1,7 @@
 package com.swarmer.finance.services;
 
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
@@ -22,12 +23,12 @@ public class CategoryService {
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
         var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
-            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getType().compareTo(c2.getType()))
+            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().toLowerCase().compareTo(c2.getFullName().toLowerCase()))) : c1.getType().compareTo(c2.getType()))
             .collect(Collectors.toList());
         Category prev = null;
         List<Category> result = new ArrayList<>();
         for (var c : categories) {
-            if (prev != null && c.getFullName().equals(prev.getFullName())) {
+            if (prev != null && c.getFullName().toLowerCase().equals(prev.getFullName().toLowerCase())) {
                 if (userId.equals(c.getOwnerId())) {
                     result.set(result.size() - 1, c);
                 }
@@ -46,7 +47,7 @@ public class CategoryService {
         }
         var coowners = aclService.findUsers(userId);
         var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
-            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().compareTo(c2.getFullName()))) : c1.getType().compareTo(c2.getType()))
+            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().toLowerCase().compareTo(c2.getFullName().toLowerCase()))) : c1.getType().compareTo(c2.getType()))
             .collect(Collectors.toList());
 
         int index = 0;
@@ -55,13 +56,35 @@ public class CategoryService {
             result.add(categoryId);
             return result;
         }
-        var fullName = categories.get(index).getFullName();
-        while(index>0 && categories.get(index - 1).getFullName().equals(fullName)) index--;
-        while(index<categories.size() && (categories.get(index).getFullName().equals(fullName) || categories.get(index).getFullName().startsWith(fullName + " / "))) result.add(categories.get(index++).getId());
+        var fullName = categories.get(index).getFullName().toLowerCase();
+        while(index>0 && categories.get(index - 1).getFullName().toLowerCase().equals(fullName)) index--;
+        while(index<categories.size() && (categories.get(index).getFullName().toLowerCase().equals(fullName) || categories.get(index).getFullName().toLowerCase().startsWith(fullName + " / "))) result.add(categories.get(index++).getId());
         return result;
     }
     
-    public Category addNewCategory(Category category) {
-        return categoryRepository.save(category);
+    public Category getCategory(Category category, Long userId) {
+        if (category.getId() != null) {
+            var c = categoryRepository.findById(category.getId()).orElse(null);
+            if (c != null && c.getOwnerId() != null && !c.getOwnerId().equals(userId)) {
+                return getCategory(new Category(null, userId, category.getParentId(), null, category.getName(), null, null), userId);
+            }
+            return c;
+        }
+        var c = categoryRepository.findByOwnerIdAndParentIdAndNameIgnoreCase(userId, category.getParentId(), category.getName());
+        if (c.isPresent()) {
+            return c.get();
+        }
+        category.setOwnerId(userId);
+        category.setCreated(LocalDateTime.now());
+        category.setUpdated(LocalDateTime.now());
+        var parent = categoryRepository.findById(category.getParentId()).orElseThrow();
+        category.setParent(getCategory(parent, userId));
+        category.setParentId(category.getParent().getId());
+        categoryRepository.save(category);
+        return category;
+    }
+
+    public Category saveCategory(Category category, Long userId) {
+        return categoryRepository.save(getCategory(category, userId));
     }
 }
