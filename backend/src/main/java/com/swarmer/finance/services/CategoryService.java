@@ -79,6 +79,7 @@ public class CategoryService {
         category.setUpdated(LocalDateTime.now());
         var parent = categoryRepository.findById(category.getParentId()).orElseThrow();
         category.setParent(getCategory(parent, userId));
+        category.setParentId(category.getParent().getId());
         categoryRepository.save(category);
         return category;
     }
