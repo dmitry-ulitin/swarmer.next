@@ -22,7 +22,7 @@ import { TransactionsComponent } from './transactions/transactions.component';
 import { HomeComponent } from './home/home.component';
 import { SummaryComponent } from './reports/summary.component';
 import { TuiButtonModule, TuiLinkModule, TuiDataListModule, TuiGroupModule, TuiHostedDropdownModule, TuiModeModule, TuiAlertModule, TuiRootModule, TuiSvgModule, TuiDialogModule, TuiLabelModule, TuiTextfieldControllerModule, TuiPrimitiveTextfieldModule, TuiErrorModule } from '@taiga-ui/core';
-import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule, TuiSelectModule, TuiComboBoxModule, TuiFilterByInputPipeModule, TuiInputDateModule, TuiTextAreaModule, TuiInputFilesModule, TuiFilesModule, TuiTagModule } from '@taiga-ui/kit';
+import { TuiDataListWrapperModule, TuiInputModule, TuiInputNumberModule, TuiInputPasswordModule, TuiSelectModule, TuiComboBoxModule, TuiFilterByInputPipeModule, TuiInputDateModule, TuiTextAreaModule, TuiInputFilesModule, TuiFilesModule, TuiTagModule, TuiTreeModule } from '@taiga-ui/kit';
 import { NgxsSelectSnapshotModule } from '@ngxs-labs/select-snapshot';
 import { TransactionDlgComponent } from './transactions/transaction-dlg/transaction-dlg.component';
 import { TransactionCtrlComponent } from './transactions/transaction-dlg/transaction-ctrl.component';
@@ -40,6 +40,7 @@ import { RegistrationComponent } from './auth/registration.component';
 import { RangeComponent } from './filters/range/range.component';
 import { SummaryByCategoryComponent } from './reports/summary-by-category.component';
 import { RuleDlgComponent } from './import/rule-dlg/rule-dlg.component';
+import { CategoriesComponent } from './categories/categories.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -63,7 +64,8 @@ registerLocaleData(localeRu, 'ru');
     RegistrationComponent,
     RangeComponent,
     SummaryByCategoryComponent,
-    RuleDlgComponent
+    RuleDlgComponent,
+    CategoriesComponent
   ],
   imports: [
     BrowserModule,
@@ -101,6 +103,7 @@ registerLocaleData(localeRu, 'ru');
     TuiPrimitiveTextfieldModule,
     TuiTableModule,
     TuiLetModule,
+    TuiTreeModule,
     
     NgxsModule.forRoot([AppState, AccState]),
     NgxsStoragePluginModule.forRoot({ key: 'app.token' }),

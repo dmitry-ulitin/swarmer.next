@@ -20,6 +20,7 @@ import { Summary } from '../models/summary';
 import { Filter } from '../models/filter';
 import { DateRange } from '../models/date-range';
 import { CategorySum } from '../models/category-sum';
+import { CategoriesComponent } from '../categories/categories.component';
 
 const GET_TRANSACTIONS_LIMIT: number = 100;
 
@@ -97,6 +98,10 @@ export class DeleteTransaction {
 export class ImportTransactions {
     static readonly type = '[Acc] Import Transactions';
     constructor(public id?: number) { }
+}
+
+export class ShowCategories {
+    static readonly type = '[Acc] Show Categories';
 }
 
 export class GetCategories {
@@ -555,6 +560,13 @@ export class AccState {
     setCurrency(cxt: StateContext<AccStateModel>, action: SetCurrency) {
         cxt.patchState({ currency: action.currency });
         cxt.dispatch(new GetTransactions());
+    }
+
+    @Action(ShowCategories)
+    async showCategories(cxt: StateContext<AccStateModel>) {
+        await firstValueFrom(this.dialogService.open(
+            new PolymorpheusComponent(CategoriesComponent, this.injector), { header: "Categories", size: 'l' }
+        ));
     }
 }
 

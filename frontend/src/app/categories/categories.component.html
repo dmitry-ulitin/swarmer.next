@@ -1,0 +1,20 @@
+<div class="container">
+    <div class="header">
+        <button tuiIconButton type="button" icon="tuiIconRefresh" [size]="'s'" [appearance]="'secondary'"
+            (click)="onRefresh()"></button>
+        <button tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'secondary'"
+            (click)="onAdd()"></button>
+        <button *ngIf="selected && selected>4" tuiIconButton type="button" icon="tuiIconEdit" [size]="'s'"
+            [appearance]="'secondary'" (click)="onEdit()"></button>
+        <button *ngIf="selected && selected>4" tuiIconButton type="button" icon="tuiIconTrash" [size]="'s'"
+            [appearance]="'secondary'" (click)="onDelete()"></button>
+    </div>
+    <div class="tree">
+        <tui-tree *ngFor="let item of categories$ | async" [value]="item" [content]="content" [tuiTreeController]="true"
+            [childrenHandler]="handler" [map]="map"></tui-tree>
+        <ng-template #content let-item>
+            <div class="category" [class.active]="isSelected(item)" (click)="setAsSelected(item)">{{ item.category.name
+                }}</div>
+        </ng-template>
+    </div>
+</div>
