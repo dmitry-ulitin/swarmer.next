@@ -4,6 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +31,14 @@ public class CategoryController {
 
     @PostMapping
     @Transactional
-	Category addNewCategory(@RequestBody Category category, Authentication authentication) {
+	Category createCategory(@RequestBody Category category, Authentication authentication) {
+        var userId = ((UserPrincipal)authentication.getPrincipal()).id();
+		return categoryService.saveCategory(category, userId);
+	}
+
+    @PutMapping
+    @Transactional
+	Category updateCategory(@RequestBody Category category, Authentication authentication) {
         var userId = ((UserPrincipal)authentication.getPrincipal()).id();
 		return categoryService.saveCategory(category, userId);
 	}

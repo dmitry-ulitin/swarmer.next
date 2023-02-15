@@ -1,0 +1,24 @@
+.category {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding-bottom: .5rem;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+.category-level-1 {
+    padding-left: 1rem;
+}
+
+.category-level-2 {
+    padding-left: 2rem;
+}
+
+.category-level-3 {
+    padding-left: 3rem;
+}

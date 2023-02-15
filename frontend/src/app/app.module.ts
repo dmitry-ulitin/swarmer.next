@@ -35,12 +35,13 @@ import { TuiTableModule } from '@taiga-ui/addon-table';
 import { TuiFilterPipeModule, TuiLetModule } from '@taiga-ui/cdk';
 import { FiltersComponent } from './filters/filters.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-import { CategoryCtrlComponent } from './transactions/transaction-dlg/category-ctrl/category-ctrl.component';
+import { CategoryCtrlComponent } from './categories/category-ctrl/category-ctrl.component';
 import { RegistrationComponent } from './auth/registration.component';
 import { RangeComponent } from './filters/range/range.component';
 import { SummaryByCategoryComponent } from './reports/summary-by-category.component';
 import { RuleDlgComponent } from './import/rule-dlg/rule-dlg.component';
 import { CategoriesComponent } from './categories/categories.component';
+import { CategoryDlgComponent } from './categories/category-dlg/category-dlg.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -65,7 +66,8 @@ registerLocaleData(localeRu, 'ru');
     RangeComponent,
     SummaryByCategoryComponent,
     RuleDlgComponent,
-    CategoriesComponent
+    CategoriesComponent,
+    CategoryDlgComponent
   ],
   imports: [
     BrowserModule,

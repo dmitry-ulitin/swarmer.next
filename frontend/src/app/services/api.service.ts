@@ -110,6 +110,18 @@ export class ApiService {
     return this.http.get<Category[]>('/api/categories');
   }
 
+  addCategory(rule: Category): Observable<Category> {
+    return this.http.post<Category>('/api/categories', rule);
+  }
+
+  updateCategory(rule: Category): Observable<Category> {
+    return this.http.put<Category>('/api/categories', rule);
+  }
+
+  saveCategory(category: Category): Observable<Category> {
+    return !!category.id ? this.addCategory(category) : this.updateCategory(category);
+  }
+
   getUsers(query: string): Observable<string[]> {
     let params = new HttpParams();
     params = params.set('query', query);

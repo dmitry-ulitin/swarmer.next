@@ -22,9 +22,16 @@ public class CategoryService {
 
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
-            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().toLowerCase().compareTo(c2.getFullName().toLowerCase()))) : c1.getType().compareTo(c2.getType()))
-            .collect(Collectors.toList());
+        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
+                .stream()
+                .sorted((c1,
+                        c2) -> c1.getType().equals(c2.getType())
+                                ? (c1.getLevel() == 0 ? -1
+                                        : (c2.getLevel() == 0 ? 1
+                                                : c1.getFullName().toLowerCase()
+                                                        .compareTo(c2.getFullName().toLowerCase())))
+                                : c1.getType().compareTo(c2.getType()))
+                .collect(Collectors.toList());
         Category prev = null;
         List<Category> result = new ArrayList<>();
         for (var c : categories) {
@@ -39,47 +46,68 @@ public class CategoryService {
         }
         return result;
     }
-    
+
     public List<Long> getCategoriesFilter(Long userId, Long categoryId) {
         List<Long> result = new ArrayList<>();
         if (categoryId == null) {
             return result;
         }
         var coowners = aclService.findUsers(userId);
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList()).stream()
-            .sorted((c1, c2) -> c1.getType().equals(c2.getType()) ? (c1.getLevel()==0 ? -1 : (c2.getLevel() == 0 ? 1 : c1.getFullName().toLowerCase().compareTo(c2.getFullName().toLowerCase()))) : c1.getType().compareTo(c2.getType()))
-            .collect(Collectors.toList());
+        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
+                .stream()
+                .sorted((c1,
+                        c2) -> c1.getType().equals(c2.getType())
+                                ? (c1.getLevel() == 0 ? -1
+                                        : (c2.getLevel() == 0 ? 1
+                                                : c1.getFullName().toLowerCase()
+                                                        .compareTo(c2.getFullName().toLowerCase())))
+                                : c1.getType().compareTo(c2.getType()))
+                .collect(Collectors.toList());
 
         int index = 0;
-        while(index<categories.size() && !categories.get(index).getId().equals(categoryId)) index++;
-        if (index>categories.size()) {
+        while (index < categories.size() && !categories.get(index).getId().equals(categoryId))
+            index++;
+        if (index > categories.size()) {
             result.add(categoryId);
             return result;
         }
         var fullName = categories.get(index).getFullName().toLowerCase();
-        while(index>0 && categories.get(index - 1).getFullName().toLowerCase().equals(fullName)) index--;
-        while(index<categories.size() && (categories.get(index).getFullName().toLowerCase().equals(fullName) || categories.get(index).getFullName().toLowerCase().startsWith(fullName + " / "))) result.add(categories.get(index++).getId());
+        while (index > 0 && categories.get(index - 1).getFullName().toLowerCase().equals(fullName))
+            index--;
+        while (index < categories.size() && (categories.get(index).getFullName().toLowerCase().equals(fullName)
+                || categories.get(index).getFullName().toLowerCase().startsWith(fullName + " / ")))
+            result.add(categories.get(index++).getId());
         return result;
     }
-    
+
     public Category getCategory(Category category, Long userId) {
-        if (category.getId() != null) {
-            var c = categoryRepository.findById(category.getId()).orElse(null);
-            if (c != null && c.getOwnerId() != null && !c.getOwnerId().equals(userId)) {
-                return getCategory(new Category(null, userId, category.getParentId(), null, category.getName(), null, null), userId);
+        var original = categoryRepository.findById(category.getId()).orElse(null);
+        if (original != null) {
+            if (original.getParentId() == null) {
+                return original;
+            } else if (!original.getOwnerId().equals(userId)) {
+                category.setId(null);
+                category.setCreated(LocalDateTime.now());
+            } else  {
+                original.setName(category.getName());
+                original.setParentId(category.getParentId());
+                category = original;
             }
-            return c;
-        }
-        var c = categoryRepository.findByOwnerIdAndParentIdAndNameIgnoreCase(userId, category.getParentId(), category.getName());
-        if (c.isPresent()) {
-            return c.get();
+        } else {
+            original = categoryRepository
+                    .findByOwnerIdAndParentIdAndNameIgnoreCase(userId, category.getParentId(), category.getName())
+                    .orElse(null);
+            if (original != null) {
+                return original;
+            }
+            category.setId(null);
+            category.setCreated(LocalDateTime.now());
         }
         category.setOwnerId(userId);
-        category.setCreated(LocalDateTime.now());
-        category.setUpdated(LocalDateTime.now());
         var parent = categoryRepository.findById(category.getParentId()).orElseThrow();
         category.setParent(getCategory(parent, userId));
         category.setParentId(category.getParent().getId());
+        category.setUpdated(LocalDateTime.now());
         categoryRepository.save(category);
         return category;
     }

@@ -21,6 +21,7 @@ import { Filter } from '../models/filter';
 import { DateRange } from '../models/date-range';
 import { CategorySum } from '../models/category-sum';
 import { CategoriesComponent } from '../categories/categories.component';
+import { CategoryDlgComponent } from '../categories/category-dlg/category-dlg.component';
 
 const GET_TRANSACTIONS_LIMIT: number = 100;
 
@@ -106,6 +107,21 @@ export class ShowCategories {
 
 export class GetCategories {
     static readonly type = '[Acc] Get Categories';
+}
+
+export class CreateCategory {
+    static readonly type = '[Acc] Create Category';
+    constructor(public id: number) { }
+}
+
+export class EditCategory {
+    static readonly type = '[Acc] Edit Category';
+    constructor(public id: number) { }
+}
+
+export class DeleteCategory {
+    static readonly type = '[Acc] Delete Category';
+    constructor(public id?: number) { }
 }
 
 export class SetCategory {
@@ -567,6 +583,41 @@ export class AccState {
         await firstValueFrom(this.dialogService.open(
             new PolymorpheusComponent(CategoriesComponent, this.injector), { header: "Categories", size: 'l' }
         ));
+    }
+
+    @Action(EditCategory)
+    async editCategory(cxt: StateContext<AccStateModel>, action: EditCategory) {
+        try {
+            const category = cxt.getState().categories.find((c: Category) => c.id === action.id);
+            const data = await firstValueFrom(this.dialogService.open<Category | undefined>(
+                new PolymorpheusComponent(CategoryDlgComponent, this.injector), { data: category, dismissible: false, size: 's' }
+            ), { defaultValue: null });
+            if (data) {
+                await lastValueFrom(this.api.saveCategory(data));
+                this.zone.run(() => this.alertService.open('Category updated', { status: TuiNotification.Success }).subscribe());
+                cxt.dispatch(new GetCategories());
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action(CreateCategory)
+    async createCategory(cxt: StateContext<AccStateModel>, action: CreateCategory) {
+        try {
+            const parent = cxt.getState().categories.find((c: Category) => c.id === action.id) || cxt.getState().categories[0];
+            const category: Category = { id: 0, name: '', fullname: '', level: parent.level + 1, type: parent.type, parent_id: parent.id}
+            const data = await firstValueFrom(this.dialogService.open<Category | undefined>(
+                new PolymorpheusComponent(CategoryDlgComponent, this.injector), { data: category, dismissible: false, size: 's' }
+            ), { defaultValue: null });
+            if (data) {
+                await lastValueFrom(this.api.saveCategory(data));
+                this.zone.run(() => this.alertService.open('Category created', { status: TuiNotification.Success }).subscribe());
+                cxt.dispatch(new GetCategories());
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
     }
 }
 
