@@ -321,6 +321,9 @@ public class TransactionService {
                 while (category.getLevel() > 1) {
                     category = entityManager.find(Category.class, category.getParentId());
                 }
+                var fullName = category.getFullName();
+                category = categorySums.stream().filter(c -> c.getCategory() != null && c.getCategory().getFullName().equals(fullName))
+                        .findFirst().map(c -> c.getCategory()).orElse(category);
                 cs.setCategory(category);
             } else {
                 cs.setCategory(entityManager.find(Category.class, Long.valueOf(type.getValue())));
