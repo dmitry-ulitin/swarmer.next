@@ -76,6 +76,10 @@ export class GetSummary {
     static readonly type = '[Acc] Get Summary';
 }
 
+export class GetExpenses {
+    static readonly type = '[Acc] Get Expenses';
+}
+
 export class SelectTransaction {
     static readonly type = '[Acc] Select Transaction';
     constructor(public id: number) { }
@@ -121,7 +125,7 @@ export class EditCategory {
 
 export class DeleteCategory {
     static readonly type = '[Acc] Delete Category';
-    constructor(public id?: number) { }
+    constructor(public id?: number, public replace: number | null = null) { }
 }
 
 export class SetCategory {
@@ -384,14 +388,12 @@ export class AccState {
         }
     }
 
-
     @Action([AppLoginSuccess, GetSummary], { cancelUncompleted: true })
     async getSummary(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
             const summary = await firstValueFrom(this.api.getSummary(state.accounts, state.range));
-            const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
-            cxt.patchState({ summary, expenses });
+            cxt.patchState({ summary });
             if (!!state.currency) {
                 const currencies = summary.filter(s => !!s.credit || !!s.debit || !!s.transfers_credit || !!s.transfers_debit).map(s => s.currency).filter((v, i, a) => a.indexOf(v) === i);
                 if (!currencies.includes(state.currency)) {
@@ -399,6 +401,17 @@ export class AccState {
                     cxt.dispatch(new GetTransactions());
                 }
             }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action([AppLoginSuccess, GetExpenses, GetSummary], { cancelUncompleted: true })
+    async getExpenses(cxt: StateContext<AccStateModel>) {
+        try {
+            const state = cxt.getState();
+            const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
+            cxt.patchState({ expenses });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
@@ -433,19 +446,21 @@ export class AccState {
             const transaction_id = action.id || state.transaction_id;
             if (transaction_id) {
                 const transaction = await firstValueFrom(this.api.getTransaction(transaction_id));
-                const data = await firstValueFrom(this.dialogService.open<Transaction | undefined>(
-                    new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }
-                ));
-                if (data) {
-                    this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
-                    patchStateTransactions(transaction, cxt, true);
-                    patchStateTransactions(data, cxt, false);
-                    if (!!data.category && state.categories.findIndex(c => c.id === data.category?.id) < 0) {
-                        cxt.dispatch(new GetCategories());
+                this.zone.run(async () => {
+                    const data = await firstValueFrom(this.dialogService.open<Transaction | undefined>(
+                        new PolymorpheusComponent(TransactionDlgComponent, this.injector), { data: transaction, dismissible: false, size: 's' }),
+                        { defaultValue: undefined }
+                    );
+                    if (data) {
+                        this.zone.run(() => this.alertService.open('Transaction updated', { status: TuiNotification.Success }).subscribe());
+                        patchStateTransactions(transaction, cxt, true);
+                        patchStateTransactions(data, cxt, false);
+                        if (!!data.category && state.categories.findIndex(c => c.id === data.category?.id) < 0) {
+                            cxt.dispatch(new GetCategories());
+                        }
+                        cxt.dispatch(new GetExpenses());
                     }
-                    const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
-                    cxt.patchState({ expenses });
-                }
+                });
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -470,8 +485,7 @@ export class AccState {
                     await firstValueFrom(this.api.deleteTransaction(transaction_id));
                     this.zone.run(() => this.alertService.open('Transaction deleted').subscribe());
                     patchStateTransactions(trx, cxt, true);
-                    const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
-                    cxt.patchState({ expenses });
+                    cxt.dispatch(new GetExpenses());
                 }
             }
         } catch (err) {
@@ -516,8 +530,7 @@ export class AccState {
             if (state.categories.findIndex(c => c.id === data.category?.id) < 0) {
                 cxt.dispatch(new GetCategories());
             }
-            const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
-            cxt.patchState({ expenses });
+            cxt.dispatch(new GetExpenses());
         }
     }
 
@@ -531,13 +544,15 @@ export class AccState {
                 return;
             }
             let transactions: TransactionImport[] | null = await lastValueFrom(this.api.importTransactions(id, value.bank, value.file));
-            transactions = await lastValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }), { defaultValue: null });
-            if (transactions) {
-                await lastValueFrom(this.api.saveTransactions(id, transactions));
-                cxt.dispatch(new GetGroups());
-                cxt.dispatch(new GetTransactions());
-                cxt.dispatch(new GetSummary());
-            }
+            this.zone.run(async () => {
+                transactions = await lastValueFrom(this.dialogService.open<TransactionImport[]>(new PolymorpheusComponent(ImportDlgComponent, this.injector), { data: transactions, dismissible: false, size: 'l' }), { defaultValue: null });
+                if (transactions) {
+                    await lastValueFrom(this.api.saveTransactions(id, transactions));
+                    cxt.dispatch(new GetGroups());
+                    cxt.dispatch(new GetTransactions());
+                    cxt.dispatch(new GetSummary());
+                }
+            });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
@@ -581,8 +596,8 @@ export class AccState {
     @Action(ShowCategories)
     async showCategories(cxt: StateContext<AccStateModel>) {
         await firstValueFrom(this.dialogService.open(
-            new PolymorpheusComponent(CategoriesComponent, this.injector), { header: "Categories", size: 'l' }
-        ));
+            new PolymorpheusComponent(CategoriesComponent, this.injector), { header: "Categories", size: 'l' }), { defaultValue: null }
+        );
     }
 
     @Action(EditCategory)
@@ -596,6 +611,8 @@ export class AccState {
                 await lastValueFrom(this.api.saveCategory(data));
                 this.zone.run(() => this.alertService.open('Category updated', { status: TuiNotification.Success }).subscribe());
                 cxt.dispatch(new GetCategories());
+                cxt.dispatch(new GetTransactions());
+                cxt.dispatch(new GetExpenses());
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -606,7 +623,7 @@ export class AccState {
     async createCategory(cxt: StateContext<AccStateModel>, action: CreateCategory) {
         try {
             const parent = cxt.getState().categories.find((c: Category) => c.id === action.id) || cxt.getState().categories[0];
-            const category: Category = { id: 0, name: '', fullname: '', level: parent.level + 1, type: parent.type, parent_id: parent.id}
+            const category: Category = { id: 0, name: '', fullname: '', level: parent.level + 1, type: parent.type, parent_id: parent.id }
             const data = await firstValueFrom(this.dialogService.open<Category | undefined>(
                 new PolymorpheusComponent(CategoryDlgComponent, this.injector), { data: category, dismissible: false, size: 's' }
             ), { defaultValue: null });
@@ -614,6 +631,28 @@ export class AccState {
                 await lastValueFrom(this.api.saveCategory(data));
                 this.zone.run(() => this.alertService.open('Category created', { status: TuiNotification.Success }).subscribe());
                 cxt.dispatch(new GetCategories());
+            }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action(DeleteCategory)
+    async deleteCategory(cxt: StateContext<AccStateModel>, action: DeleteCategory) {
+        try {
+            const state = cxt.getState();
+            if (action.id) {
+                const answer = await firstValueFrom(
+                    this.dialogService.open(new PolymorpheusComponent(ConfirmationDlgComponent, this.injector), { data: 'Are you sure you want to delete this category?', dismissible: false, size: 's' }),
+                    { defaultValue: false }
+                );
+                if (answer) {
+                    await firstValueFrom(this.api.deleteCategory(action.id));
+                    this.zone.run(() => this.alertService.open('Category deleted').subscribe());
+                    cxt.dispatch(new GetCategories());
+                    cxt.dispatch(new GetTransactions());
+                    cxt.dispatch(new GetExpenses());
+                }
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));

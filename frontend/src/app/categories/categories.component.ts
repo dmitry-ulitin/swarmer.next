@@ -4,7 +4,7 @@ import { EMPTY_ARRAY, TuiHandler } from '@taiga-ui/cdk';
 import { TuiDialogContext } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 import { map } from 'rxjs';
-import { CreateCategory, EditCategory, GetCategories } from 'src/app/accounts/accounts.state';
+import { CreateCategory, DeleteCategory, EditCategory, GetCategories } from 'src/app/accounts/accounts.state';
 import { Category } from 'src/app/models/category';
 import { TransactionType } from 'src/app/models/transaction';
 
@@ -63,7 +63,7 @@ export class CategoriesComponent {
   }
 
   onDelete() {
-//    this.context.completeWith({id: this.selected});
+    if (this.selected) { this.store.dispatch(new DeleteCategory(this.selected)); }
   }
 }
 

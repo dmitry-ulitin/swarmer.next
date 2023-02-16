@@ -9,14 +9,18 @@ import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.models.Category;
 import com.swarmer.finance.repositories.CategoryRepository;
+import com.swarmer.finance.repositories.TransactionRepository;
 
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
+    private final TransactionRepository transactionRepository;
     private final AclService aclService;
 
-    public CategoryService(CategoryRepository categoryRepository, AclService aclService) {
+    public CategoryService(CategoryRepository categoryRepository, TransactionRepository transactionRepository,
+            AclService aclService) {
         this.categoryRepository = categoryRepository;
+        this.transactionRepository = transactionRepository;
         this.aclService = aclService;
     }
 
@@ -88,7 +92,7 @@ public class CategoryService {
             } else if (!original.getOwnerId().equals(userId)) {
                 category.setId(null);
                 category.setCreated(LocalDateTime.now());
-            } else  {
+            } else {
                 original.setName(category.getName());
                 original.setParentId(category.getParentId());
                 category = original;
@@ -114,5 +118,19 @@ public class CategoryService {
 
     public Category saveCategory(Category category, Long userId) {
         return categoryRepository.save(getCategory(category, userId));
+    }
+
+    public void deleteCategory(Long id, Long replaceId, Long userId) {
+        var category = categoryRepository.findById(id).orElseThrow();
+        if (category.getOwnerId() == null || !category.getOwnerId().equals(userId)) {
+            return;
+        }
+        Category replace = null;
+        if (replaceId != null) {
+            replace = getCategory(categoryRepository.findById(replaceId).orElseThrow(), userId);
+            replaceId = replace.getId();
+        }
+        transactionRepository.replaceCategoryId(id, replaceId);
+        categoryRepository.delete(category);
     }
 }

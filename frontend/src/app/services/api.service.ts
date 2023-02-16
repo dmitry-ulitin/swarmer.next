@@ -122,6 +122,10 @@ export class ApiService {
     return !!category.id ? this.addCategory(category) : this.updateCategory(category);
   }
 
+  deleteCategory(id: number, replace: number | null = null): Observable<void> {
+    return this.http.delete<void>(`/api/categories/${id}?replace=${replace || ''}`);
+  }
+
   getUsers(query: string): Observable<string[]> {
     let params = new HttpParams();
     params = params.set('query', query);

@@ -105,7 +105,7 @@ public class TransactionServiceTest {
                         TransactionRepository transactionRepository, AccountRepository accountRepository,
                         AclRepository aclRepository, CategoryRepository categoryRepository, EntityManager em) {
                 var aclService = new AclService(aclRepository, groupRepository);
-                var categoryService = new CategoryService(categoryRepository, aclService);
+                var categoryService = new CategoryService(categoryRepository, transactionRepository, aclService);
                 this.transactionService = new TransactionService(transactionRepository, accountRepository,
                                 userRepository, aclService, categoryService, em);
                 this.em = em;

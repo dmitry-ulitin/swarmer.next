@@ -170,10 +170,8 @@ public class TransactionService {
                     false);
         }
         entity.setOwner(userRepository.findById(userId).orElseThrow());
-        if (dto.category() != null) {
-            var category = categoryService.getCategory(dto.category(), entity.getOwner().getId());
-            entity.setCategory(category);
-        }
+        var category = dto.category() == null ? null : categoryService.getCategory(dto.category(), entity.getOwner().getId());
+        entity.setCategory(category);
         dto2entity(dto, entity);
         transactionRepository.save(entity);
         if (entity.getAccount() != null) {
