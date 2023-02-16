@@ -33,7 +33,7 @@ export class ApiService {
     return this.http.delete<void>(`/api/groups/${id}`);
   }
 
-  getTransactions(accounts: number[], search: string, range: DateRange, category: number | undefined, currency: string | null, offset: number, limit: number): Observable<Transaction[]> {
+  getTransactions(accounts: number[], search: string, range: DateRange, category: number | undefined | null, currency: string | null, offset: number, limit: number): Observable<Transaction[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('search', search);

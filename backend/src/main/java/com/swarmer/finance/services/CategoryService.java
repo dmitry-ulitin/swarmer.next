@@ -85,13 +85,13 @@ public class CategoryService {
     }
 
     public Category getCategory(Category category, Long userId) {
-        var original = categoryRepository.findById(category.getId()).orElse(null);
-        if (original != null) {
+        Category original = null;
+        if (category.getId() != null) {
+            original = categoryRepository.findById(category.getId()).orElseThrow();
             if (original.getParentId() == null) {
                 return original;
             } else if (!original.getOwnerId().equals(userId)) {
-                category.setId(null);
-                category.setCreated(LocalDateTime.now());
+                category = new Category(null, userId, category.getParentId(), category.getParent(), category.getName(), LocalDateTime.now(), LocalDateTime.now());
             } else {
                 original.setName(category.getName());
                 original.setParentId(category.getParentId());
@@ -104,7 +104,6 @@ public class CategoryService {
             if (original != null) {
                 return original;
             }
-            category.setId(null);
             category.setCreated(LocalDateTime.now());
         }
         category.setOwnerId(userId);
@@ -125,11 +124,11 @@ public class CategoryService {
         if (category.getOwnerId() == null || !category.getOwnerId().equals(userId)) {
             return;
         }
-        Category replace = null;
-        if (replaceId != null) {
-            replace = getCategory(categoryRepository.findById(replaceId).orElseThrow(), userId);
-            replaceId = replace.getId();
+        if (replaceId == null) {
+            replaceId = category.getParentId();
         }
+        Category replace = getCategory(categoryRepository.findById(replaceId).orElseThrow(), userId);
+        replaceId = replace.getParentId() == null ? null : replace.getId();
         transactionRepository.replaceCategoryId(id, replaceId);
         categoryRepository.delete(category);
     }

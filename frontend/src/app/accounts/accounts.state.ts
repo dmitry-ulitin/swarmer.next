@@ -623,7 +623,7 @@ export class AccState {
     async createCategory(cxt: StateContext<AccStateModel>, action: CreateCategory) {
         try {
             const parent = cxt.getState().categories.find((c: Category) => c.id === action.id) || cxt.getState().categories[0];
-            const category: Category = { id: 0, name: '', fullname: '', level: parent.level + 1, type: parent.type, parent_id: parent.id }
+            const category: Category = { id: null, name: '', fullname: '', level: parent.level + 1, type: parent.type, parent_id: parent.id }
             const data = await firstValueFrom(this.dialogService.open<Category | undefined>(
                 new PolymorpheusComponent(CategoryDlgComponent, this.injector), { data: category, dismissible: false, size: 's' }
             ), { defaultValue: null });

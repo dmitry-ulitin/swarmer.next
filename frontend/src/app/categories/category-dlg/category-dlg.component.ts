@@ -15,7 +15,7 @@ import { TransactionType } from 'src/app/models/transaction';
 export class CategoryDlgComponent {
   categories: Category[] = this.store.selectSnapshot(state => state.acc.categories);
   form = new FormGroup({
-    id: new FormControl(0),
+    id: new FormControl<number|null>(null),
     name: new FormControl('', [Validators.required]),
     fullname: new FormControl(''),
     level: new FormControl(1),
@@ -43,7 +43,6 @@ export class CategoryDlgComponent {
     const category = this.form.controls['parent'].value;
     return category?.level ? (category.fullname + ' / ') : '';
   }
-
 
   constructor(private store: Store, @Inject(POLYMORPHEUS_CONTEXT) private readonly context: TuiDialogContext<Category | undefined, Category>) {
     this.form.patchValue({...context.data, parent: this.categories.find(c => c.id == context.data?.parent_id)});
