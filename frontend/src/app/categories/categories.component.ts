@@ -35,19 +35,16 @@ export class CategoriesComponent {
     this.selected = node.category.id;
   }
 
-  isSelected(node: TreeNode) {
-    if (node.category.id === this.selected) {
-      let parent_id = node.category.parent_id;
-      while (!!parent_id) {
-        const key = [...this.map.keys()].find(n => n.category.id === parent_id);
-        if (!key || !this.map.get(key)) {
-          return false;
-        }
-        parent_id = key.category.parent_id;
+  get isSelected(): boolean {
+    let selected = this.selected;
+    while (selected) {
+      let key = [...this.map.keys()].find(n => n.category.id === selected);
+      if (!key || selected !== this.selected && key.children.length > 0 && !this.map.get(key)) {
+        return false;
       }
-      return true;
-    }
-    return false;
+      selected = key.category.parent_id;
+    };
+    return !!this.selected && this.selected>4;
   }
 
   onRefresh() {
@@ -77,8 +74,8 @@ function map2tree(data: Category[], index: number, tree: TreeNode[], map: Map<Tr
     if (data[index].level > level) {
       index = map2tree(data, index, tree[tree.length - 1].children, map);
     } else {
-      const item = {category: data[index++], children: []};
-      tree.push(item);      
+      const item = { category: data[index++], children: [] };
+      tree.push(item);
       const key = [...map.keys()].find(n => n.category.id === item.category.id);
       if (key) {
         map.set(item, map.get(key) || false);

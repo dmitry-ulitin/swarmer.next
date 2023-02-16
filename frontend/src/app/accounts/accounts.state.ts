@@ -605,7 +605,7 @@ export class AccState {
         try {
             const category = cxt.getState().categories.find((c: Category) => c.id === action.id);
             const data = await firstValueFrom(this.dialogService.open<Category | undefined>(
-                new PolymorpheusComponent(CategoryDlgComponent, this.injector), { data: category, dismissible: false, size: 's' }
+                new PolymorpheusComponent(CategoryDlgComponent, this.injector), { header: "Edit Category", data: category, dismissible: false, size: 's' }
             ), { defaultValue: null });
             if (data) {
                 await lastValueFrom(this.api.saveCategory(data));
@@ -625,7 +625,7 @@ export class AccState {
             const parent = cxt.getState().categories.find((c: Category) => c.id === action.id) || cxt.getState().categories[0];
             const category: Category = { id: null, name: '', fullname: '', level: parent.level + 1, type: parent.type, parent_id: parent.id }
             const data = await firstValueFrom(this.dialogService.open<Category | undefined>(
-                new PolymorpheusComponent(CategoryDlgComponent, this.injector), { data: category, dismissible: false, size: 's' }
+                new PolymorpheusComponent(CategoryDlgComponent, this.injector), { header: "Create Category", data: category, dismissible: false, size: 's' }
             ), { defaultValue: null });
             if (data) {
                 await lastValueFrom(this.api.saveCategory(data));
