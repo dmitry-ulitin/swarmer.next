@@ -51,7 +51,7 @@ public class GroupServiceTest {
                         TransactionRepository transactionRepository, AccountRepository accountRepository,
                         AclRepository aclRepository, CategoryRepository categoryRepository, EntityManager em) {
                 var aclService = new AclService(aclRepository, groupRepository);
-                var categoryService = new CategoryService(categoryRepository, aclService);
+                var categoryService = new CategoryService(categoryRepository, transactionRepository, aclService);
                 var transactionService = new TransactionService(transactionRepository, accountRepository,
                                 userRepository, aclService, categoryService, em);
                 groupService = new GroupService(groupRepository, accountRepository, userRepository, transactionService, aclService);

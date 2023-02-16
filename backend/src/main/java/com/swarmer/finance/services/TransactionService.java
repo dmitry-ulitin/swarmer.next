@@ -170,10 +170,8 @@ public class TransactionService {
                     false);
         }
         entity.setOwner(userRepository.findById(userId).orElseThrow());
-        if (dto.category() != null) {
-            var category = categoryService.getCategory(dto.category(), entity.getOwner().getId());
-            entity.setCategory(category);
-        }
+        var category = dto.category() == null ? null : categoryService.getCategory(dto.category(), entity.getOwner().getId());
+        entity.setCategory(category);
         dto2entity(dto, entity);
         transactionRepository.save(entity);
         if (entity.getAccount() != null) {
@@ -321,6 +319,9 @@ public class TransactionService {
                 while (category.getLevel() > 1) {
                     category = entityManager.find(Category.class, category.getParentId());
                 }
+                var fullName = category.getFullName();
+                category = categorySums.stream().filter(c -> c.getCategory() != null && c.getCategory().getFullName().equals(fullName))
+                        .findFirst().map(c -> c.getCategory()).orElse(category);
                 cs.setCategory(category);
             } else {
                 cs.setCategory(entityManager.find(Category.class, Long.valueOf(type.getValue())));

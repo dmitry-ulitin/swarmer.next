@@ -1,0 +1,26 @@
+<form [formGroup]=form class="category">
+    <label tuiLabel="Parent">
+        <tui-select class="flex-fill" formControlName="parent" [tuiTextfieldSize]="'s'" [valueContent]="categoryValue"
+            [identityMatcher]="identityMatcher">
+            Parent
+            <tui-data-list-wrapper *tuiDataList [items]="categories | tuiFilter: matcher: form.value.type"
+                [itemContent]="categoryContent" [size]="'s'">
+            </tui-data-list-wrapper>
+        </tui-select>
+    </label>
+    <label tuiLabel="Name">
+        <app-category-ctrl formControlName="name" [tuiTextfieldSize]="'s'" class="flex-fill"
+            [prefix]="categoryParent">category name</app-category-ctrl>
+    </label>
+    <ng-template #categoryValue let-category>
+        {{category.fullname}}
+    </ng-template>
+    <ng-template #categoryContent let-category>
+        <div [class]="'category-level-' + category.level">{{category.name}}</div>
+    </ng-template>
+</form>
+<div class="footer">
+    <button tuiButton type="button" [appearance]="'primary'" [size]="'s'" (click)="onSubmit()"
+        [disabled]="form.hasError('invalid')">Save</button>
+    <button tuiButton type="button" [appearance]="'secondary'" [size]="'s'" (click)="onCancel()">Cancel</button>
+</div>

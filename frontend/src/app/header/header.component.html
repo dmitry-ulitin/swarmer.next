@@ -5,8 +5,8 @@
             (click)="onRefresh()" class="tui-space_right-2"></button>
         <button tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'"
             (click)="onExpense()"></button>
-        <button tuiIconButton type="button" *ngIf="accounts.length>1" icon="tuiIconCollapse" [size]="'s'" [appearance]="'flat'"
-            (click)="onTransfer()"></button>
+        <button tuiIconButton type="button" *ngIf="accounts.length>1" icon="tuiIconCollapse" [size]="'s'"
+            [appearance]="'flat'" (click)="onTransfer()"></button>
         <button tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'"
             (click)="onIncome()"></button>
         <span *ngIf="transactions_id$ | async" class="tui-space_left-2">
@@ -27,16 +27,17 @@
             <tui-svg src="tuiIconChevronDown" class="icon" [class.icon_rotated]="accMenu.open"></tui-svg>
         </ng-template>
         <ng-template #accDropdown>
-            <tui-data-list>
-                <button tuiOption (click)="newGroup()" [size]="'s'">New Account</button>
-                <button tuiOption *ngIf="!!group" (click)="editGroup(group)" [size]="'s'">Edit
+            <tui-data-list [size]="'s'">
+                <button tuiOption (click)="newGroup()">New Account</button>
+                <button tuiOption *ngIf="!!group" (click)="editGroup(group)">Edit
                     '{{group.fullname}}'</button>
-                <button tuiOption *ngIf="!!group" (click)="deleteGroup(group)" [size]="'s'">Delete
+                <button tuiOption *ngIf="!!group" (click)="deleteGroup(group)">Delete
                     '{{group.fullname}}'</button>
-                <button tuiOption *ngIf="account$ | async as account" (click)="onCorrection(account)"
-                    [size]="'s'">Correct '{{account.fullname}}' Balance</button>
-                <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)" [size]="'s'">Import
+                <button tuiOption *ngIf="account$ | async as account" (click)="onCorrection(account)">
+                    Correct '{{account.fullname}}' Balance</button>
+                <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)">Import
                     '{{account.fullname}}' Statement</button>
+                <button tuiOption (click)="onCategories()">Categories</button>
             </tui-data-list>
         </ng-template>
     </span>

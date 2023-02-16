@@ -33,7 +33,7 @@ export class ApiService {
     return this.http.delete<void>(`/api/groups/${id}`);
   }
 
-  getTransactions(accounts: number[], search: string, range: DateRange, category: number | undefined, currency: string | null, offset: number, limit: number): Observable<Transaction[]> {
+  getTransactions(accounts: number[], search: string, range: DateRange, category: number | undefined | null, currency: string | null, offset: number, limit: number): Observable<Transaction[]> {
     let params = new HttpParams();
     params = params.set('accounts', accounts.join(","));
     params = params.set('search', search);
@@ -108,6 +108,22 @@ export class ApiService {
 
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories');
+  }
+
+  addCategory(rule: Category): Observable<Category> {
+    return this.http.post<Category>('/api/categories', rule);
+  }
+
+  updateCategory(rule: Category): Observable<Category> {
+    return this.http.put<Category>('/api/categories', rule);
+  }
+
+  saveCategory(category: Category): Observable<Category> {
+    return !!category.id ? this.addCategory(category) : this.updateCategory(category);
+  }
+
+  deleteCategory(id: number, replace: number | null = null): Observable<void> {
+    return this.http.delete<void>(`/api/categories/${id}?replace=${replace || ''}`);
   }
 
   getUsers(query: string): Observable<string[]> {

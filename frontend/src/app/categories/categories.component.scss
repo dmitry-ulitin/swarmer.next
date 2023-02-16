@@ -1,0 +1,24 @@
+.container {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    text-align: left;
+    display: flex;
+    gap: .5rem;
+    padding-bottom: .5rem;
+}
+
+.tree {
+    width: 100%;
+    flex-grow: 1;
+    overflow: auto;
+}
+
+.category {
+    padding: 0 .5rem;
+    border-radius: .3rem;
+    cursor: pointer;
+}
