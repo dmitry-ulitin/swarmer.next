@@ -1,10 +1,11 @@
-div.active>div {
+.t-content.active {
     background-color: rgba(0,0,0,.075);
 }
   
 
 .t-content {
     border-top: 1px solid #dee2e6;
+    min-width: 16rem;
     padding: 0 .5rem;
 }
 
