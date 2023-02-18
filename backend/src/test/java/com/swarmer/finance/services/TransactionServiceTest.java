@@ -64,10 +64,12 @@ public class TransactionServiceTest {
         private final Category fuel = Category.builder().name("fuel")
                         .created(LocalDateTime.now())
                         .updated(LocalDateTime.now()).build();
-        private final Category salary = Category.builder().name("Salary").parentId(TransactionType.INCOME.getValue())
+        private final Category salary = Category.builder().name("Salary")
+                        .parentId(TransactionType.INCOME.getValue())
                         .created(LocalDateTime.now())
                         .updated(LocalDateTime.now()).build();
-        private final Category refund = Category.builder().name("Refund").parentId(TransactionType.INCOME.getValue())
+        private final Category refund = Category.builder().name("Refund")
+                        .parentId(TransactionType.INCOME.getValue())
                         .created(LocalDateTime.now())
                         .updated(LocalDateTime.now()).build();
         private final Transaction income = Transaction.builder().owner(user)
@@ -115,6 +117,11 @@ public class TransactionServiceTest {
         void init() {
                 var correction = em.find(Category.class, TransactionType.CORRECTION.getValue());
                 em.persist(user);
+                salary.setOwnerId(user.getId());
+                refund.setOwnerId(user.getId());
+                education.setOwnerId(user.getId());
+                car.setOwnerId(user.getId());
+                fuel.setOwnerId(user.getId());
                 em.persist(salary);
                 em.persist(refund);
                 em.persist(education);
@@ -303,14 +310,16 @@ public class TransactionServiceTest {
 
         @Test
         void testGetTransactionsSearch() {
-                var trx = transactionService.getTransactions(user.getId(), List.of(), "uel", null, null, null, null, 0, 0);
+                var trx = transactionService.getTransactions(user.getId(), List.of(), "uel", null, null, null, null, 0,
+                                0);
                 assertThat(trx).hasSize(1);
                 assertThat(trx.get(0).id()).isEqualTo(expense.getId());
         }
 
         @Test
         void testGetTransactionsSearchEmpty() {
-                var trx = transactionService.getTransactions(user.getId(), List.of(), "ducduc", null, null, null, null, 100,
+                var trx = transactionService.getTransactions(user.getId(), List.of(), "ducduc", null, null, null, null,
+                                100,
                                 50);
                 assertThat(trx).hasSize(0);
         }
