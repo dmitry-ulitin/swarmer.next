@@ -496,14 +496,15 @@ export class AccState {
     @Action(CreateTransaction)
     async addTransaction(cxt: StateContext<AccStateModel>, action: CreateTransaction) {
         const state = cxt.getState();
-        const accounts = AccState.accounts(state);
-        let account: Account | null | undefined = accounts.find(a => a.id === state.accounts[0])
-            || state.transactions[0]?.account
-            || state.transactions[0]?.recipient
-            || accounts[0];
+        let accounts = AccState.accounts(state);
+        const first = state.transactions.find((t: TransactionView) => t.type !== TransactionType.Transfer);
+        let account: Account | null | undefined = first?.account || first?.recipient
+            || accounts.find(a => a.id === state.accounts[0]) || accounts[0];
         let recipient: Account | null | undefined = undefined;
         if (action.type === TransactionType.Transfer) {
-            recipient = accounts.find(a => a.id !== account?.id && !a.deleted && a.currency === account?.currency);
+            const transfer = state.transactions.find((t: TransactionView) => t.type === TransactionType.Transfer);
+            account = transfer?.account || account;
+            recipient = transfer?.recipient ?? accounts.find(a => a.id !== account?.id && !a.deleted && a.currency === account?.currency);
         } else if (action.type === TransactionType.Income) {
             recipient = account;
             account = undefined;
