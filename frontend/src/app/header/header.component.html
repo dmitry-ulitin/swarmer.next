@@ -18,7 +18,7 @@
     </span>
     <span class="flex-fill"></span>
     <span *ngIf="isAuthenticated$ | async">
-        <tui-hosted-dropdown #accMenu [content]="accDropdown" tuiDropdownAlign="left">
+        <tui-hosted-dropdown #accMenu [content]="accDropdown" tuiDropdownAlign="left" [(open)]="open">
             <button tuiButton type="button" appearance="flat" [size]="'s'" [iconRight]="icon">
                 <tui-svg src="tuiIconSettings"></tui-svg>
             </button>
@@ -38,6 +38,7 @@
                 <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)">Import
                     '{{account.fullname}}' Statement</button>
                 <button tuiOption (click)="onCategories()">Categories</button>
+                <button tuiOption (click)="onBackup()">Backup</button>
             </tui-data-list>
         </ng-template>
     </span>

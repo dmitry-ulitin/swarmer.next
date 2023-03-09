@@ -148,6 +148,10 @@ export class SetCurrency {
     constructor(public currency: string | null) { }
 }
 
+export class Backup {
+    static readonly type = '[Acc] Backup';
+}
+
 export interface AccStateModel {
     // groups
     groups: Group[];
@@ -655,6 +659,20 @@ export class AccState {
                     cxt.dispatch(new GetExpenses());
                 }
             }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action([Backup], { cancelUncompleted: true })
+    async backup(cxt: StateContext<AccStateModel>) {
+        try {
+            const data = await firstValueFrom(this.api.getBackup());
+            const url = window.URL.createObjectURL(data.body as Blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `export_${new Date().toISOString().substring(0,16)}.json`;
+            link.click();
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
