@@ -133,6 +133,6 @@ export class ApiService {
   }
 
   getBackup(): Observable<HttpResponse<Blob>> {
-    return this.http.get('/api/categories', {responseType: 'blob', observe: 'response'});
+    return this.http.get('/api/data/dump', {responseType: 'blob', observe: 'response'});
   }
 }
