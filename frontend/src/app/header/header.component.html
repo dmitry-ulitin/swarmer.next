@@ -38,7 +38,8 @@
                 <button tuiOption *ngIf="account$ | async as account" (click)="onImport(account)">Import
                     '{{account.fullname}}' Statement</button>
                 <button tuiOption (click)="onCategories()">Categories</button>
-                <button tuiOption (click)="onBackup()">Backup</button>
+                <button tuiOption (click)="onSaveBackup()">Save Backup</button>
+                <button tuiOption (click)="onLoadBackup()">Load Backup</button>
             </tui-data-list>
         </ng-template>
     </span>

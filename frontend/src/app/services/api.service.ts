@@ -135,4 +135,8 @@ export class ApiService {
   getBackup(): Observable<HttpResponse<Blob>> {
     return this.http.get('/api/data/dump', {responseType: 'blob', observe: 'response'});
   }
+
+  loadBackup(blob: any) {
+    return this.http.put('/api/data/dump', blob);
+  }
 }

@@ -3,7 +3,7 @@ import { ViewSelectSnapshot } from '@ngxs-labs/select-snapshot';
 import { Select, Store } from '@ngxs/store';
 import { TUI_ICONS_PATH } from '@taiga-ui/core';
 import { Observable } from 'rxjs';
-import { AccState, CreateTransaction, CreateGroup, DeleteGroup, DeleteTransaction, EditGroup, EditTransaction, GetGroups, GetTransactions, ImportTransactions, GetSummary, ShowCategories, Backup } from '../accounts/accounts.state';
+import { AccState, CreateTransaction, CreateGroup, DeleteGroup, DeleteTransaction, EditGroup, EditTransaction, GetGroups, GetTransactions, ImportTransactions, GetSummary, ShowCategories, SaveBackup, LoadBackup } from '../accounts/accounts.state';
 import { AppLogout, AppState } from '../app.state';
 import { Account } from '../models/account';
 import { Group } from '../models/group';
@@ -94,8 +94,13 @@ export class HeaderComponent {
     this.store.dispatch(new ShowCategories());
   }
 
-  onBackup(): void {
+  onSaveBackup(): void {
     this.open = false;
-    this.store.dispatch(new Backup());
+    this.store.dispatch(new SaveBackup());
+  }
+
+  onLoadBackup(): void {
+    this.open = false;
+    this.store.dispatch(new LoadBackup());
   }
 }
