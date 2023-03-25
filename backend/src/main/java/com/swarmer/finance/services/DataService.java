@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.dto.Dump;
 import com.swarmer.finance.dto.DumpGroup;
+import com.swarmer.finance.dto.DumpRule;
 import com.swarmer.finance.dto.DumpCategory;
 import com.swarmer.finance.dto.DumpTransaction;
 import com.swarmer.finance.models.Acl;
 import com.swarmer.finance.models.Category;
 import com.swarmer.finance.repositories.CategoryRepository;
 import com.swarmer.finance.repositories.GroupRepository;
+import com.swarmer.finance.repositories.RuleRepository;
 import com.swarmer.finance.repositories.TransactionRepository;
 import com.swarmer.finance.repositories.UserRepository;
 import com.swarmer.finance.repositories.AclRepository;
@@ -29,14 +31,17 @@ public class DataService {
     private final GroupRepository groupRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final RuleRepository ruleRepository;
 
     public DataService(AclRepository aclRepository, UserRepository userRepository, GroupRepository groupRepository,
-            CategoryRepository categoryRepository, TransactionRepository transactionRepository) {
+            CategoryRepository categoryRepository, TransactionRepository transactionRepository,
+            RuleRepository ruleRepository) {
         this.aclRepository = aclRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.ruleRepository = ruleRepository;
     }
 
     public Dump getDump(Long userId) {
@@ -44,7 +49,8 @@ public class DataService {
                 .filter(c -> c.getOwnerId() != null).map(DumpCategory::from).toList();
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(userId)).stream().map(DumpGroup::from).toList();
         var transactions = transactionRepository.findAllByOwnerId(userId).map(DumpTransaction::from).toList();
-        return new Dump(userId, LocalDateTime.now(), groups, categories, transactions);
+        var rules = ruleRepository.findAllByOwnerId(userId).stream().map(DumpRule::from).toList();
+        return new Dump(userId, LocalDateTime.now(), groups, categories, transactions, rules);
     }
 
     public void loadDump(Long userId, Dump dump) {
@@ -128,6 +134,12 @@ public class DataService {
             transactionRepository.insertTransactionWithId(t.id(), userId, t.opdate(), t.accountId(), t.debit(),
                     t.recipientId(), t.credit(), t.categoryId(), t.currency(), t.party(), t.details(), t.created(),
                     t.updated());
+        }
+        // rules
+        ruleRepository.removeByOwnerId(userId);
+        for (var r : dump.rules()) {
+            ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType(), r.conditionValue(), r.categoryId(),
+                    r.created(), r.updated());
         }
     }
 }

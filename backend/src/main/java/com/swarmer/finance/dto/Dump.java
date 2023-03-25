@@ -10,5 +10,6 @@ public record Dump(
         LocalDateTime created,
         List<DumpGroup> groups,
         List<DumpCategory> categories,
-        List<DumpTransaction> transactions) {
+        List<DumpTransaction> transactions,
+        List<DumpRule> rules) {
 }

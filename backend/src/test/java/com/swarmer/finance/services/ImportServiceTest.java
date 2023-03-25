@@ -66,7 +66,7 @@ public class ImportServiceTest {
 
             when(transactionService.queryTransactions(any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
                     .thenReturn(list);
-            when(ruleRepository.findByOwnerId(userId)).thenReturn(List.of());
+            when(ruleRepository.findAllByOwnerId(userId)).thenReturn(List.of());
 
             var actual = importService.importFile(new ByteArrayInputStream(lhv.getBytes()), BankType.LHV, 1L, 1L);
             assertThat(actual).hasSize(14);
