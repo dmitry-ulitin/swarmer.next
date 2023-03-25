@@ -122,5 +122,12 @@ public class DataService {
                 groupRepository.save(group);
             }
         }
+        // transactions
+        transactionRepository.removeByOwnerId(userId);
+        for (var t : dump.transactions()) {
+            transactionRepository.insertTransactionWithId(t.id(), userId, t.opdate(), t.accountId(), t.debit(),
+                    t.recipientId(), t.credit(), t.categoryId(), t.currency(), t.party(), t.details(), t.created(),
+                    t.updated());
+        }
     }
 }

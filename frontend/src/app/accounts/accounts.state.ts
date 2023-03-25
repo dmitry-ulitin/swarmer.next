@@ -693,7 +693,7 @@ export class AccState {
             }
             await lastValueFrom(this.api.loadBackup(value));
             this.zone.run(() => this.alertService.open('Backup Loaded').subscribe());
-            cxt.dispatch(new GetCategories());
+            cxt.dispatch(new AppLoginSuccess());
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
