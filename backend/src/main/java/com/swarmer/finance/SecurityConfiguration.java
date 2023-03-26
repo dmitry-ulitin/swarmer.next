@@ -15,6 +15,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.swarmer.finance.authentication.JWTFilter;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 public class SecurityConfiguration {
     @Bean
@@ -23,9 +25,9 @@ public class SecurityConfiguration {
                 .requestMatchers("/api/register/**").permitAll()
                 .requestMatchers("/api/login/**").permitAll()
                 .anyRequest().authenticated())
-                .cors().and()
-                .csrf().disable()
-                .httpBasic().disable();
+                .cors(withDefaults())
+                .csrf(t -> t.disable())
+                .httpBasic(t -> t.disable());
         http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

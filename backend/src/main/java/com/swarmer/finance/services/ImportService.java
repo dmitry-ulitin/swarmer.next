@@ -39,7 +39,7 @@ public class ImportService {
     }
 
     public List<RuleDto> getRules(Long userId) {
-        return ruleRepository.findByOwnerId(userId).stream().map(r -> RuleDto.from(r)).toList();
+        return ruleRepository.findAllByOwnerId(userId).stream().map(r -> RuleDto.from(r)).toList();
     }
 
     public RuleDto getRuleById(Long ruleId, Long userId) {
@@ -78,7 +78,7 @@ public class ImportService {
             var records = csvParser.getRecords().stream().map(r -> csv2trx(bankId, r)).toList();
             var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
             var trx = transactionService.queryTransactions(userId, List.of(accountId), null, null, minOpdate, null, 0, 0);
-            var rules = ruleRepository.findByOwnerId(userId);
+            var rules = ruleRepository.findAllByOwnerId(userId);
 
             return records.stream().map(r -> {
                 var rule = rules

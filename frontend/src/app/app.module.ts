@@ -42,6 +42,7 @@ import { SummaryByCategoryComponent } from './reports/summary-by-category.compon
 import { RuleDlgComponent } from './import/rule-dlg/rule-dlg.component';
 import { CategoriesComponent } from './categories/categories.component';
 import { CategoryDlgComponent } from './categories/category-dlg/category-dlg.component';
+import { LoadDumpDlgComponent } from './import/load-dump-dlg.component';
 registerLocaleData(localeRu, 'ru');
 
 @NgModule({
@@ -67,7 +68,8 @@ registerLocaleData(localeRu, 'ru');
     SummaryByCategoryComponent,
     RuleDlgComponent,
     CategoriesComponent,
-    CategoryDlgComponent
+    CategoryDlgComponent,
+    LoadDumpDlgComponent
   ],
   imports: [
     BrowserModule,

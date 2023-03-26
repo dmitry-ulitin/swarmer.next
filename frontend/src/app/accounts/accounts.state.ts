@@ -22,6 +22,7 @@ import { DateRange } from '../models/date-range';
 import { CategorySum } from '../models/category-sum';
 import { CategoriesComponent } from '../categories/categories.component';
 import { CategoryDlgComponent } from '../categories/category-dlg/category-dlg.component';
+import { LoadDumpDlgComponent } from '../import/load-dump-dlg.component';
 
 const GET_TRANSACTIONS_LIMIT: number = 100;
 
@@ -146,6 +147,14 @@ export class SetRange {
 export class SetCurrency {
     static readonly type = '[Acc] Set Currency';
     constructor(public currency: string | null) { }
+}
+
+export class SaveBackup {
+    static readonly type = '[Acc] Save Backup';
+}
+
+export class LoadBackup {
+    static readonly type = '[Acc] Load Backup';
 }
 
 export interface AccStateModel {
@@ -655,6 +664,36 @@ export class AccState {
                     cxt.dispatch(new GetExpenses());
                 }
             }
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action([SaveBackup], { cancelUncompleted: true })
+    async backup(cxt: StateContext<AccStateModel>) {
+        try {
+            const data = await firstValueFrom(this.api.getBackup());
+            const url = window.URL.createObjectURL(data.body as Blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `export_${new Date().toISOString().substring(0,16)}.json`;
+            link.click();
+        } catch (err) {
+            cxt.dispatch(new AppPrintError(err));
+        }
+    }
+
+    @Action(LoadBackup)
+    async loadBackup(cxt: StateContext<AccStateModel>) {
+        try {
+            const state = cxt.getState();
+            const value = await lastValueFrom(this.dialogService.open<File>(new PolymorpheusComponent(LoadDumpDlgComponent, this.injector), { dismissible: false }), { defaultValue: null });
+            if (!value) {
+                return;
+            }
+            await lastValueFrom(this.api.loadBackup(value));
+            this.zone.run(() => this.alertService.open('Backup Loaded').subscribe());
+            cxt.dispatch(new AppLoginSuccess());
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
