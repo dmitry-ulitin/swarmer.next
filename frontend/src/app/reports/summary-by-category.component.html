@@ -1,6 +1,14 @@
+<div class="t-row" *ngFor="let e of income$ | async; let i = index">
+    <div class="t-left"><a tuiLink (click)="setCategory(e.category)" class="stop-reset">{{e.category.fullname}}</a>
+    </div>
+    <div class="t-right">
+        <div *ngFor="let a of e.amounts" class="credit">{{a.value | currency:a.currency}}</div>
+    </div>
+</div>
 <div class="t-row" *ngFor="let e of expenses$ | async; let i = index">
-    <div class="t-left"><a tuiLink (click)="setCategory(e.category)" class="stop-reset">{{e.category.fullname}}</a></div>
-    <div class="t-right debit">
+    <div class="t-left"><a tuiLink (click)="setCategory(e.category)" class="stop-reset">{{e.category.fullname}}</a>
+    </div>
+    <div class="t-right">
         <div *ngFor="let a of e.amounts" class="debit">{{a.value | currency:a.currency}}</div>
     </div>
 </div>

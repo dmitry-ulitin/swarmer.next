@@ -8,7 +8,7 @@ import { Transaction, TransactionImport, TransactionType } from '../models/trans
 import { Account } from '../models/account';
 import { TuiAlertService, TuiDialogService, TuiNotification } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, lastValueFrom } from 'rxjs';
 import { TransactionDlgComponent } from '../transactions/transaction-dlg/transaction-dlg.component';
 import { Category } from '../models/category';
 import { ConfirmationDlgComponent } from '../confirmation/confirmation-dlg.component';
@@ -77,8 +77,8 @@ export class GetSummary {
     static readonly type = '[Acc] Get Summary';
 }
 
-export class GetExpenses {
-    static readonly type = '[Acc] Get Expenses';
+export class GetCategoriesSummary {
+    static readonly type = '[Acc] Get Categories Summary';
 }
 
 export class SelectTransaction {
@@ -166,6 +166,7 @@ export interface AccStateModel {
     transactions: TransactionView[];
     transaction_id: number | null;
     summary: Summary[];
+    income: CategorySum[];
     expenses: CategorySum[];
     // filters
     search: string;
@@ -186,6 +187,7 @@ export interface AccStateModel {
         transactions: [],
         transaction_id: null,
         summary: [],
+        income: [],
         expenses: [],
         search: '',
         range: DateRange.last30(),
@@ -415,12 +417,17 @@ export class AccState {
         }
     }
 
-    @Action([AppLoginSuccess, GetExpenses, GetSummary], { cancelUncompleted: true })
+    @Action([AppLoginSuccess, GetCategoriesSummary, GetSummary], { cancelUncompleted: true })
     async getExpenses(cxt: StateContext<AccStateModel>) {
         try {
             const state = cxt.getState();
-            const expenses = await firstValueFrom(this.api.getExpenses(state.accounts, state.range));
-            cxt.patchState({ expenses });
+            const { income, expenses } = await firstValueFrom(
+                forkJoin({
+                    income: this.api.getCategoriesSummary(TransactionType.Income, state.accounts, state.range),
+                    expenses: this.api.getCategoriesSummary(TransactionType.Expense, state.accounts, state.range)
+                })
+            );
+            cxt.patchState({ expenses, income });
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }
@@ -467,7 +474,7 @@ export class AccState {
                         if (!!data.category && state.categories.findIndex(c => c.id === data.category?.id) < 0) {
                             cxt.dispatch(new GetCategories());
                         }
-                        cxt.dispatch(new GetExpenses());
+                        cxt.dispatch(new GetCategoriesSummary());
                     }
                 });
             }
@@ -494,7 +501,7 @@ export class AccState {
                     await firstValueFrom(this.api.deleteTransaction(transaction_id));
                     this.zone.run(() => this.alertService.open('Transaction deleted').subscribe());
                     patchStateTransactions(trx, cxt, true);
-                    cxt.dispatch(new GetExpenses());
+                    cxt.dispatch(new GetCategoriesSummary());
                 }
             }
         } catch (err) {
@@ -540,7 +547,7 @@ export class AccState {
             if (state.categories.findIndex(c => c.id === data.category?.id) < 0) {
                 cxt.dispatch(new GetCategories());
             }
-            cxt.dispatch(new GetExpenses());
+            cxt.dispatch(new GetCategoriesSummary());
         }
     }
 
@@ -622,7 +629,7 @@ export class AccState {
                 this.zone.run(() => this.alertService.open('Category updated', { status: TuiNotification.Success }).subscribe());
                 cxt.dispatch(new GetCategories());
                 cxt.dispatch(new GetTransactions());
-                cxt.dispatch(new GetExpenses());
+                cxt.dispatch(new GetCategoriesSummary());
             }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
@@ -661,7 +668,7 @@ export class AccState {
                     this.zone.run(() => this.alertService.open('Category deleted').subscribe());
                     cxt.dispatch(new GetCategories());
                     cxt.dispatch(new GetTransactions());
-                    cxt.dispatch(new GetExpenses());
+                    cxt.dispatch(new GetCategoriesSummary());
                 }
             }
         } catch (err) {
@@ -676,7 +683,7 @@ export class AccState {
             const url = window.URL.createObjectURL(data.body as Blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `export_${new Date().toISOString().substring(0,16)}.json`;
+            link.download = `export_${new Date().toISOString().substring(0, 16)}.json`;
             link.click();
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));

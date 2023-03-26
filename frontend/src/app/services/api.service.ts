@@ -8,7 +8,7 @@ import { DateRange } from '../models/date-range';
 import { Group } from '../models/group';
 import { Rule } from '../models/rule';
 import { Summary } from '../models/summary';
-import { Transaction, TransactionImport } from '../models/transaction';
+import { Transaction, TransactionImport, TransactionType } from '../models/transaction';
 
 @Injectable({
   providedIn: 'root'
@@ -54,12 +54,13 @@ export class ApiService {
     return this.http.get<Summary[]>('/api/transactions/summary', {params: params});
   }
 
-  getExpenses(accounts: number[], range: DateRange): Observable<CategorySum[]> {
+  getCategoriesSummary(type: TransactionType, accounts: number[], range: DateRange): Observable<CategorySum[]> {
     let params = new HttpParams();
+    params = params.set('type', type.toString());
     params = params.set('accounts', accounts.join(","));
     params = params.set('from', range?.from?.toString('YMD','-') || '');
     params = params.set('to', range?.to?.toString('YMD','-') || '');
-    return this.http.get<CategorySum[]>('/api/transactions/expenses', {params: params});
+    return this.http.get<CategorySum[]>('/api/transactions/categories', {params: params});
   }
 
   getTransaction(id: number): Observable<Transaction> {

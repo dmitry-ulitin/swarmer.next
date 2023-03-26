@@ -1,10 +1,10 @@
-<div class="t-row" *ngFor="let s of expenses$ | async; let i = index">
-    <div class="t-left"><ng-template [ngIf]="i==0"><a tuiLink (click)="onExpenses()">Expenses</a></ng-template></div>
-    <div class="t-right debit"><a tuiLink (click)="onCurrency(s.currency)">{{s.debit | currency:s.currency}}</a></div>
-</div>
 <div class="t-row" *ngFor="let s of income$ | async; let i = index">
     <div class="t-left"><ng-template [ngIf]="i==0"><a tuiLink (click)="onIncome()">Income</a></ng-template></div>
     <div class="t-right credit"><a tuiLink (click)="onCurrency(s.currency)">{{s.credit | currency:s.currency}}</a></div>
+</div>
+<div class="t-row" *ngFor="let s of expenses$ | async; let i = index">
+    <div class="t-left"><ng-template [ngIf]="i==0"><a tuiLink (click)="onExpenses()">Expenses</a></ng-template></div>
+    <div class="t-right debit"><a tuiLink (click)="onCurrency(s.currency)">{{s.debit | currency:s.currency}}</a></div>
 </div>
 <div class="t-row" *ngFor="let s of transfers$ | async; let i = index">
     <div class="t-left"><ng-template [ngIf]="i==0"><a tuiLink (click)="onTransfers()">Transfers</a></ng-template></div>

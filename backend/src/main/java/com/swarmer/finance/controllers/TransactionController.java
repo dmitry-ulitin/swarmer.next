@@ -30,7 +30,7 @@ import com.swarmer.finance.dto.Summary;
 import com.swarmer.finance.dto.TransactionDto;
 import com.swarmer.finance.dto.UserPrincipal;
 import com.swarmer.finance.models.BankType;
-import com.swarmer.finance.models.TransactionType;
+import com.swarmer.finance.models.TransactionTypeConverter;
 import com.swarmer.finance.services.ImportService;
 import com.swarmer.finance.services.TransactionService;
 
@@ -59,7 +59,8 @@ public class TransactionController {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
         LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
-        return transactionService.getTransactions(userId, accounts, search, category, currency, fromDate, toDate, offset, limit);
+        return transactionService.getTransactions(userId, accounts, search, category, currency, fromDate, toDate,
+                offset, limit);
     }
 
     @GetMapping("/{id}")
@@ -97,15 +98,17 @@ public class TransactionController {
         return transactionService.getSummary(userId, accounts, fromDate, toDate);
     }
 
-    @GetMapping("/expenses")
-    Collection<CategorySum> getSummaryExpenses(Authentication authentication,
+    @GetMapping("/categories")
+    Collection<CategorySum> getCategoriesSummary(Authentication authentication,
+            @RequestParam(required = false, defaultValue = "1") Long type,
             @RequestParam(required = false, defaultValue = "") String from,
             @RequestParam(required = false, defaultValue = "") String to,
             @RequestParam(required = false, defaultValue = "") Collection<Long> accounts) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         LocalDateTime fromDate = from.isBlank() ? null : LocalDate.parse(from).atStartOfDay();
         LocalDateTime toDate = to.isBlank() ? null : LocalDate.parse(to).atTime(LocalTime.MAX);
-        return transactionService.getCategoriesSummary(userId, TransactionType.EXPENSE, accounts, fromDate, toDate);
+        return transactionService.getCategoriesSummary(userId,
+                new TransactionTypeConverter().convertToEntityAttribute(type), accounts, fromDate, toDate);
     }
 
     @PostMapping("/import")
@@ -144,7 +147,7 @@ public class TransactionController {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
         return importService.addRule(rule, userId);
     }
-    
+
     @PutMapping("/rules")
     RuleDto updateRule(@RequestBody RuleDto rule, Authentication authentication) {
         var userId = ((UserPrincipal) authentication.getPrincipal()).id();
