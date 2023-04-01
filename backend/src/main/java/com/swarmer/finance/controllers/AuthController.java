@@ -40,7 +40,8 @@ class AuthController {
 	@PostMapping("/register")
 	Map<String, Object> register(@RequestBody UserToCreate userToCreate) {
 		String encodedPass = passwordEncoder.encode(userToCreate.password());
-		String currency = userToCreate.currency() == null || userToCreate.currency().isBlank() ? "EUR" : userToCreate.currency();
+		String currency = userToCreate.currency() == null || userToCreate.currency().isBlank() ? "EUR"
+				: userToCreate.currency();
 		var user = new User(null, userToCreate.email(), encodedPass, true, userToCreate.name(), currency,
 				LocalDateTime.now(), LocalDateTime.now(), null);
 		user = userRepository.save(user);
@@ -51,12 +52,16 @@ class AuthController {
 
 	@PostMapping("/login")
 	Map<String, Object> login(@RequestBody LoginCredentials credentials) {
-		var authInputToken = new UsernamePasswordAuthenticationToken(credentials.getUsername(),
-				credentials.getPassword());
-		var authentication = authenticationManager.authenticate(authInputToken);
-		var user = (User) authentication.getPrincipal();
-		var token = generateToken(user);
-		return Collections.singletonMap("access_token", token);
+		try {
+			var authInputToken = new UsernamePasswordAuthenticationToken(credentials.getUsername(),
+					credentials.getPassword());
+			var authentication = authenticationManager.authenticate(authInputToken);
+			var user = (User) authentication.getPrincipal();
+			var token = generateToken(user);
+			return Collections.singletonMap("access_token", token);
+		} catch (Exception e) {
+			return Collections.singletonMap("error", e.getMessage());
+		}
 	}
 
 	private String generateToken(User user) {
