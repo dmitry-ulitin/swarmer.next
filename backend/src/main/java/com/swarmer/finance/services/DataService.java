@@ -3,7 +3,6 @@ package com.swarmer.finance.services;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -64,31 +63,11 @@ public class DataService {
 
     public void loadDump(Long userId, Dump dump) {
         var owner = userRepository.findById(userId).orElseThrow();
-        // categories
-        var catMap = new HashMap<Long, Long>();
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdInOrderById(List.of(userId)).stream()
-                .collect(Collectors.toMap(Category::getId, Function.identity()));
-        for (var category : dump.categories()) {
-            var existingCategory = categories.get(category.id());
-            if (existingCategory == null) {
-                categoryRepository.insertCategoryWithId(category.id(), userId, category.parentId(), category.name(),
-                        category.created(), category.updated());
-                existingCategory = categoryRepository.findById(category.id()).orElseThrow();
-                categories.put(category.id(), existingCategory);
-            }
-        }
-        for (var category : dump.categories()) {
-            var existingCategory = categories.get(category.id());
-            if (existingCategory != null && !category.updated().isEqual(existingCategory.getUpdated())) {
-                existingCategory.setName(category.name());
-                if (!existingCategory.getParentId().equals(category.parentId())) {
-                    existingCategory.setParentId(category.parentId());
-                    existingCategory.setParent(categoryRepository.findById(category.parentId()).orElseThrow());
-                }
-                existingCategory.setUpdated(category.updated());
-                categoryRepository.save(existingCategory);
-            }
-        }
+        // remove old data
+        transactionRepository.removeByOwnerId(userId);
+        ruleRepository.removeByOwnerId(userId);
+        categoryRepository.removeByOwnerId(userId);
+        groupRepository.deleteByOwnerId(userId);
         // groups
         var accMap = new HashMap<Long, Long>();
         if (dump.ownerId().equals(userId)) {
@@ -142,43 +121,58 @@ public class DataService {
                     groupRepository.save(group);
                 }
             }
-        } else {
-            // insert new groups
-            for (var group : dump.groups()) {
-                var existingGroup = groupRepository.findById(group.id()).orElse(null);
-                if (existingGroup == null) {
-                    var entity = new AccountGroup();
-                    entity.setOwner(owner);
-                    entity.setName(group.name());
-                    entity.setDeleted(group.deleted());
-                    entity.setCreated(group.created());
-                    entity.setUpdated(group.updated());
-                    entity.setAccounts(List.of());
-                    entity.setAcls(List.of());
-                    groupRepository.save(entity);
-                    for (var account : group.accounts()) {
-                        var a = new Account(null, entity, account.name(), account.currency(), account.start_balance(),
-                                account.deleted(), account.created(), account.updated());
-                        accountRepository.save(a);
-                        accMap.put(account.id(), a.getId());
-                    }
-                    for (var acl : group.acls()) {
-                        var user = userRepository.findById(acl.userId()).orElseThrow();
-                        var a = new Acl(entity.getId(), entity, acl.userId(), user, acl.admin(), acl.readonly(),
-                                acl.name(),
-                                acl.deleted(), acl.created(), acl.updated());
-                        aclRepository.save(a);
-                    }
+        }
+        // insert new groups
+        for (var g : dump.groups()) {
+            var existingGroup = dump.ownerId().equals(userId) ? groupRepository.findById(g.id()).orElse(null) : null;
+            if (existingGroup == null || !existingGroup.getOwner().getId().equals(userId)) {
+                var group = new AccountGroup();
+                group.setOwner(owner);
+                group.setName(g.name());
+                group.setDeleted(g.deleted());
+                group.setCreated(g.created());
+                group.setUpdated(g.updated());
+                group.setAccounts(List.of());
+                group.setAcls(List.of());
+                groupRepository.save(group);
+                for (var account : g.accounts()) {
+                    var a = new Account(null, group, account.name(), account.currency(), account.start_balance(),
+                            account.deleted(), account.created(), account.updated());
+                    accountRepository.save(a);
+                    accMap.put(account.id(), a.getId());
+                }
+                for (var acl : g.acls()) {
+                    var user = userRepository.findById(acl.userId()).orElseThrow();
+                    var a = new Acl(group.getId(), group, acl.userId(), user, acl.admin(), acl.readonly(),
+                            acl.name(),
+                            acl.deleted(), acl.created(), acl.updated());
+                    aclRepository.save(a);
                 }
             }
         }
+        // categories
+        var catMap = new HashMap<Long, Long>();
+        for (var c : dump.categories()) {
+            var existingCategory = dump.ownerId().equals(userId) ? categoryRepository.findById(c.id()).orElse(null) : null;
+            if (existingCategory == null) {
+                categoryRepository.insertCategoryWithId(c.id(), userId, c.parentId(), c.name(),
+                        c.created(), c.updated());
+            } else {
+                var parent = categoryRepository.findById(catMap.getOrDefault(c.parentId(), c.parentId())).orElse(null);
+                var category = new Category(null, userId, c.parentId(), parent, c.name(), c.created(), c.updated());
+                categoryRepository.save(category);
+                catMap.put(category.getId(), category.getId());
+            }
+        }
         // transactions
-        transactionRepository.removeByOwnerId(userId);
         for (var t : dump.transactions()) {
-            if (dump.ownerId().equals(userId)) {
+            var existingTransaction = dump.ownerId().equals(userId) ? transactionRepository.findById(t.id()).orElse(null)
+                    : null;
+            if (existingTransaction == null) {
                 transactionRepository.insertTransactionWithId(t.id(), userId, t.opdate(),
                         accMap.getOrDefault(t.accountId(), t.accountId()), t.debit(),
-                        accMap.getOrDefault(t.recipientId(), t.recipientId()), t.credit(), t.categoryId(), t.currency(),
+                        accMap.getOrDefault(t.recipientId(), t.recipientId()), t.credit(),
+                        catMap.getOrDefault(t.categoryId(), t.categoryId()), t.currency(),
                         t.party(), t.details(), t.created(), t.updated());
             } else {
                 var account = t.accountId() == null ? null
@@ -194,9 +188,9 @@ public class DataService {
             }
         }
         // rules
-        ruleRepository.removeByOwnerId(userId);
         for (var r : dump.rules()) {
-            if (dump.ownerId().equals(userId)) {
+            var existingRule = dump.ownerId().equals(userId) ? ruleRepository.findById(r.id()).orElse(null) : null;
+            if (existingRule == null) {
                 ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType(), r.conditionValue(), r.categoryId(),
                         r.created(), r.updated());
             } else {

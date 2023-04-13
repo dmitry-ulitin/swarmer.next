@@ -13,9 +13,13 @@ import com.swarmer.finance.models.Category;
 
 public interface CategoryRepository extends CrudRepository<Category, Long> {
     List<Category> findByOwnerIdIsNullOrOwnerIdInOrderById(Collection<Long> ids);
+
     Optional<Category> findByOwnerIdAndParentIdAndNameIgnoreCase(Long ownerId, Long parentId, String name);
+
+    long removeByOwnerId(Long ownerId);
 
     @Modifying
     @Query("insert into categories (id, ownerId, parentId, name, created, updated) values (?1, ?2, ?3, ?4, ?5, ?6)")
-    void insertCategoryWithId(Long id, Long ownerId, Long parentId, String name, LocalDateTime created, LocalDateTime updated);
+    void insertCategoryWithId(Long id, Long ownerId, Long parentId, String name, LocalDateTime created,
+            LocalDateTime updated);
 }
