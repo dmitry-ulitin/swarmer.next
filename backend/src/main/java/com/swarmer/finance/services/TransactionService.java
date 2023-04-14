@@ -367,9 +367,9 @@ public class TransactionService {
                     entity.setRecipient(account);
                 }
                 entity.setCredit(dto.getCredit());
-                entity.setCategory(dto.getCategory());
-                if (entity.getCategory() != null) {
-                    entity.setCategory(entityManager.find(Category.class, entity.getCategory().getId()));
+                if (dto.getCategory() != null) {
+                    var category = categoryService.getCategory(dto.getCategory(), userId);
+                    entity.setCategory(category);
                 }
                 entity.setCurrency(dto.getCurrency());
                 entity.setParty(dto.getParty());
