@@ -1,11 +1,11 @@
 <div class="h-100 px-3 d-flex align-items-center" tuiMode="onDark">
     <div class="fw-bolder me-2">Swarmer Finance</div>
     <span *ngIf="accounts.length">
-        <button tuiIconButton type="button" icon="tuiIconRefresh" [size]="'s'" [appearance]="'flat'"
+        <button tuiIconButton type="button" icon="tuiIconRefreshCw" [size]="'s'" [appearance]="'flat'"
             (click)="onRefresh()" class="tui-space_right-2"></button>
         <button tuiIconButton type="button" icon="tuiIconMinus" [size]="'s'" [appearance]="'flat'"
             (click)="onExpense()"></button>
-        <button tuiIconButton type="button" *ngIf="accounts.length>1" icon="tuiIconCollapse" [size]="'s'"
+        <button tuiIconButton type="button" *ngIf="accounts.length>1" icon="tuiIconMinimize" [size]="'s'"
             [appearance]="'flat'" (click)="onTransfer()"></button>
         <button tuiIconButton type="button" icon="tuiIconPlus" [size]="'s'" [appearance]="'flat'"
             (click)="onIncome()"></button>

@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
-import { TuiDialogContext, TUI_ICONS_PATH } from '@taiga-ui/core';
+import { TuiDialogContext, tuiSvgOptionsProvider } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 import { firstValueFrom } from 'rxjs';
 import { AccState } from 'src/app/accounts/accounts.state';
@@ -10,7 +10,7 @@ import { Transaction, TransactionType } from 'src/app/models/transaction';
 import { ApiService } from 'src/app/services/api.service';
 
 const MAPPER: Record<string, string> = {
-  tuiIconCollapse: 'swap_horiz_24'
+  tuiIconMinimize: 'swap_horiz_24'
 };
 
 export function iconsPath(name: string): string {
@@ -22,10 +22,9 @@ export function iconsPath(name: string): string {
   styleUrls: ['./transaction-dlg.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
-    {
-      provide: TUI_ICONS_PATH,
-      useValue: iconsPath,
-    },
+    tuiSvgOptionsProvider({
+      path: iconsPath,
+    })
   ]
 })
 export class TransactionDlgComponent {
