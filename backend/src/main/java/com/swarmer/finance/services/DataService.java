@@ -114,7 +114,7 @@ public class DataService {
                     }
                     group.getAcls().stream().filter(
                             a -> updated.acls().stream().noneMatch(p -> p.userId().equals(a.getUserId())))
-                            .forEach(a -> aclRepository.deleteByUserIdAndGroupId(a.getUserId(), a.getGroupId()));
+                            .forEach(a -> aclRepository.delete(a));
                     group.setAcls(group.getAcls().stream().filter(
                             a -> updated.acls().stream().anyMatch(p -> p.userId().equals(a.getUserId())))
                             .collect(Collectors.toList()));

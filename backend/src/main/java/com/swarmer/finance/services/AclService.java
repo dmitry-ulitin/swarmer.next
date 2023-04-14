@@ -24,8 +24,8 @@ public class AclService {
         return aclRepository.findByUserId(userId);
     }
 
-    public void deleteByUserIdAndGroupId(Long userId, Long groupId) {
-        aclRepository.deleteByUserIdAndGroupId(userId, groupId);
+    public void delete(Acl acl) {
+        aclRepository.delete(acl);
     }
 
     public List<Long> findUsers(Long userId) {
