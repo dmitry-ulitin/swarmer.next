@@ -26,7 +26,8 @@ public class CategoryService {
 
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
+        var categories = categoryRepository
+                .findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
                 .stream()
                 .sorted((c1,
                         c2) -> c1.getType().equals(c2.getType())
@@ -57,7 +58,8 @@ public class CategoryService {
             return result;
         }
         var coowners = aclService.findUsers(userId);
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
+        var categories = categoryRepository
+                .findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
                 .stream()
                 .sorted((c1,
                         c2) -> c1.getType().equals(c2.getType())
@@ -85,38 +87,20 @@ public class CategoryService {
     }
 
     public Category getCategory(Category category, Long userId) {
-        Category original = null;
         if (category.getId() != null) {
-            original = categoryRepository.findById(category.getId()).orElseThrow();
-            if (original.getParentId() == null) {
-                return original;
-            } else if (!original.getOwnerId().equals(userId)) {
-                category = new Category(null, userId, category.getParentId(), category.getParent(), category.getName(), LocalDateTime.now(), LocalDateTime.now());
-            } else {
-                original.setName(category.getName());
-                original.setParentId(category.getParentId());
-                category = original;
-            }
-        } else {
-            original = categoryRepository
-                    .findByOwnerIdAndParentIdAndNameIgnoreCase(userId, category.getParentId(), category.getName())
-                    .orElse(null);
-            if (original != null) {
+            Category original = categoryRepository.findById(category.getId()).orElseThrow();
+            if (original.getParentId() == null || original.getOwnerId().equals(userId)) {
                 return original;
             }
-            category.setCreated(LocalDateTime.now());
         }
-        category.setOwnerId(userId);
-        var parent = categoryRepository.findById(category.getParentId()).orElseThrow();
-        category.setParent(getCategory(parent, userId));
-        category.setParentId(category.getParent().getId());
-        category.setUpdated(LocalDateTime.now());
-        categoryRepository.save(category);
-        return category;
-    }
-
-    public Category saveCategory(Category category, Long userId) {
-        return categoryRepository.save(getCategory(category, userId));
+        var parent = getCategory(categoryRepository.findById(category.getParentId()).orElseThrow(), userId);
+        var existing = categoryRepository
+                .findByOwnerIdAndParentIdAndNameIgnoreCase(userId, parent.getId(), category.getName()).orElse(null);
+        if (existing != null) {
+            return existing;
+        }
+        return categoryRepository.save(new Category(null, userId, parent.getId(), parent, category.getName(),
+                LocalDateTime.now(), LocalDateTime.now()));
     }
 
     public void deleteCategory(Long id, Long replaceId, Long userId) {

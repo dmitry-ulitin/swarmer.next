@@ -36,14 +36,14 @@ public class CategoryController {
     @Transactional
 	Category createCategory(@RequestBody Category category, Authentication authentication) {
         var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		return categoryService.saveCategory(category, userId);
+		return categoryService.getCategory(category, userId);
 	}
 
     @PutMapping
     @Transactional
 	Category updateCategory(@RequestBody Category category, Authentication authentication) {
         var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		return categoryService.saveCategory(category, userId);
+		return categoryService.getCategory(category, userId);
 	}
 
     @DeleteMapping("/{id}")
