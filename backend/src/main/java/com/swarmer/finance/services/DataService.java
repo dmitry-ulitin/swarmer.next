@@ -191,7 +191,7 @@ public class DataService {
         for (var r : dump.rules()) {
             var existingRule = dump.ownerId().equals(userId) ? ruleRepository.findById(r.id()).orElse(null) : null;
             if (existingRule == null) {
-                ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType(), r.conditionValue(), r.categoryId(),
+                ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType().getValue(), r.conditionValue(), r.categoryId(),
                         r.created(), r.updated());
             } else {
                 var category = r.categoryId() == null ? null
