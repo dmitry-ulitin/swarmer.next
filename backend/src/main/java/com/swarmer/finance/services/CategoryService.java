@@ -98,19 +98,28 @@ public class CategoryService {
         }
         var parent = getCategory(categoryRepository.findById(category.getParentId()).orElseThrow(), userId);
         var existing = categoryRepository
-                .findByOwnerIdAndParentIdAndNameIgnoreCase(userId, parent.getId(), category.getName()).orElse(null);
-        if (existing != null) {
-            return existing;
+                .findAllByOwnerIdAndParentIdAndNameIgnoreCase(userId, parent.getId(), category.getName());
+        if (existing.isEmpty()) {
+            return categoryRepository.save(new Category(null, userId, parent.getId(), parent, category.getName(),
+                    LocalDateTime.now(), LocalDateTime.now()));
         }
-        return categoryRepository.save(new Category(null, userId, parent.getId(), parent, category.getName(),
-                LocalDateTime.now(), LocalDateTime.now()));
+        return existing.get(0);
     }
 
     public Category saveCategory(Category category, Long userId) {
         Category original = getCategory(category, userId);
         original.setName(category.getName());
         original.setUpdated(LocalDateTime.now());
-        return categoryRepository.save(original);
+        categoryRepository.save(original);
+        // remove dubs
+        var dubs = categoryRepository.findAllByOwnerIdAndParentIdAndNameIgnoreCase(userId, original.getParentId(), original.getName());
+        dubs.stream().filter(dub -> !dub.getId().equals(original.getId())).forEach(dub -> {
+            transactionRepository.replaceCategoryId(dub.getId(), original.getId());
+            ruleRepository.replaceCategoryId(dub.getId(), original.getId());
+            categoryRepository.replaceParentId(dub.getId(), original.getId());
+            categoryRepository.deleteById(dub.getId());
+        });
+        return original;
     }
 
     public void deleteCategory(Long id, Long replaceId, Long userId) {
@@ -122,6 +131,7 @@ public class CategoryService {
             replaceId = category.getParentId();
         }
         Category replace = getCategory(categoryRepository.findById(replaceId).orElseThrow(), userId);
+        categoryRepository.replaceParentId(id, replaceId);
         replaceId = replace.getParentId() == null ? null : replace.getId();
         transactionRepository.replaceCategoryId(id, replaceId);
         if (replaceId == null) {
