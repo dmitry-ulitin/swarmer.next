@@ -43,7 +43,7 @@ public class CategoryController {
     @Transactional
 	Category updateCategory(@RequestBody Category category, Authentication authentication) {
         var userId = ((UserPrincipal)authentication.getPrincipal()).id();
-		return categoryService.getCategory(category, userId);
+		return categoryService.saveCategory(category, userId);
 	}
 
     @DeleteMapping("/{id}")

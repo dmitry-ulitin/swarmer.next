@@ -103,6 +103,13 @@ public class CategoryService {
                 LocalDateTime.now(), LocalDateTime.now()));
     }
 
+    public Category saveCategory(Category category, Long userId) {
+        Category original = getCategory(category, userId);
+        original.setName(category.getName());
+        original.setUpdated(LocalDateTime.now());
+        return categoryRepository.save(original);
+    }
+
     public void deleteCategory(Long id, Long replaceId, Long userId) {
         var category = categoryRepository.findById(id).orElseThrow();
         if (category.getOwnerId() == null || !category.getOwnerId().equals(userId)) {

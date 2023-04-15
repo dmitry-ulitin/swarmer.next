@@ -120,7 +120,7 @@ export class ApiService {
   }
 
   saveCategory(category: Category): Observable<Category> {
-    return !!category.id ? this.addCategory(category) : this.updateCategory(category);
+    return !!category.id ? this.updateCategory(category) : this.addCategory(category);
   }
 
   deleteCategory(id: number, replace: number | null = null): Observable<void> {
