@@ -8,8 +8,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestPropertySource;
 
@@ -18,23 +21,20 @@ import com.swarmer.finance.dto.GroupDto;
 import com.swarmer.finance.models.Account;
 import com.swarmer.finance.models.AccountGroup;
 import com.swarmer.finance.models.User;
-import com.swarmer.finance.repositories.AccountRepository;
-import com.swarmer.finance.repositories.AclRepository;
-import com.swarmer.finance.repositories.CategoryRepository;
-import com.swarmer.finance.repositories.GroupRepository;
-import com.swarmer.finance.repositories.TransactionRepository;
-import com.swarmer.finance.repositories.UserRepository;
 
 import jakarta.persistence.EntityManager;
 
-@DataJpaTest
+@DataJpaTest(showSql = true, includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
+        GroupService.class, TransactionService.class, AclService.class, CategoryService.class }))
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 public class GroupServiceTest {
-        private final GroupService groupService;
-        private final EntityManager em;
-
+        @Autowired
+        GroupService groupService;
+        @Autowired
+        EntityManager em;
+    
         private final User user = new User(null, "test@test.com", "{noop}123456", true, "Test", "USD",
                         LocalDateTime.now(), LocalDateTime.now(), "test");
         private final AccountGroup group = new AccountGroup(null, user, List.of(), null, "Test Group 1", false,
@@ -45,18 +45,6 @@ public class GroupServiceTest {
         private final Account account2 = new Account(null, group, "", "EUR",
                         .0, false,
                         LocalDateTime.now(), LocalDateTime.now());
-
-//        @Autowired
-        public GroupServiceTest(GroupRepository groupRepository, UserRepository userRepository,
-                        TransactionRepository transactionRepository, AccountRepository accountRepository,
-                        AclRepository aclRepository, CategoryRepository categoryRepository, EntityManager em) {
-                var aclService = new AclService(aclRepository, groupRepository);
-                var categoryService = new CategoryService(categoryRepository, transactionRepository, aclService);
-                var transactionService = new TransactionService(transactionRepository, accountRepository,
-                                userRepository, aclService, categoryService, em);
-                groupService = new GroupService(groupRepository, accountRepository, userRepository, transactionService, aclService);
-                this.em = em;
-        }
 
         @BeforeEach
         void init() {
