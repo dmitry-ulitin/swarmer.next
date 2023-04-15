@@ -9,18 +9,21 @@ import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.models.Category;
 import com.swarmer.finance.repositories.CategoryRepository;
+import com.swarmer.finance.repositories.RuleRepository;
 import com.swarmer.finance.repositories.TransactionRepository;
 
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final RuleRepository ruleRepository;
     private final AclService aclService;
 
     public CategoryService(CategoryRepository categoryRepository, TransactionRepository transactionRepository,
-            AclService aclService) {
+            RuleRepository ruleRepository, AclService aclService) {
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.ruleRepository = ruleRepository;
         this.aclService = aclService;
     }
 
@@ -121,6 +124,11 @@ public class CategoryService {
         Category replace = getCategory(categoryRepository.findById(replaceId).orElseThrow(), userId);
         replaceId = replace.getParentId() == null ? null : replace.getId();
         transactionRepository.replaceCategoryId(id, replaceId);
+        if (replaceId == null) {
+            ruleRepository.removeByCategoryId(id);
+        } else {
+            ruleRepository.replaceCategoryId(id, replaceId);
+        }
         categoryRepository.delete(category);
     }
 }
