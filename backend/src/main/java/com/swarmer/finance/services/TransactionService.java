@@ -250,6 +250,9 @@ public class TransactionService {
                         if (result.containsKey(rCurrency)) {
                             var rSummary = result.get(rCurrency);
                             rSummary.setTransfers_debit(rSummary.getTransfers_debit() + b.getCredit());
+                        } else {
+                            var rSummary = result.get(aCurrency);
+                            rSummary.setTransfers_debit(rSummary.getTransfers_debit() + b.getDebit());
                         }
                     }
                 } else {
@@ -265,6 +268,9 @@ public class TransactionService {
                         if (result.containsKey(aCurrency)) {
                             var aSummary = result.get(aCurrency);
                             aSummary.setTransfers_credit(aSummary.getTransfers_credit() + b.getDebit());
+                        } else {
+                            var aSummary = result.get(rCurrency);
+                            aSummary.setTransfers_credit(aSummary.getTransfers_credit() + b.getCredit());
                         }
                     }
                 } else {
