@@ -53,7 +53,8 @@ public class DataService {
     }
 
     public Dump getDump(Long userId) {
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdInOrderById(List.of(userId)).stream()
+        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(userId)).stream()
+                .sorted((c1, c2) -> (int)(c1.getLevel() - c2.getLevel()))
                 .filter(c -> c.getOwnerId() != null).map(DumpCategory::from).toList();
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(userId)).stream().map(DumpGroup::from).toList();
         var transactions = transactionRepository.findAllByOwnerId(userId).map(DumpTransaction::from).toList();

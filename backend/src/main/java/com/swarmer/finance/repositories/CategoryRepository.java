@@ -11,7 +11,7 @@ import org.springframework.data.repository.CrudRepository;
 import com.swarmer.finance.models.Category;
 
 public interface CategoryRepository extends CrudRepository<Category, Long> {
-    List<Category> findByOwnerIdIsNullOrOwnerIdInOrderById(Collection<Long> ids);
+    List<Category> findByOwnerIdIsNullOrOwnerIdIn(Collection<Long> ids);
 
     List<Category> findAllByOwnerIdAndParentIdAndNameIgnoreCase(Long ownerId, Long parentId, String name);
 

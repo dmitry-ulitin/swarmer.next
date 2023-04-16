@@ -30,7 +30,7 @@ public class CategoryService {
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
         var categories = categoryRepository
-                .findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
+                .findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
                 .stream()
                 .sorted((c1,
                         c2) -> c1.getType().equals(c2.getType())
@@ -62,7 +62,7 @@ public class CategoryService {
         }
         var coowners = aclService.findUsers(userId);
         var categories = categoryRepository
-                .findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
+                .findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
                 .stream()
                 .sorted((c1,
                         c2) -> c1.getType().equals(c2.getType())
