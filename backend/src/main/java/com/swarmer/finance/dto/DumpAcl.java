@@ -1,6 +1,7 @@
 package com.swarmer.finance.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swarmer.finance.models.Acl;
@@ -21,7 +22,17 @@ public record DumpAcl(
                 acl.getName(),
                 acl.getDeleted(),
                 acl.getCreated(),
-                acl.getUpdated()
-        );
+                acl.getUpdated());
+    }
+
+    public static DumpAcl mapUsers(DumpAcl acl, Map<Long, Long> userIds) {
+        return new DumpAcl(
+                userIds.get(acl.userId()),
+                acl.admin(),
+                acl.readonly(),
+                acl.name(),
+                acl.deleted(),
+                acl.created(),
+                acl.updated());
     }
 }
