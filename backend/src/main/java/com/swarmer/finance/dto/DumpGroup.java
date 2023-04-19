@@ -2,6 +2,7 @@ package com.swarmer.finance.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.swarmer.finance.models.AccountGroup;
 
@@ -22,5 +23,16 @@ public record DumpGroup(
                 group.getDeleted(),
                 group.getCreated(),
                 group.getUpdated());
+    }
+
+    public static DumpGroup mapUsers(DumpGroup group, Map<Long, Long> userIds) {
+        return new DumpGroup(
+                group.id(),
+                group.acls().stream().map(acl -> DumpAcl.mapUsers(acl, userIds)).toList(),
+                group.accounts(),
+                group.name(),
+                group.deleted(),
+                group.created(),
+                group.updated());
     }
 }

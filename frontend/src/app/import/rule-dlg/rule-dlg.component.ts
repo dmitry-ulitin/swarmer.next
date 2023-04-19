@@ -38,7 +38,7 @@ export class RuleDlgComponent {
       const condition = rule.conditionType % 2 ? this.conditions[0] : this.conditions[1];
       this.form.patchValue({ id: rule.id, field: field, condition: condition, value: rule.conditionValue, category: rule.category });
     } else {
-      this.form.patchValue({ value: this.transaction.party || this.transaction.details});
+      this.form.patchValue({ field: this.transaction.party ? this.fields[0] : this.fields[1], value: this.transaction.party || this.transaction.details});
     }
     this.form.controls['field'].valueChanges.pipe(takeUntil(destroy$)).subscribe((v) => {
       if (v?.id == 1 && this.transaction.party) {

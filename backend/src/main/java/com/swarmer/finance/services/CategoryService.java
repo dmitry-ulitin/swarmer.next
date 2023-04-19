@@ -9,24 +9,28 @@ import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.models.Category;
 import com.swarmer.finance.repositories.CategoryRepository;
+import com.swarmer.finance.repositories.RuleRepository;
 import com.swarmer.finance.repositories.TransactionRepository;
 
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final RuleRepository ruleRepository;
     private final AclService aclService;
 
     public CategoryService(CategoryRepository categoryRepository, TransactionRepository transactionRepository,
-            AclService aclService) {
+            RuleRepository ruleRepository, AclService aclService) {
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.ruleRepository = ruleRepository;
         this.aclService = aclService;
     }
 
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
+        var categories = categoryRepository
+                .findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
                 .stream()
                 .sorted((c1,
                         c2) -> c1.getType().equals(c2.getType())
@@ -57,7 +61,8 @@ public class CategoryService {
             return result;
         }
         var coowners = aclService.findUsers(userId);
-        var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdInOrderById(coowners.stream().distinct().toList())
+        var categories = categoryRepository
+                .findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
                 .stream()
                 .sorted((c1,
                         c2) -> c1.getType().equals(c2.getType())
@@ -85,38 +90,36 @@ public class CategoryService {
     }
 
     public Category getCategory(Category category, Long userId) {
-        Category original = null;
         if (category.getId() != null) {
-            original = categoryRepository.findById(category.getId()).orElseThrow();
-            if (original.getParentId() == null) {
-                return original;
-            } else if (!original.getOwnerId().equals(userId)) {
-                category = new Category(null, userId, category.getParentId(), category.getParent(), category.getName(), LocalDateTime.now(), LocalDateTime.now());
-            } else {
-                original.setName(category.getName());
-                original.setParentId(category.getParentId());
-                category = original;
-            }
-        } else {
-            original = categoryRepository
-                    .findByOwnerIdAndParentIdAndNameIgnoreCase(userId, category.getParentId(), category.getName())
-                    .orElse(null);
-            if (original != null) {
+            Category original = categoryRepository.findById(category.getId()).orElseThrow();
+            if (original.getParentId() == null || original.getOwnerId().equals(userId)) {
                 return original;
             }
-            category.setCreated(LocalDateTime.now());
         }
-        category.setOwnerId(userId);
-        var parent = categoryRepository.findById(category.getParentId()).orElseThrow();
-        category.setParent(getCategory(parent, userId));
-        category.setParentId(category.getParent().getId());
-        category.setUpdated(LocalDateTime.now());
-        categoryRepository.save(category);
-        return category;
+        var parent = getCategory(categoryRepository.findById(category.getParentId()).orElseThrow(), userId);
+        var existing = categoryRepository
+                .findAllByOwnerIdAndParentIdAndNameIgnoreCase(userId, parent.getId(), category.getName());
+        if (existing.isEmpty()) {
+            return categoryRepository.save(new Category(null, userId, parent.getId(), parent, category.getName(),
+                    LocalDateTime.now(), LocalDateTime.now()));
+        }
+        return existing.get(0);
     }
 
     public Category saveCategory(Category category, Long userId) {
-        return categoryRepository.save(getCategory(category, userId));
+        Category original = getCategory(category, userId);
+        original.setName(category.getName());
+        original.setUpdated(LocalDateTime.now());
+        categoryRepository.save(original);
+        // remove dubs
+        var dubs = categoryRepository.findAllByOwnerIdAndParentIdAndNameIgnoreCase(userId, original.getParentId(), original.getName());
+        dubs.stream().filter(dub -> !dub.getId().equals(original.getId())).forEach(dub -> {
+            transactionRepository.replaceCategoryId(dub.getId(), original.getId());
+            ruleRepository.replaceCategoryId(dub.getId(), original.getId());
+            categoryRepository.replaceParentId(dub.getId(), original.getId());
+            categoryRepository.deleteById(dub.getId());
+        });
+        return original;
     }
 
     public void deleteCategory(Long id, Long replaceId, Long userId) {
@@ -128,8 +131,14 @@ public class CategoryService {
             replaceId = category.getParentId();
         }
         Category replace = getCategory(categoryRepository.findById(replaceId).orElseThrow(), userId);
+        categoryRepository.replaceParentId(id, replaceId);
         replaceId = replace.getParentId() == null ? null : replace.getId();
         transactionRepository.replaceCategoryId(id, replaceId);
+        if (replaceId == null) {
+            ruleRepository.removeByCategoryId(id);
+        } else {
+            ruleRepository.replaceCategoryId(id, replaceId);
+        }
         categoryRepository.delete(category);
     }
 }

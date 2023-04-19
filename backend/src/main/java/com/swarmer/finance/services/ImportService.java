@@ -23,18 +23,17 @@ import com.swarmer.finance.models.BankType;
 import com.swarmer.finance.models.ConditionType;
 import com.swarmer.finance.models.Rule;
 import com.swarmer.finance.models.TransactionType;
-import com.swarmer.finance.repositories.CategoryRepository;
 import com.swarmer.finance.repositories.RuleRepository;
 
 @Service
 public class ImportService {
     private final TransactionService transactionService;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final RuleRepository ruleRepository;
 
-    public ImportService(TransactionService transactionService, CategoryRepository categoryRepository, RuleRepository ruleRepository) {
+    public ImportService(TransactionService transactionService, CategoryService categoryService, RuleRepository ruleRepository) {
         this.transactionService = transactionService;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
         this.ruleRepository = ruleRepository;
     }
 
@@ -51,7 +50,10 @@ public class ImportService {
         entity.setOwnerId(userId);
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
-        entity.setCategory(categoryRepository.findById(rule.category().getId()).orElseThrow());
+        if (rule.category() != null) {
+            var category = categoryService.getCategory(rule.category(), userId);
+            entity.setCategory(category);
+        }
         entity.setCreated(LocalDateTime.now());
         entity.setUpdated(LocalDateTime.now());
         return RuleDto.from(ruleRepository.save(entity));
@@ -61,7 +63,10 @@ public class ImportService {
         var entity = ruleRepository.findById(rule.id()).orElseThrow();
         entity.setConditionType(rule.conditionType());
         entity.setConditionValue(rule.conditionValue());
-        entity.setCategory(categoryRepository.findById(rule.category().getId()).orElseThrow());
+        if (rule.category() != null) {
+            var category = categoryService.getCategory(rule.category(), userId);
+            entity.setCategory(category);
+        }
         entity.setUpdated(LocalDateTime.now());
         return RuleDto.from(ruleRepository.save(entity));
     }

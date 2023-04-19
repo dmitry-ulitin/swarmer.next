@@ -305,6 +305,7 @@ export class AccState {
                     const index = groups.findIndex(g => data.is_owner && !g.is_owner || data.is_coowner && !g.is_coowner);
                     groups.splice(index < 0 ? groups.length : index, 0, data);
                     cxt.patchState({ groups, accounts: data.accounts.map((a: Account) => a.id), transactions: [], transaction_id: null });
+                    cxt.dispatch(new GetCategories());
                 }
             }
         });
@@ -330,6 +331,7 @@ export class AccState {
                     cxt.patchState({ groups, accounts });
                     cxt.dispatch(new GetTransactions());
                     cxt.dispatch(new GetSummary());
+                    cxt.dispatch(new GetCategories());
                 }
             }
         });
@@ -356,6 +358,7 @@ export class AccState {
                     const accounts = state.accounts.filter(id => groups.some(g => !g.deleted && g.accounts.some(a => a.id === id)));
                     cxt.patchState({ groups, accounts });
                     cxt.dispatch(new GetTransactions());
+                    cxt.dispatch(new GetCategories());
                 }
             }
         } catch (err) {

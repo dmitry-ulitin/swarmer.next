@@ -155,7 +155,7 @@ public class GroupService {
         }
         entity.getAcls().stream().filter(
                 a -> !dto.permissions().stream().anyMatch(p -> p.user().email().equals(a.getUser().getEmail())))
-                .forEach(a -> aclService.deleteByUserIdAndGroupId(a.getUserId(), a.getGroupId()));
+                .forEach(a -> aclService.delete(a));
         entity.setAcls(entity.getAcls().stream().filter(
                 a -> dto.permissions().stream().anyMatch(p -> p.user().email().equals(a.getUser().getEmail())))
                 .collect(Collectors.toList()));

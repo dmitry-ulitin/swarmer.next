@@ -8,8 +8,11 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestPropertySource;
 
@@ -22,22 +25,19 @@ import com.swarmer.finance.models.Category;
 import com.swarmer.finance.models.Transaction;
 import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.models.User;
-import com.swarmer.finance.repositories.AccountRepository;
-import com.swarmer.finance.repositories.AclRepository;
-import com.swarmer.finance.repositories.CategoryRepository;
-import com.swarmer.finance.repositories.GroupRepository;
-import com.swarmer.finance.repositories.TransactionRepository;
-import com.swarmer.finance.repositories.UserRepository;
 
 import jakarta.persistence.EntityManager;
 
-@DataJpaTest
+@DataJpaTest(showSql = true, includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
+        TransactionService.class, AclService.class, CategoryService.class }))
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 public class TransactionServiceTest {
-        private final TransactionService transactionService;
-        private final EntityManager em;
+        @Autowired
+        TransactionService transactionService;
+        @Autowired
+        EntityManager em;
 
         private final User user = new User(null, "test@test.com", "{noop}123456", true, "Test", "USD",
                         LocalDateTime.now(), LocalDateTime.now(), "test");
@@ -102,16 +102,6 @@ public class TransactionServiceTest {
                         .opdate(LocalDateTime.of(2022, 1, 28, 0, 0, 0))
                         .account(savingsUSD).debit(100.0).recipient(bankUSD).credit(100.0).created(LocalDateTime.now())
                         .updated(LocalDateTime.now()).build();
-
-        public TransactionServiceTest(GroupRepository groupRepository, UserRepository userRepository,
-                        TransactionRepository transactionRepository, AccountRepository accountRepository,
-                        AclRepository aclRepository, CategoryRepository categoryRepository, EntityManager em) {
-                var aclService = new AclService(aclRepository, groupRepository);
-                var categoryService = new CategoryService(categoryRepository, transactionRepository, aclService);
-                this.transactionService = new TransactionService(transactionRepository, accountRepository,
-                                userRepository, aclService, categoryService, em);
-                this.em = em;
-        }
 
         @BeforeEach
         void init() {
