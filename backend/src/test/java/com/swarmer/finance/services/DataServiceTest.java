@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.swarmer.finance.dto.Dump;
+import com.swarmer.finance.models.Account;
 import com.swarmer.finance.models.AccountGroup;
 import com.swarmer.finance.models.User;
 import com.swarmer.finance.repositories.GroupRepository;
@@ -105,18 +106,24 @@ public class DataServiceTest {
     void testRepeatedLoad() {
         // load dump and get new one with real group ids
         dataService.loadDump(user1.getId(), dump1);
-        var dump = dataService.getDump(user1.getId());
+        var copy = dataService.getDump(user1.getId());
         // modify data
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
         groups.get(0).setDeleted(true);
         groupRepository.save(groups.get(0));
-        groupRepository.save(new AccountGroup(null, groups.get(0).getOwner(), List.of(), List.of(), "New Test Group", false, LocalDateTime.now(), LocalDateTime.now()));
+        groups.get(1).getAcls().clear();
+        groups.get(1).getAccounts().add(new Account(null, groups.get(1), "New Account", "EUR", 0.0, false,
+                LocalDateTime.now(), LocalDateTime.now()));
+        groupRepository.save(groups.get(1));
+        groupRepository.save(new AccountGroup(null, groups.get(0).getOwner(), List.of(), List.of(), "New Test Group",
+                false, LocalDateTime.now(), LocalDateTime.now()));
         em.flush();
         // restore from dump
-        dataService.loadDump(user1.getId(), dump);
+        dataService.loadDump(user1.getId(), copy);
         // check group names
         groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
         var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
-        assertThat(names).hasSameElementsAs(dump.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
+        assertThat(names).hasSameElementsAs(
+                copy.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
     }
 }

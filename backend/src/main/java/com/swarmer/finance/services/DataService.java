@@ -1,6 +1,7 @@
 package com.swarmer.finance.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -132,22 +133,25 @@ public class DataService {
                 group.setDeleted(g.deleted());
                 group.setCreated(g.created());
                 group.setUpdated(g.updated());
-                group.setAccounts(List.of());
-                group.setAcls(List.of());
+                group.setAccounts(new ArrayList<>());
+                group.setAcls(new ArrayList<>());
                 groupRepository.save(group);
                 for (var a : g.accounts()) {
                     var account = new Account(null, group, a.name(), a.currency(), a.start_balance(), a.deleted(),
                             a.created(), a.updated());
                     accountRepository.save(account);
                     accMap.put(a.id(), account.getId());
+                    group.getAccounts().add(account);
                 }
-                for (var acl : g.acls()) {
-                    var user = userRepository.findById(acl.userId()).orElseThrow();
-                    var a = new Acl(group.getId(), group, acl.userId(), user, acl.admin(), acl.readonly(),
-                            acl.name(),
-                            acl.deleted(), acl.created(), acl.updated());
-                    aclRepository.save(a);
+                for (var a : g.acls()) {
+                    var user = userRepository.findById(a.userId()).orElseThrow();
+                    var acl = new Acl(group.getId(), group, a.userId(), user, a.admin(), a.readonly(),
+                            a.name(),
+                            a.deleted(), a.created(), a.updated());
+                    aclRepository.save(acl);
+                    group.getAcls().add(acl);
                 }
+                groupRepository.save(group);
             }
         }
         // categories
