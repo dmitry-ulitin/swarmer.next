@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -22,7 +23,9 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.swarmer.finance.dto.Dump;
+import com.swarmer.finance.models.AccountGroup;
 import com.swarmer.finance.models.User;
+import com.swarmer.finance.repositories.GroupRepository;
 
 import jakarta.persistence.EntityManager;
 
@@ -35,6 +38,8 @@ public class DataServiceTest {
     static Dump dump1 = null;
     static Dump dump2 = null;
 
+    @Autowired
+    GroupRepository groupRepository;
     @Autowired
     DataService dataService;
     @Autowired
@@ -65,8 +70,7 @@ public class DataServiceTest {
 
     @Test
     void testGetDump() {
-        dataService.loadDump(user1.getId(), new Dump(user1.getId(), dump1.created(), dump1.groups(), dump1.categories(),
-                dump1.transactions(), dump1.rules()));
+        dataService.loadDump(user1.getId(), dump1);
         var copy = dataService.getDump(user1.getId());
         assertThat(copy).isNotNull();
         assertThat(copy.ownerId()).isEqualTo(user1.getId());
@@ -78,13 +82,41 @@ public class DataServiceTest {
 
     @Test
     void testLoadDumpSameUser() {
-        dataService.loadDump(user1.getId(), new Dump(user1.getId(), dump1.created(), dump1.groups(), dump1.categories(),
-                dump1.transactions(), dump1.rules()));
+        dataService.loadDump(user1.getId(), dump1);
+        // check group names
+        var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
+        var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        assertThat(names).hasSameElementsAs(
+                dump1.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
     }
 
     @Test
     void testLoadDumpOtherUser() {
         dataService.loadDump(user1.getId(), new Dump(user2.getId(), dump1.created(), dump1.groups(), dump1.categories(),
                 dump1.transactions(), dump1.rules()));
+        // check group names
+        var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
+        var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        assertThat(names).hasSameElementsAs(
+                dump1.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
+    }
+
+    @Test
+    void testRepeatedLoad() {
+        // load dump and get new one with real group ids
+        dataService.loadDump(user1.getId(), dump1);
+        var dump = dataService.getDump(user1.getId());
+        // modify data
+        var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
+        groups.get(0).setDeleted(true);
+        groupRepository.save(groups.get(0));
+        groupRepository.save(new AccountGroup(null, groups.get(0).getOwner(), List.of(), List.of(), "New Test Group", false, LocalDateTime.now(), LocalDateTime.now()));
+        em.flush();
+        // restore from dump
+        dataService.loadDump(user1.getId(), dump);
+        // check group names
+        groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
+        var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        assertThat(names).hasSameElementsAs(dump.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
     }
 }

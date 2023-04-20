@@ -15,7 +15,7 @@ public interface CategoryRepository extends CrudRepository<Category, Long> {
 
     List<Category> findAllByOwnerIdAndParentIdAndNameIgnoreCase(Long ownerId, Long parentId, String name);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("delete from categories where ownerId = ?1")
     void removeByOwnerId(Long ownerId);
 
