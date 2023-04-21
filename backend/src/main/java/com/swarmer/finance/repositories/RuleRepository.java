@@ -12,7 +12,7 @@ import com.swarmer.finance.models.Rule;
 public interface RuleRepository extends CrudRepository<Rule, Long> {
     List<Rule> findAllByOwnerId(Long ownerId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("delete from rules where ownerId = ?1")
     void removeByOwnerId(Long ownerId);
 

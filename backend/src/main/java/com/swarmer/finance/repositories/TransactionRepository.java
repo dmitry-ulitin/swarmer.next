@@ -14,7 +14,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     Stream<Transaction> findAllByOwnerId(Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("delete from transactions where owner.id = ?1")
     void removeByOwnerId(Long userId);
 

@@ -1,6 +1,7 @@
 package com.swarmer.finance.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,8 +42,7 @@ public class DataService {
 
     public DataService(AclRepository aclRepository, UserRepository userRepository, GroupRepository groupRepository,
             AccountRepository accountRepository, CategoryRepository categoryRepository,
-            TransactionRepository transactionRepository,
-            RuleRepository ruleRepository) {
+            TransactionRepository transactionRepository, RuleRepository ruleRepository) {
         this.aclRepository = aclRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -54,7 +54,7 @@ public class DataService {
 
     public Dump getDump(Long userId) {
         var categories = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(userId)).stream()
-                .sorted((c1, c2) -> (int)(c1.getLevel() - c2.getLevel()))
+                .sorted((c1, c2) -> (int) (c1.getLevel() - c2.getLevel()))
                 .filter(c -> c.getOwnerId() != null).map(DumpCategory::from).toList();
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(userId)).stream().map(DumpGroup::from).toList();
         var transactions = transactionRepository.findAllByOwnerId(userId).map(DumpTransaction::from).toList();
@@ -102,9 +102,13 @@ public class DataService {
                                 .findFirst()
                                 .orElse(null);
                         if (acl == null) {
-                            var user = userRepository.findById(updatedAcl.userId()).orElseThrow();
+                            var user = userRepository.findById(updatedAcl.userId()).orElse(null);
+                            if (user == null) {
+                                continue;
+                            }
                             group.getAcls()
-                                    .add(new Acl(group.getId(), group, updatedAcl.userId(), user, updatedAcl.admin(),
+                                    .add(new Acl(group.getId(), group, updatedAcl.userId(), user,
+                                            updatedAcl.admin(),
                                             updatedAcl.readonly(), updatedAcl.name(),
                                             updatedAcl.deleted(), updatedAcl.created(), updatedAcl.updated()));
                         } else {
@@ -133,41 +137,49 @@ public class DataService {
                 group.setDeleted(g.deleted());
                 group.setCreated(g.created());
                 group.setUpdated(g.updated());
-                group.setAccounts(List.of());
-                group.setAcls(List.of());
+                group.setAccounts(new ArrayList<>());
+                group.setAcls(new ArrayList<>());
                 groupRepository.save(group);
-                for (var account : g.accounts()) {
-                    var a = new Account(null, group, account.name(), account.currency(), account.start_balance(),
-                            account.deleted(), account.created(), account.updated());
-                    accountRepository.save(a);
-                    accMap.put(account.id(), a.getId());
+                for (var a : g.accounts()) {
+                    var account = new Account(null, group, a.name(), a.currency(), a.start_balance(), a.deleted(),
+                            a.created(), a.updated());
+                    accountRepository.save(account);
+                    accMap.put(a.id(), account.getId());
+                    group.getAccounts().add(account);
                 }
-                for (var acl : g.acls()) {
-                    var user = userRepository.findById(acl.userId()).orElseThrow();
-                    var a = new Acl(group.getId(), group, acl.userId(), user, acl.admin(), acl.readonly(),
-                            acl.name(),
-                            acl.deleted(), acl.created(), acl.updated());
-                    aclRepository.save(a);
+                for (var a : g.acls()) {
+                    var user = userRepository.findById(a.userId()).orElse(null);
+                    if (user == null) {
+                        continue;
+                    }
+                    var acl = new Acl(group.getId(), group, a.userId(), user, a.admin(), a.readonly(),
+                            a.name(),
+                            a.deleted(), a.created(), a.updated());
+                    aclRepository.save(acl);
+                    group.getAcls().add(acl);
                 }
+                groupRepository.save(group);
             }
         }
         // categories
         var catMap = new HashMap<Long, Long>();
         for (var c : dump.categories()) {
-            var existingCategory = dump.ownerId().equals(userId) ? categoryRepository.findById(c.id()).orElse(null) : null;
+            var existingCategory = dump.ownerId().equals(userId) ? categoryRepository.findById(c.id()).orElse(null)
+                    : null;
+            var parentId = catMap.getOrDefault(c.parentId(), c.parentId());
             if (existingCategory == null) {
-                categoryRepository.insertCategoryWithId(c.id(), userId, c.parentId(), c.name(),
-                        c.created(), c.updated());
+                categoryRepository.insertCategoryWithId(c.id(), userId, parentId, c.name(), c.created(), c.updated());
             } else {
-                var parent = categoryRepository.findById(catMap.getOrDefault(c.parentId(), c.parentId())).orElse(null);
-                var category = new Category(null, userId, c.parentId(), parent, c.name(), c.created(), c.updated());
+                var parent = categoryRepository.findById(parentId).orElse(null);
+                var category = new Category(null, userId, parentId, parent, c.name(), c.created(), c.updated());
                 categoryRepository.save(category);
-                catMap.put(category.getId(), category.getId());
+                catMap.put(c.id(), category.getId());
             }
         }
         // transactions
         for (var t : dump.transactions()) {
-            var existingTransaction = dump.ownerId().equals(userId) ? transactionRepository.findById(t.id()).orElse(null)
+            var existingTransaction = dump.ownerId().equals(userId)
+                    ? transactionRepository.findById(t.id()).orElse(null)
                     : null;
             if (existingTransaction == null) {
                 transactionRepository.insertTransactionWithId(t.id(), userId, t.opdate(),
@@ -183,6 +195,10 @@ public class DataService {
                                 .orElse(null);
                 var category = t.categoryId() == null ? null
                         : categoryRepository.findById(catMap.getOrDefault(t.categoryId(), t.categoryId())).orElse(null);
+                if (t.accountId() != null && account == null || t.recipientId() != null && recipient == null
+                        || t.categoryId() != null && category == null) {
+                    continue;
+                }
                 transactionRepository.save(new Transaction(null, owner, t.opdate(), account, t.debit(),
                         recipient, t.credit(), category, t.currency(), t.party(), t.details(), t.created(),
                         t.updated()));
@@ -192,7 +208,8 @@ public class DataService {
         for (var r : dump.rules()) {
             var existingRule = dump.ownerId().equals(userId) ? ruleRepository.findById(r.id()).orElse(null) : null;
             if (existingRule == null) {
-                ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType().getValue(), r.conditionValue(), r.categoryId(),
+                ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType().getValue(), r.conditionValue(),
+                        r.categoryId(),
                         r.created(), r.updated());
             } else {
                 var category = r.categoryId() == null ? null
