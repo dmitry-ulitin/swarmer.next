@@ -25,8 +25,12 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.swarmer.finance.dto.Dump;
 import com.swarmer.finance.models.Account;
 import com.swarmer.finance.models.AccountGroup;
+import com.swarmer.finance.models.TransactionType;
 import com.swarmer.finance.models.User;
+import com.swarmer.finance.repositories.CategoryRepository;
 import com.swarmer.finance.repositories.GroupRepository;
+import com.swarmer.finance.repositories.RuleRepository;
+import com.swarmer.finance.repositories.TransactionRepository;
 
 import jakarta.persistence.EntityManager;
 
@@ -41,6 +45,12 @@ public class DataServiceTest {
 
     @Autowired
     GroupRepository groupRepository;
+    @Autowired
+    CategoryRepository categoryRepository;
+    @Autowired
+    TransactionRepository transactionRepository;
+    @Autowired
+    RuleRepository ruleRepository;
     @Autowired
     DataService dataService;
     @Autowired
@@ -61,9 +71,11 @@ public class DataServiceTest {
 
     @BeforeEach
     void init() throws StreamReadException, DatabindException, IOException {
+        // create test users
         em.persist(user1);
         em.persist(user2);
         em.flush();
+        // map test users to dumps
         var userIds = Map.of(dump1.ownerId(), user1.getId(), dump2.ownerId(), user2.getId());
         dump1 = Dump.mapUsers(dump1, userIds);
         dump2 = Dump.mapUsers(dump2, userIds);
@@ -72,8 +84,28 @@ public class DataServiceTest {
     @Test
     void testGetDump() {
         dataService.loadDump(user1.getId(), dump1);
+        var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
+        var expectedNames = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        var expectedAccs = groups.stream().flatMap(g -> g.getAccounts().stream()).filter(a -> !a.getDeleted()).count();
+        var expectedAcls = groups.stream().flatMap(g -> g.getAcls().stream()).mapToLong(a -> a.getUserId()).toArray();
+        var transactions = transactionRepository.findAllByOwnerId(user1.getId());
+        var expectedDebit = transactions.mapToDouble(t -> t.getDebit()).sum();
+        var expectedCatNames = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(user1.getId())).stream()
+                .filter(c -> c.getParentId() != null).map(c -> c.getName()).sorted().toList();
+
         var copy = dataService.getDump(user1.getId());
-        assertThat(copy).isNotNull();
+
+        var actualNames = copy.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
+        var actualAcls = copy.groups().stream().flatMap(g -> g.acls().stream()).mapToLong(a -> a.userId()).toArray();
+        assertThat(actualAcls).containsExactlyInAnyOrder(expectedAcls);
+        var actualAccs = copy.groups().stream().flatMap(g -> g.accounts().stream()).filter(a -> !a.deleted()).count();
+        assertThat(actualAccs).isEqualTo(expectedAccs);
+        var actualDebit = copy.transactions().stream().mapToDouble(t -> t.debit()).sum();
+        assertThat(actualDebit).isEqualTo(expectedDebit);
+        var actualCatNames = copy.categories().stream().map(c -> c.name()).sorted().toList();
+        assertThat(actualCatNames).hasSameElementsAs(expectedCatNames);
+
         assertThat(copy.ownerId()).isEqualTo(user1.getId());
         assertThat(copy.groups()).hasSize(dump1.groups().size());
         assertThat(copy.transactions()).hasSize(dump1.transactions().size());
@@ -86,44 +118,135 @@ public class DataServiceTest {
         dataService.loadDump(user1.getId(), dump1);
         // check group names
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
-        var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
-        assertThat(names).hasSameElementsAs(
-                dump1.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
+        var actualNames = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        var expectedNames = dump1.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
+        // check account counts
+        var actualAccs = groups.stream().flatMap(g -> g.getAccounts().stream()).filter(a -> !a.getDeleted()).count();
+        var expectedAccs = dump1.groups().stream().flatMap(g -> g.accounts().stream()).filter(a -> !a.deleted())
+                .count();
+        assertThat(actualAccs).isEqualTo(expectedAccs);
+        // check acls
+        var actualAcls = groups.stream().flatMap(g -> g.getAcls().stream()).mapToLong(a -> a.getUserId()).toArray();
+        var expectedAcls = dump1.groups().stream().flatMap(g -> g.acls().stream()).mapToLong(a -> a.userId())
+                .toArray();
+        assertThat(actualAcls).containsExactlyInAnyOrder(expectedAcls);
+        // check transactions
+        var transactions = transactionRepository.findAllByOwnerId(user1.getId());
+        var actualDebit = transactions.mapToDouble(t -> t.getDebit()).sum();
+        var expectedDebit = dump1.transactions().stream().mapToDouble(t -> t.debit()).sum();
+        assertThat(actualDebit).isEqualTo(expectedDebit);
+        // check categories
+        actualNames = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(user1.getId())).stream()
+                .filter(c -> c.getParentId() != null).map(c -> c.getName()).sorted().toList();
+        expectedNames = dump1.categories().stream().map(c -> c.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
     }
 
     @Test
     void testLoadDumpOtherUser() {
-        dataService.loadDump(user1.getId(), new Dump(user2.getId(), dump1.created(), dump1.groups(), dump1.categories(),
-                dump1.transactions(), dump1.rules()));
+        dataService.loadDump(user2.getId(), dump1);
         // check group names
-        var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
-        var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
-        assertThat(names).hasSameElementsAs(
-                dump1.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
+        var groups = groupRepository.findByOwnerIdInOrderById(List.of(user2.getId()));
+        var actualNames = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        var expectedNames = dump1.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
+        // check account counts
+        var actualAccs = groups.stream().flatMap(g -> g.getAccounts().stream()).filter(a -> !a.getDeleted()).count();
+        var expectedAccs = dump1.groups().stream().flatMap(g -> g.accounts().stream()).filter(a -> !a.deleted())
+                .count();
+        assertThat(actualAccs).isEqualTo(expectedAccs);
+        // check acls
+        var actualAcls = groups.stream().flatMap(g -> g.getAcls().stream()).mapToLong(a -> a.getUserId()).toArray();
+        var expectedAcls = dump1.groups().stream().flatMap(g -> g.acls().stream()).mapToLong(a -> a.userId())
+                .toArray();
+        assertThat(actualAcls).containsExactlyInAnyOrder(expectedAcls);
+        // check transactions
+        var transactions = transactionRepository.findAllByOwnerId(user2.getId());
+        var actualDebit = transactions.mapToDouble(t -> t.getDebit()).sum();
+        var expectedDebit = dump1.transactions().stream().mapToDouble(t -> t.debit()).sum();
+        assertThat(actualDebit).isEqualTo(expectedDebit);
+        // check categories
+        actualNames = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(user2.getId())).stream()
+                .filter(c -> c.getParentId() != null).map(c -> c.getName()).sorted().toList();
+        expectedNames = dump1.categories().stream().map(c -> c.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
     }
 
     @Test
     void testRepeatedLoad() {
-        // load dump and get new one with real group ids
+        // load dump and get new one with real ids
         dataService.loadDump(user1.getId(), dump1);
         var copy = dataService.getDump(user1.getId());
+        assertThat(copy.ownerId()).isEqualTo(user1.getId());
+        assertThat(copy.groups()).hasSize(dump1.groups().size());
+        assertThat(copy.transactions()).hasSize(dump1.transactions().size());
+        assertThat(copy.categories()).hasSameElementsAs(dump1.categories());
+        assertThat(copy.rules()).hasSameElementsAs(dump1.rules());
         // modify data
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
-        groups.get(0).setDeleted(true);
-        groupRepository.save(groups.get(0));
-        groups.get(1).getAcls().clear();
-        groups.get(1).getAccounts().add(new Account(null, groups.get(1), "New Account", "EUR", 0.0, false,
+        assertThat(groups).hasSize(copy.groups().size());
+        var cash = groups.get(0);
+        cash.setDeleted(true);
+        groupRepository.save(cash);
+        var lhv = groups.get(1);
+        em.remove(lhv.getAcls().get(0));
+        lhv.getAcls().clear();
+        lhv.getAccounts().add(new Account(null, lhv, "New Account", "EUR", 0.0, false,
                 LocalDateTime.now(), LocalDateTime.now()));
-        groupRepository.save(groups.get(1));
+        groupRepository.save(lhv);
         groupRepository.save(new AccountGroup(null, groups.get(0).getOwner(), List.of(), List.of(), "New Test Group",
                 false, LocalDateTime.now(), LocalDateTime.now()));
+        var fe = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(user1.getId())).stream()
+                .filter(c -> c.getOwnerId() != null && c.getType() == TransactionType.EXPENSE).findFirst()
+                .orElseThrow();
+        fe.setOwnerId(user2.getId());
+        categoryRepository.save(fe);
+        var fi = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(user1.getId())).stream()
+                .filter(c -> c.getOwnerId() != null && c.getType() == TransactionType.INCOME).findFirst()
+                .orElseThrow();
+        fi.setOwnerId(user2.getId());
+        categoryRepository.save(fi);
+        transactionRepository.findAllByOwnerId(user1.getId())
+                .filter(t -> t.getCategory() != null
+                        && (t.getCategory().getId().equals(fe.getId()) || t.getCategory().getId().equals(fi.getId())))
+                .forEach(t -> {
+                    t.setOwner(user2);
+                    transactionRepository.save(t);
+                });
+        ruleRepository.findAllByOwnerId(user1.getId()).stream()
+                .filter(r -> r.getCategory().getId().equals(fe.getId()) || r.getCategory().getId().equals(fi.getId()))
+                .forEach(r -> {
+                    r.setOwnerId(user2.getId());
+                    ruleRepository.save(r);
+                });
         em.flush();
         // restore from dump
         dataService.loadDump(user1.getId(), copy);
         // check group names
         groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
-        var names = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
-        assertThat(names).hasSameElementsAs(
-                copy.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList());
+        var actualNames = groups.stream().filter(g -> !g.getDeleted()).map(g -> g.getName()).sorted().toList();
+        var expectedNames = copy.groups().stream().filter(g -> !g.deleted()).map(g -> g.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
+        // check account counts
+        var actualAccs = groups.stream().flatMap(g -> g.getAccounts().stream()).filter(a -> !a.getDeleted()).count();
+        var expectedAccs = copy.groups().stream().flatMap(g -> g.accounts().stream()).filter(a -> !a.deleted())
+                .count();
+        assertThat(actualAccs).isEqualTo(expectedAccs);
+        // check acls
+        var actualAcls = groups.stream().flatMap(g -> g.getAcls().stream()).mapToLong(a -> a.getUserId()).toArray();
+        var expectedAcls = copy.groups().stream().flatMap(g -> g.acls().stream()).mapToLong(a -> a.userId())
+                .toArray();
+        assertThat(actualAcls).containsExactlyInAnyOrder(expectedAcls);
+        // check transactions
+        var transactions = transactionRepository.findAllByOwnerId(user1.getId());
+        var actualDebit = transactions.mapToDouble(t -> t.getDebit()).sum();
+        var expectedDebit = copy.transactions().stream().mapToDouble(t -> t.debit()).sum();
+        assertThat(actualDebit).isEqualTo(expectedDebit);
+        // check categories
+        actualNames = categoryRepository.findByOwnerIdIsNullOrOwnerIdIn(List.of(user1.getId())).stream()
+                .filter(c -> c.getParentId() != null).map(c -> c.getName()).sorted().toList();
+        expectedNames = copy.categories().stream().map(c -> c.name()).sorted().toList();
+        assertThat(actualNames).hasSameElementsAs(expectedNames);
     }
 }
