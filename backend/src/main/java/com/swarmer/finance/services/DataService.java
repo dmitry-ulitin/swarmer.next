@@ -102,9 +102,13 @@ public class DataService {
                                 .findFirst()
                                 .orElse(null);
                         if (acl == null) {
-                            var user = userRepository.findById(updatedAcl.userId()).orElseThrow();
+                            var user = userRepository.findById(updatedAcl.userId()).orElse(null);
+                            if (user == null) {
+                                continue;
+                            }
                             group.getAcls()
-                                    .add(new Acl(group.getId(), group, updatedAcl.userId(), user, updatedAcl.admin(),
+                                    .add(new Acl(group.getId(), group, updatedAcl.userId(), user,
+                                            updatedAcl.admin(),
                                             updatedAcl.readonly(), updatedAcl.name(),
                                             updatedAcl.deleted(), updatedAcl.created(), updatedAcl.updated()));
                         } else {
@@ -144,7 +148,10 @@ public class DataService {
                     group.getAccounts().add(account);
                 }
                 for (var a : g.acls()) {
-                    var user = userRepository.findById(a.userId()).orElseThrow();
+                    var user = userRepository.findById(a.userId()).orElse(null);
+                    if (user == null) {
+                        continue;
+                    }
                     var acl = new Acl(group.getId(), group, a.userId(), user, a.admin(), a.readonly(),
                             a.name(),
                             a.deleted(), a.created(), a.updated());
@@ -188,6 +195,10 @@ public class DataService {
                                 .orElse(null);
                 var category = t.categoryId() == null ? null
                         : categoryRepository.findById(catMap.getOrDefault(t.categoryId(), t.categoryId())).orElse(null);
+                if (t.accountId() != null && account == null || t.recipientId() != null && recipient == null
+                        || t.categoryId() != null && category == null) {
+                    continue;
+                }
                 transactionRepository.save(new Transaction(null, owner, t.opdate(), account, t.debit(),
                         recipient, t.credit(), category, t.currency(), t.party(), t.details(), t.created(),
                         t.updated()));
