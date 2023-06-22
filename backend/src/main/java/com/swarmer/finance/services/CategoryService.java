@@ -3,6 +3,7 @@ package com.swarmer.finance.services;
 import java.util.List;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -29,24 +30,19 @@ public class CategoryService {
 
     public List<Category> getCategories(Long userId) {
         var coowners = aclService.findUsers(userId);
+        var comparator = Comparator.comparing(Category::getType)
+                .thenComparingInt(c -> c.getParentId() == null ? 0 : 1)
+                .thenComparing((c1, c2) -> c1.getFullName().compareToIgnoreCase(c2.getFullName()))
+                .thenComparingInt(c -> userId.equals(c.getOwnerId()) ? 0 : 1);
         var categories = categoryRepository
                 .findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
                 .stream()
-                .sorted((c1,
-                        c2) -> c1.getType().equals(c2.getType())
-                                ? (c1.getLevel() == 0 ? -1
-                                        : (c2.getLevel() == 0 ? 1
-                                                : c1.getFullName().toLowerCase()
-                                                        .compareTo(c2.getFullName().toLowerCase())))
-                                : c1.getType().compareTo(c2.getType()))
+                .sorted(comparator)
                 .collect(Collectors.toList());
         Category prev = null;
         List<Category> result = new ArrayList<>();
         for (var c : categories) {
             if (prev != null && c.getFullName().toLowerCase().equals(prev.getFullName().toLowerCase())) {
-                if (userId.equals(c.getOwnerId())) {
-                    result.set(result.size() - 1, c);
-                }
                 continue;
             }
             result.add(c);
@@ -61,16 +57,13 @@ public class CategoryService {
             return result;
         }
         var coowners = aclService.findUsers(userId);
+        var comparator = Comparator.comparing(Category::getType)
+                .thenComparingInt(c -> c.getParentId() == null ? 0 : 1)
+                .thenComparing((c1, c2) -> c1.getFullName().compareToIgnoreCase(c2.getFullName()));
         var categories = categoryRepository
                 .findByOwnerIdIsNullOrOwnerIdIn(coowners.stream().distinct().toList())
                 .stream()
-                .sorted((c1,
-                        c2) -> c1.getType().equals(c2.getType())
-                                ? (c1.getLevel() == 0 ? -1
-                                        : (c2.getLevel() == 0 ? 1
-                                                : c1.getFullName().toLowerCase()
-                                                        .compareTo(c2.getFullName().toLowerCase())))
-                                : c1.getType().compareTo(c2.getType()))
+                .sorted(comparator)
                 .collect(Collectors.toList());
 
         int index = 0;
@@ -112,7 +105,8 @@ public class CategoryService {
         original.setUpdated(LocalDateTime.now());
         categoryRepository.save(original);
         // remove dubs
-        var dubs = categoryRepository.findAllByOwnerIdAndParentIdAndNameIgnoreCase(userId, original.getParentId(), original.getName());
+        var dubs = categoryRepository.findAllByOwnerIdAndParentIdAndNameIgnoreCase(userId, original.getParentId(),
+                original.getName());
         dubs.stream().filter(dub -> !dub.getId().equals(original.getId())).forEach(dub -> {
             transactionRepository.replaceCategoryId(dub.getId(), original.getId());
             ruleRepository.replaceCategoryId(dub.getId(), original.getId());
