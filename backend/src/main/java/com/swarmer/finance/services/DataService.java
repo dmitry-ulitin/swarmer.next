@@ -28,9 +28,11 @@ import com.swarmer.finance.repositories.AccountRepository;
 import com.swarmer.finance.repositories.AclRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @Transactional
+@Log4j2
 public class DataService {
     private final AclRepository aclRepository;
     private final UserRepository userRepository;
@@ -71,9 +73,9 @@ public class DataService {
         groupRepository.deleteByOwnerId(userId);
         // groups
         var accMap = new HashMap<Long, Long>();
+        var groups = groupRepository.findByOwnerIdInOrderById(List.of(userId));
         if (dump.ownerId().equals(userId)) {
             // update existing groups
-            var groups = groupRepository.findByOwnerIdInOrderById(List.of(userId));
             for (var group : groups) {
                 var updated = dump.groups().stream().filter(g -> g.id().equals(group.getId())).findFirst().orElse(null);
                 if (updated == null) {
@@ -104,6 +106,8 @@ public class DataService {
                         if (acl == null) {
                             var user = userRepository.findById(updatedAcl.userId()).orElse(null);
                             if (user == null) {
+                                log.warn("User {} not found, acl for group {} has been dropped", updatedAcl.userId(),
+                                        group.getId());
                                 continue;
                             }
                             group.getAcls()
@@ -129,8 +133,8 @@ public class DataService {
         }
         // insert new groups
         for (var g : dump.groups()) {
-            var existingGroup = dump.ownerId().equals(userId) ? groupRepository.findById(g.id()).orElse(null) : null;
-            if (existingGroup == null || !existingGroup.getOwner().getId().equals(userId)) {
+            var existingGroup = groups.stream().filter(group -> group.getId().equals(g.id())).findFirst().orElse(null);
+            if (existingGroup == null) {
                 var group = new AccountGroup();
                 group.setOwner(owner);
                 group.setName(g.name());
@@ -150,6 +154,7 @@ public class DataService {
                 for (var a : g.acls()) {
                     var user = userRepository.findById(a.userId()).orElse(null);
                     if (user == null) {
+                        log.warn("User {} not found, acl for group {} has been dropped", a.userId(), group.getId());
                         continue;
                     }
                     var acl = new Acl(group.getId(), group, a.userId(), user, a.admin(), a.readonly(),
@@ -195,8 +200,8 @@ public class DataService {
                                 .orElse(null);
                 var category = t.categoryId() == null ? null
                         : categoryRepository.findById(catMap.getOrDefault(t.categoryId(), t.categoryId())).orElse(null);
-                if (t.accountId() != null && account == null || t.recipientId() != null && recipient == null
-                        || t.categoryId() != null && category == null) {
+                if (t.accountId() != null && account == null || t.recipientId() != null && recipient == null) {
+                    log.warn("Invalid account or recipient: " + t.id());
                     continue;
                 }
                 transactionRepository.save(new Transaction(null, owner, t.opdate(), account, t.debit(),
