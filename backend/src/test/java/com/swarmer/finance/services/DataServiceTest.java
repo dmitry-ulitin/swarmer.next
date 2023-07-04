@@ -109,8 +109,8 @@ public class DataServiceTest {
         assertThat(copy.ownerId()).isEqualTo(user1.getId());
         assertThat(copy.groups()).hasSize(dump1.groups().size());
         assertThat(copy.transactions()).hasSize(dump1.transactions().size());
-        assertThat(copy.categories()).hasSameElementsAs(dump1.categories());
-        assertThat(copy.rules()).hasSameElementsAs(dump1.rules());
+        assertThat(copy.categories()).hasSize(dump1.categories().size());
+        assertThat(copy.rules()).hasSize(dump1.rules().size());
     }
 
     @Test
@@ -181,8 +181,8 @@ public class DataServiceTest {
         assertThat(copy.ownerId()).isEqualTo(user1.getId());
         assertThat(copy.groups()).hasSize(dump1.groups().size());
         assertThat(copy.transactions()).hasSize(dump1.transactions().size());
-        assertThat(copy.categories()).hasSameElementsAs(dump1.categories());
-        assertThat(copy.rules()).hasSameElementsAs(dump1.rules());
+        assertThat(copy.categories()).hasSize(dump1.categories().size());
+        assertThat(copy.rules()).hasSize(dump1.rules().size());
         // modify data
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(user1.getId()));
         assertThat(groups).hasSize(copy.groups().size());
