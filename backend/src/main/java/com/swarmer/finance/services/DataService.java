@@ -74,10 +74,17 @@ public class DataService {
         // groups
         var accMap = new HashMap<Long, Long>();
         var groups = groupRepository.findByOwnerIdInOrderById(List.of(userId));
-        if (dump.ownerId().equals(userId)) {
+        var tryToUpdate = dump.ownerId().equals(userId)
+                && dump.groups().stream().noneMatch(d -> groups.stream().noneMatch(g -> d.id().equals(g.getId())));
+        if (!tryToUpdate) {
+            log.warn("Dump contains data from a different user or a different db");
+            // TODO - try to delete all groups
+            groups.clear();
+        }
+        if (tryToUpdate) {
             // update existing groups
             for (var group : groups) {
-                var updated = dump.groups().stream().filter(g -> g.id().equals(group.getId())).findFirst().orElse(null);
+                var updated = dump.groups().stream().filter(d -> d.id().equals(group.getId())).findFirst().orElse(null);
                 if (updated == null) {
                     group.setDeleted(true);
                     groupRepository.save(group);
@@ -154,7 +161,8 @@ public class DataService {
                 for (var a : g.acls()) {
                     var user = userRepository.findById(a.userId()).orElse(null);
                     if (user == null) {
-                        log.warn("User {} not found, acl for group {} has been dropped", a.userId(), group.getId());
+                        log.warn("User {} not found, acl for group {}({}) has been dropped", a.userId(), group.getId(),
+                                g.id());
                         continue;
                     }
                     var acl = new Acl(group.getId(), group, a.userId(), user, a.admin(), a.readonly(),
@@ -169,60 +177,36 @@ public class DataService {
         // categories
         var catMap = new HashMap<Long, Long>();
         for (var c : dump.categories()) {
-            var existingCategory = dump.ownerId().equals(userId) ? categoryRepository.findById(c.id()).orElse(null)
-                    : null;
             var parentId = catMap.getOrDefault(c.parentId(), c.parentId());
-            if (existingCategory == null) {
-                categoryRepository.insertCategoryWithId(c.id(), userId, parentId, c.name(), c.created(), c.updated());
-            } else {
-                var parent = categoryRepository.findById(parentId).orElse(null);
-                var category = new Category(null, userId, parentId, parent, c.name(), c.created(), c.updated());
-                categoryRepository.save(category);
-                catMap.put(c.id(), category.getId());
-            }
+            var parent = categoryRepository.findById(parentId).orElse(null);
+            var category = new Category(null, userId, parentId, parent, c.name(), c.created(), c.updated());
+            categoryRepository.save(category);
+            catMap.put(c.id(), category.getId());
         }
         // transactions
         for (var t : dump.transactions()) {
-            var existingTransaction = dump.ownerId().equals(userId)
-                    ? transactionRepository.findById(t.id()).orElse(null)
-                    : null;
-            if (existingTransaction == null) {
-                transactionRepository.insertTransactionWithId(t.id(), userId, t.opdate(),
-                        accMap.getOrDefault(t.accountId(), t.accountId()), t.debit(),
-                        accMap.getOrDefault(t.recipientId(), t.recipientId()), t.credit(),
-                        catMap.getOrDefault(t.categoryId(), t.categoryId()), t.currency(),
-                        t.party(), t.details(), t.created(), t.updated());
-            } else {
-                var account = t.accountId() == null ? null
-                        : accountRepository.findById(accMap.getOrDefault(t.accountId(), t.accountId())).orElse(null);
-                var recipient = t.recipientId() == null ? null
-                        : accountRepository.findById(accMap.getOrDefault(t.recipientId(), t.recipientId()))
-                                .orElse(null);
-                var category = t.categoryId() == null ? null
-                        : categoryRepository.findById(catMap.getOrDefault(t.categoryId(), t.categoryId())).orElse(null);
-                if (t.accountId() != null && account == null || t.recipientId() != null && recipient == null) {
-                    log.warn("Invalid account or recipient: " + t.id());
-                    continue;
-                }
-                transactionRepository.save(new Transaction(null, owner, t.opdate(), account, t.debit(),
-                        recipient, t.credit(), category, t.currency(), t.party(), t.details(), t.created(),
-                        t.updated()));
+            var account = t.accountId() == null ? null
+                    : accountRepository.findById(accMap.getOrDefault(t.accountId(), t.accountId())).orElse(null);
+            var recipient = t.recipientId() == null ? null
+                    : accountRepository.findById(accMap.getOrDefault(t.recipientId(), t.recipientId()))
+                            .orElse(null);
+            var category = t.categoryId() == null ? null
+                    : categoryRepository.findById(catMap.getOrDefault(t.categoryId(), t.categoryId())).orElse(null);
+            if (t.accountId() != null && account == null || t.recipientId() != null && recipient == null) {
+                log.warn("Invalid account or recipient, transaction {} has been dropped", t.id());
+                continue;
             }
+            // TODO - check if account group has same owner
+            transactionRepository.save(new Transaction(null, owner, t.opdate(), account, t.debit(),
+                    recipient, t.credit(), category, t.currency(), t.party(), t.details(), t.created(),
+                    t.updated()));
         }
         // rules
         for (var r : dump.rules()) {
-            var existingRule = dump.ownerId().equals(userId) ? ruleRepository.findById(r.id()).orElse(null) : null;
-            if (existingRule == null) {
-                ruleRepository.insertRuleWithId(r.id(), userId, r.conditionType().getValue(), r.conditionValue(),
-                        r.categoryId(),
-                        r.created(), r.updated());
-            } else {
-                var category = r.categoryId() == null ? null
-                        : categoryRepository.findById(catMap.getOrDefault(r.categoryId(), r.categoryId())).orElse(null);
-                ruleRepository.save(
-                        new Rule(null, userId, r.conditionType(), r.conditionValue(), category, r.created(),
-                                r.updated()));
-            }
+            var category = r.categoryId() == null ? null
+                    : categoryRepository.findById(catMap.getOrDefault(r.categoryId(), r.categoryId())).orElse(null);
+            ruleRepository.save(
+                    new Rule(null, userId, r.conditionType(), r.conditionValue(), category, r.created(), r.updated()));
         }
     }
 }
