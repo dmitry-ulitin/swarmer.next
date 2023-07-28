@@ -11,7 +11,7 @@ import { Subject } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputFileDlgComponent {
-  readonly banks = [{id:1, name: 'LHV'}, {id:2, name: 'Tinkoff'}, {id:3, name: 'Альфа-Банк'}];
+  readonly banks = [{id:1, name: 'LHV'}, {id:2, name: 'Tinkoff'}, {id:3, name: 'Сбербанк'}, {id:4, name: 'Альфа-Банк'}];
   readonly files = new UntypedFormControl();
   readonly bank = new UntypedFormControl(this.banks[0]);
   readonly rejectedFiles$ = new Subject<TuiFileLike | null>();
