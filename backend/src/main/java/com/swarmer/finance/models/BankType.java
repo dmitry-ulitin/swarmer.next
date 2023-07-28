@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum BankType {
-    LHV(1L), TINKOFF(2L);
+    LHV(1L), TINKOFF(2L), SBER(3L);
     private final Long value;
     private BankType(Long value) {
         this.value = value;

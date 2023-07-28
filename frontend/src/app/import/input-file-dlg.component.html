@@ -3,7 +3,7 @@
     <tui-data-list-wrapper *tuiDataList [items]="banks" [itemContent]="bankContent"></tui-data-list-wrapper>
 </tui-select>
 
-<tui-input-files *ngIf="!files.value" accept=".csv, .txt" [formControl]="files" (reject)="onReject($event)">
+<tui-input-files *ngIf="!files.value" accept=".csv, .txt, .pdf" [formControl]="files" (reject)="onReject($event)">
 </tui-input-files>
 
 <tui-files class="tui-space_top-1">

@@ -1,6 +1,5 @@
 package com.swarmer.finance.controllers;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -118,7 +117,7 @@ public class TransactionController {
             var userId = ((UserPrincipal) authentication.getPrincipal()).id();
             var bank = BankType.fromValue(bankId);
             return importService.importFile(file.getInputStream(), bank, accountId, userId);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad input file", e);
         }
     }

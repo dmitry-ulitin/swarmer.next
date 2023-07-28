@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +71,7 @@ public class ImportServiceTest {
             assertThat(actual).hasSize(14);
             assertThat(actual.get(0).isSelected()).isFalse();
             assertThat(actual.stream().filter(ImportDto::isSelected).toList()).hasSize(13);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

@@ -9,12 +9,15 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 
 import com.swarmer.finance.dto.ImportDto;
@@ -31,7 +34,8 @@ public class ImportService {
     private final CategoryService categoryService;
     private final RuleRepository ruleRepository;
 
-    public ImportService(TransactionService transactionService, CategoryService categoryService, RuleRepository ruleRepository) {
+    public ImportService(TransactionService transactionService, CategoryService categoryService,
+            RuleRepository ruleRepository) {
         this.transactionService = transactionService;
         this.categoryService = categoryService;
         this.ruleRepository = ruleRepository;
@@ -72,66 +76,98 @@ public class ImportService {
     }
 
     public List<ImportDto> importFile(InputStream is, BankType bankId, Long accountId, Long userId)
-            throws IOException {
-        var format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).setIgnoreHeaderCase(true)
-                .setTrim(true).build();
-        if (bankId == BankType.TINKOFF) {
-            format = format.builder().setDelimiter(';').build();
+            throws IOException, ParseException {
+        List<ImportDto> records = new ArrayList<>();
+        if (bankId == BankType.SBER) {
+            PDDocument document = PDDocument.load(is);
+            PDFTextStripper stripper = new PDFTextStripper();
+            String text = stripper.getText(document);
+            System.out.println(text);
+            String[] lines = text.split("\\R");
+            boolean table = false;
+            NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
+            for (int i = 0; i < lines.length; i++) {
+                if (table) {
+                    if (lines[i].matches("\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}")) {
+                        var opdate = LocalDateTime.parse(lines[i], DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+                        var details = lines[i + 2];
+                        var party = lines[i + 3].replaceAll("\\s{2,}.*", "");
+                        var amount = nf.parse(lines[i + 4].replaceAll("^\\+", "").replaceAll("\\u00a0", ""))
+                                .doubleValue();
+                        var type = lines[i + 4].startsWith("+") ? TransactionType.INCOME : TransactionType.EXPENSE;
+                        records.add(new ImportDto(null, opdate, type, Math.abs(amount), Math.abs(amount), null, null,
+                                "RUB", party, details, true));
+                        i += 4;
+                    } else {
+                        table = false;
+                    }
+                } else if (lines[i].startsWith(
+                        "\u0421\u0443\u043C\u043C\u0430 \u0432 \u0432\u0430\u043B\u044E\u0442\u0435 \u043E\u043F\u0435\u0440\u0430\u0446\u0438\u0438")) {
+                    table = true;
+                }
+            }
+        } else {
+            var format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).setIgnoreHeaderCase(true)
+                    .setTrim(true).build();
+            if (bankId == BankType.TINKOFF) {
+                format = format.builder().setDelimiter(';').build();
+            }
+            try (var fileReader = new BufferedReader(
+                    new InputStreamReader(is, bankId == BankType.TINKOFF ? "cp1251" : "UTF-8"));
+                    var csvParser = new CSVParser(fileReader, format)) {
+                records = csvParser.getRecords().stream().map(r -> csv2trx(bankId, r)).toList();
+            }
         }
-        try (var fileReader = new BufferedReader(new InputStreamReader(is, bankId == BankType.TINKOFF ? "cp1251" : "UTF-8"));
-                var csvParser = new CSVParser(fileReader, format)) {
-            var records = csvParser.getRecords().stream().map(r -> csv2trx(bankId, r)).toList();
-            var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
-            var trx = transactionService.queryTransactions(userId, List.of(accountId), null, null, minOpdate, null, 0, 0);
-            var rules = ruleRepository.findAllByOwnerId(userId);
+        var minOpdate = records.stream().map(r -> r.getOpdate()).min((a, b) -> a.compareTo(b)).orElseThrow();
+        var trx = transactionService.queryTransactions(userId, List.of(accountId), null, null, minOpdate, null, 0, 0);
+        var rules = ruleRepository.findAllByOwnerId(userId);
 
-            return records.stream().map(r -> {
-                var rule = rules
+        return records.stream().map(r -> {
+            var rule = rules
+                    .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                            && rl.getConditionType() == ConditionType.PARTY_EQUALS
+                            && rl.getConditionValue().equals(r.getParty()))
+                    .findFirst().orElse(null);
+            if (rule == null) {
+                rule = rules
                         .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
-                                && rl.getConditionType() == ConditionType.PARTY_EQUALS
-                                && rl.getConditionValue().equals(r.getParty()))
+                                && rl.getConditionType() == ConditionType.DETAILS_EQUALS
+                                && rl.getConditionValue().equals(r.getDetails()))
                         .findFirst().orElse(null);
-                if (rule == null) {
-                    rule = rules
-                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
-                                    && rl.getConditionType() == ConditionType.DETAILS_EQUALS
-                                    && rl.getConditionValue().equals(r.getDetails()))
-                            .findFirst().orElse(null);
-                }
-                if (rule == null) {
-                    rule = rules
-                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
-                                    && rl.getConditionType() == ConditionType.PARTY_CONTAINS && r.getParty() != null
-                                    && r.getParty().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
-                            .findFirst().orElse(null);
-                }
-                if (rule == null) {
-                    rule = rules
-                            .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
-                                    && rl.getConditionType() == ConditionType.DETAILS_CONTAINS && r.getDetails() != null
-                                    && r.getDetails().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
-                            .findFirst().orElse(null);
-                }
-                if (rule != null) {
-                    r.setRule(RuleDto.from(rule));
-                    r.setCategory(rule.getCategory());
-                }
-                var stored = trx.stream()
-                        .filter(t -> t.getOpdate().toLocalDate().equals(r.getOpdate().toLocalDate())
-                                && (t.getAccount() != null
-                                        && t.getAccount().getId().equals(accountId) && t.getDebit() == r.getDebit()
-                                        || t.getRecipient() != null && t.getRecipient().getId().equals(accountId)
-                                                && t.getCredit() == r.getCredit()))
+            }
+            if (rule == null) {
+                rule = rules
+                        .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                                && rl.getConditionType() == ConditionType.PARTY_CONTAINS && r.getParty() != null
+                                && r.getParty().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
                         .findFirst().orElse(null);
-                if (stored != null) {
-                    r.setId(stored.getId());
-                    r.setSelected(false);
-                    r.setCategory(stored.getCategory());
-                    trx.remove(stored);
-                }
-                return r;
-            }).toList();
-        }
+            }
+            if (rule == null) {
+                rule = rules
+                        .stream().filter(rl -> rl.getCategory().getType().equals(r.getType())
+                                && rl.getConditionType() == ConditionType.DETAILS_CONTAINS && r.getDetails() != null
+                                && r.getDetails().toLowerCase().contains(rl.getConditionValue().toLowerCase()))
+                        .findFirst().orElse(null);
+            }
+            if (rule != null) {
+                r.setRule(RuleDto.from(rule));
+                r.setCategory(rule.getCategory());
+            }
+            var stored = trx.stream()
+                    .filter(t -> t.getOpdate().toLocalDate().equals(r.getOpdate().toLocalDate())
+                            && (t.getAccount() != null
+                                    && t.getAccount().getId().equals(accountId) && t.getDebit() == r.getDebit()
+                                    || t.getRecipient() != null && t.getRecipient().getId().equals(accountId)
+                                            && t.getCredit() == r.getCredit()))
+                    .findFirst().orElse(null);
+            if (stored != null) {
+                r.setId(stored.getId());
+                r.setSelected(false);
+                r.setCategory(stored.getCategory());
+                trx.remove(stored);
+            }
+            return r;
+        }).toList();
     }
 
     private ImportDto csv2trx(BankType bankId, CSVRecord r) {
