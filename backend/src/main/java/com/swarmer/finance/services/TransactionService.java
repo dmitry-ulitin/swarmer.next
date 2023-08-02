@@ -224,7 +224,8 @@ public class TransactionService {
         }
         criteriaQuery.multiselect(root.get("account").get("id"), root.get("recipient").get("id"),
                 builder.sumAsDouble(root.get("debit")).alias("debit"),
-                builder.sumAsDouble(root.get("credit")).alias("credit"))
+                builder.sumAsDouble(root.get("credit")).alias("credit"),
+                builder.max(root.get("opdate")).alias("opdate"))
                 .where(where)
                 .groupBy(root.get("account").get("id"), root.get("recipient").get("id"));
         return entityManager.createQuery(criteriaQuery).getResultList();

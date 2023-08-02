@@ -34,15 +34,7 @@ public class GroupService {
 
     public List<GroupDto> getGroups(Long userId, LocalDateTime opdate) {
         var aids = aclService.findAccounts(userId).map(a -> a.getId()).toList();
-        var amounts = transactionService.getBalances(aids, null, opdate, null);
-        var balances = aids.stream().collect(Collectors.toMap(id -> id, id -> {
-            Double balance = .0;
-            balance -= amounts.stream().filter(b -> id.equals(b.getAccountId())).mapToDouble(a -> a.getDebit()).sum();
-            balance += amounts.stream().filter(b -> id.equals(b.getRecipientId())).mapToDouble(a -> a.getCredit())
-                    .sum();
-            return balance;
-        }));
-
+        var balances = transactionService.getBalances(aids, null, opdate, null);
         var userGroups = groupRepository.findByOwnerIdInOrderById(List.of(userId)).stream()
                 .map(g -> GroupDto.from(g, userId, balances))
                 .sorted((a, b) -> a.id().compareTo(b.id()))
@@ -64,14 +56,7 @@ public class GroupService {
     public GroupDto getGroup(Long groupId, Long userId) {
         var group = groupRepository.findById(groupId).orElseThrow();
         var aids = group.getAccounts().stream().map(a -> a.getId()).toList();
-        var amounts = transactionService.getBalances(aids);
-        var balances = aids.stream().collect(Collectors.toMap(id -> id, id -> {
-            Double balance = .0;
-            balance -= amounts.stream().filter(b -> id.equals(b.getAccountId())).mapToDouble(a -> a.getDebit()).sum();
-            balance += amounts.stream().filter(b -> id.equals(b.getRecipientId())).mapToDouble(a -> a.getCredit())
-                    .sum();
-            return balance;
-        }));
+        var balances = transactionService.getBalances(aids);
         return GroupDto.from(group, userId, balances);
     }
 
