@@ -13,7 +13,7 @@ import { DateRange } from 'src/app/models/date-range';
 export class RangeComponent {
   @ViewChild(TuiHostedDropdownComponent) component?: TuiHostedDropdownComponent;
   options = [DateRange.all(), DateRange.last30(), DateRange.last90(), DateRange.lastYear(), DateRange.month(), DateRange.year()];
-  value = this.store.selectSnapshot(state => state.acc.range);
+  range$ = this.store.select(state => state.acc.range);
   open = false;
 
   constructor(private store: Store) { }
@@ -21,20 +21,14 @@ export class RangeComponent {
   onClick(option: DateRange) {
     this.open = false;
     this.component?.nativeFocusableElement?.focus();
-    this.value = option;
-    this.store.dispatch(new SetRange(this.value));
+    this.store.dispatch(new SetRange(option));
   }
 
-  itemIsActive(option: DateRange): boolean {
-    return option.same(this.value);
+  prev(option: DateRange) {
+    this.store.dispatch(new SetRange(option.prev()));
   }
 
-  prev() {
-    this.value = this.value.prev();
-    this.store.dispatch(new SetRange(this.value))
-  }
-  next() {
-    this.value = this.value.next();
-    this.store.dispatch(new SetRange(this.value))
+  next(option: DateRange) {
+    this.store.dispatch(new SetRange(option.next()));
   }
 }
