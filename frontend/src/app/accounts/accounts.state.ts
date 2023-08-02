@@ -267,14 +267,20 @@ export class AccState {
     }
 
     ngxsOnInit(ctx: StateContext<AccState>) {
-        ctx.dispatch([new GetGroups(), new GetTransactions(), new GetSummary(), new GetCategories()]);
+        ctx.dispatch(new AppLoginSuccess());
     }
 
     @Action([AppLoginSuccess, GetGroups], { cancelUncompleted: true })
-    async getGroups(cxt: StateContext<AccStateModel>) {
+    async getGroups(cxt: StateContext<AccStateModel>, action: AppLoginSuccess | GetGroups) {
         try {
             const groups = await firstValueFrom(this.api.getGroups(''));
             cxt.patchState({ groups });
+            if (action instanceof AppLoginSuccess) {
+                let max = groups.map(g => g.opdate || '').reduce((max,c) => c > max? c : max);
+                if (max < (cxt.getState().range.from?.toString('YMD','-') || '')) {
+                    cxt.dispatch(new SetRange(DateRange.all()));
+                }
+            }
         } catch (err) {
             cxt.dispatch(new AppPrintError(err));
         }

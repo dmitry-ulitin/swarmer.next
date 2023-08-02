@@ -12,6 +12,7 @@ export interface Group {
     permissions?: Permission[];
     deleted?: boolean;
     ownerEmail?: string;
+    opdate?: string;
 }
 
 export interface Permission {
