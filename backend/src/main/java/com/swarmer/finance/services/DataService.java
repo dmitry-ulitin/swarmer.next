@@ -78,7 +78,19 @@ public class DataService {
                 && dump.groups().stream().noneMatch(d -> groups.stream().noneMatch(g -> d.id().equals(g.getId())));
         if (!tryToUpdate) {
             log.warn("Dump contains data from a different user or a different db");
-            // TODO - try to delete all groups
+            // try to delete all groups
+            for (var group : groups) {
+                var deleted = 0;
+                for (var account : group.getAccounts()) {
+                    if (!transactionRepository.existsByAccountIdOrRecipientId(account.getId(), account.getId())) {
+                        accountRepository.delete(account);
+                        deleted++;
+                    }
+                }
+                if (deleted == group.getAccounts().size()) {
+                    groupRepository.delete(group);
+                }
+            }            
             groups.clear();
         }
         if (tryToUpdate) {
