@@ -90,14 +90,16 @@ public class ImportService {
                 if (table) {
                     if (lines[i].matches("\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}")) {
                         var opdate = LocalDateTime.parse(lines[i], DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
-                        var details = lines[i + 2];
-                        var party = lines[i + 3].replaceAll("\\s{2,}.*", "");
-                        var amount = nf.parse(lines[i + 4].replaceAll("^\\+", "").replaceAll("\\u00a0", ""))
-                                .doubleValue();
-                        var type = lines[i + 4].startsWith("+") ? TransactionType.INCOME : TransactionType.EXPENSE;
+                        var details = lines[i + 2];                        
+                        String party = "";
+                        i += 3;
+                        while (!lines[i].replaceAll("\\u00a0|\\+|-", "").matches("^\\d+\\,\\d\\d")) {
+                            party += lines[i++].replaceAll("\\s{2,}.*", "") + " ";
+                        }
+                        var amount = nf.parse(lines[i].replaceAll("\\u00a0|\\+|-", "")).doubleValue();
+                        var type = lines[i].startsWith("+") ? TransactionType.INCOME : TransactionType.EXPENSE;
                         records.add(new ImportDto(null, opdate, type, Math.abs(amount), Math.abs(amount), null, null,
-                                "RUB", party, details, true));
-                        i += 4;
+                                "RUB", party.trim(), details, true));
                     } else {
                         table = false;
                     }
