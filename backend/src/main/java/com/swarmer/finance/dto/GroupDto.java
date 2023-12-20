@@ -1,7 +1,7 @@
 package com.swarmer.finance.dto;
 
 import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swarmer.finance.models.AccountGroup;
@@ -16,8 +16,9 @@ public record GroupDto(
 		@JsonProperty("is_shared") Boolean shared,
 		List<AccountDto> accounts,
 		List<Permission> permissions,
+		LocalDateTime opdate,
 		Boolean deleted) {
-	public static GroupDto from(AccountGroup group, Long userId, Map<Long, Double> balances) {
+	public static GroupDto from(AccountGroup group, Long userId, List<TransactionSum> balances) {
 		var owner = group.getOwner().getId().equals(userId)
 				&& group.getAcls().stream().noneMatch(acl -> acl.getAdmin());
 		var coowner = group.getAcls().stream().anyMatch(acl -> acl.getAdmin()
@@ -33,10 +34,23 @@ public record GroupDto(
 		var permissions = group.getAcls().stream().map(acl -> Permission.from(acl))
 				.collect(java.util.stream.Collectors.toList());
 		var accounts = group.getAccounts().stream()
-				.map(account -> AccountDto.from(account, userId,
-						account.getStart_balance() + balances.getOrDefault(account.getId(), .0)))
+				.map(account -> {
+					var balance = balances.stream().filter(b -> account.getId().equals(b.getRecipientId()))
+							.mapToDouble(a -> a.getCredit()).sum();
+					balance -= balances.stream().filter(b -> account.getId().equals(b.getAccountId()))
+							.mapToDouble(a -> a.getDebit()).sum();
+					return AccountDto.from(account, userId, account.getStart_balance() + balance);
+				})
 				.sorted((a, b) -> a.id().compareTo(b.id()))
 				.collect(java.util.stream.Collectors.toList());
+		var opdate = group.getAccounts().stream()
+				.map(account -> balances.stream()
+						.filter(b -> account.getId().equals(b.getAccountId())
+								|| account.getId().equals(b.getRecipientId()))
+						.map(TransactionSum::getOpdate).filter(o -> o != null).max(LocalDateTime::compareTo)
+						.orElse(null))
+				.filter(o -> o != null)
+				.max(LocalDateTime::compareTo).orElse(null);
 		return new GroupDto(
 				group.getId(),
 				group.getOwner().getId(),
@@ -47,6 +61,7 @@ public record GroupDto(
 				shared,
 				accounts,
 				permissions,
+				opdate,
 				group.getDeleted());
 	}
 }
