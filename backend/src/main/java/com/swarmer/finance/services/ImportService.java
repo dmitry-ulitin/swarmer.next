@@ -97,7 +97,7 @@ public class ImportService {
                             party += lines[i++].replaceAll("\\s{2,}.*", "") + " ";
                         }
                         var amount = nf.parse(lines[i].replaceAll("\\u00a0|\\+|-", "")).doubleValue();
-                        var type = lines[i].startsWith("+") ? TransactionType.INCOME : TransactionType.EXPENSE;
+                        var type = lines[i].startsWith("-") ? TransactionType.EXPENSE : TransactionType.INCOME;
                         records.add(new ImportDto(null, opdate, type, Math.abs(amount), Math.abs(amount), null, null,
                                 "RUB", party.trim(), details, true));
                     } else {
