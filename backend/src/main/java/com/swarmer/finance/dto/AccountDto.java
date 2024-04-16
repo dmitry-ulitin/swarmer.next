@@ -1,5 +1,7 @@
 package com.swarmer.finance.dto;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swarmer.finance.models.Account;
 
@@ -10,8 +12,9 @@ public record AccountDto(
         String currency,
         Double balance,
         @JsonProperty("start_balance") Double startBalance,
+        LocalDateTime opdate,
         Boolean deleted) {
-    public static AccountDto from(Account account, Long userId, Double balance) {
+    public static AccountDto from(Account account, Long userId, Double balance, LocalDateTime opdate) {
         var accfullname = account.getGroup().getName();
         if (account.getName() != null && !account.getName().isBlank()) {
             accfullname += " " + account.getName();
@@ -29,6 +32,7 @@ public record AccountDto(
                 account.getCurrency(),
                 balance,
                 account.getStart_balance(),
+                opdate,
                 account.getDeleted());
     }
 }

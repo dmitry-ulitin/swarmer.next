@@ -83,7 +83,7 @@ public class CategoryService {
     }
 
     public Category getCategory(Category category, Long userId) {
-        if (category.getId() != null) {
+        if (category.getId() != null && category.getId() > 0) {
             Category original = categoryRepository.findById(category.getId()).orElseThrow();
             if (original.getParentId() == null || original.getOwnerId().equals(userId)) {
                 return original;
