@@ -56,8 +56,8 @@ public class GroupServiceTest {
 
         @Test
         void testCreateGroup() {
-                var acc1 = new AccountDto(null, null, null, "USD", null, 1000.0, false);
-                var acc2 = new AccountDto(null, null, null, "RUB", null, 1000.0, true);
+                var acc1 = new AccountDto(null, null, null, "USD", null, 1000.0, null, false);
+                var acc2 = new AccountDto(null, null, null, "RUB", null, 1000.0, null, true);
                 var grp = new GroupDto(null, null, null, "Test Group 2", false, false, false, List.of(acc1, acc2),
                                 List.of(), null, false);
                 var actual = groupService.createGroup(grp, user.getId());
@@ -81,8 +81,8 @@ public class GroupServiceTest {
         void testUpdateGroup() {
                 var dto = groupService.getGroup(group.getId(), user.getId());
                 var accounts = new ArrayList<>(dto.accounts());
-                accounts.add(new AccountDto(null, null, null, "RUB", null, 1000.0, false));
-                accounts.add(new AccountDto(null, null, null, "RUB", null, 1000.0, true));
+                accounts.add(new AccountDto(null, null, null, "RUB", null, 1000.0, null, false));
+                accounts.add(new AccountDto(null, null, null, "RUB", null, 1000.0, null, true));
                 var permissions = dto.permissions();
                 var updated = new GroupDto(dto.id(), dto.ownerId(), user.getEmail(), "New name", dto.owner(),
                                 dto.coowner(), dto.shared(), accounts, permissions, null, dto.deleted());
