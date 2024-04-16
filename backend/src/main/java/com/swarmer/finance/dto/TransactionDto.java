@@ -25,8 +25,8 @@ public record TransactionDto(
     String details
 ) {
     public static TransactionDto from(Transaction transaction, Long userId, Double accountBalance, Double recipientBalance) {
-        var account = transaction.getAccount() == null ? null : AccountDto.from(transaction.getAccount(), userId, accountBalance);
-        var recipient = transaction.getRecipient() == null ? null : AccountDto.from(transaction.getRecipient(), userId, recipientBalance);
+        var account = transaction.getAccount() == null ? null : AccountDto.from(transaction.getAccount(), userId, accountBalance, transaction.getOpdate());
+        var recipient = transaction.getRecipient() == null ? null : AccountDto.from(transaction.getRecipient(), userId, recipientBalance, transaction.getOpdate());
         return new TransactionDto(
             transaction.getId(),
             transaction.getOwner().getId(),

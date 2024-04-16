@@ -39,7 +39,11 @@ public record GroupDto(
 							.mapToDouble(a -> a.getCredit()).sum();
 					balance -= balances.stream().filter(b -> account.getId().equals(b.getAccountId()))
 							.mapToDouble(a -> a.getDebit()).sum();
-					return AccountDto.from(account, userId, account.getStart_balance() + balance);
+					var opdate = balances.stream()
+							.filter(b -> account.getId().equals(b.getAccountId()) || account.getId().equals(b.getRecipientId()))
+							.map(TransactionSum::getOpdate).filter(o -> o != null).max(LocalDateTime::compareTo)
+							.orElse(null);
+					return AccountDto.from(account, userId, account.getStart_balance() + balance, opdate);
 				})
 				.sorted((a, b) -> a.id().compareTo(b.id()))
 				.collect(java.util.stream.Collectors.toList());
