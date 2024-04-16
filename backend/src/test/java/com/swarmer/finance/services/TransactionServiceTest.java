@@ -146,7 +146,7 @@ public class TransactionServiceTest {
         void testCreateTransaction() {
                 var trx1 = new TransactionDto(null, user.getId(), LocalDateTime.of(2022, 1, 20, 0, 0, 0),
                                 TransactionType.EXPENSE,
-                                AccountDto.from(bankRUB, user.getId(), null), 10000., null, 10000.,
+                                AccountDto.from(bankRUB, user.getId(), null, null), 10000., null, 10000.,
                                 Category.builder().name("Food").ownerId(user.getId())
                                                 .parentId(TransactionType.EXPENSE.getValue()).build(),
                                 null,
@@ -154,12 +154,12 @@ public class TransactionServiceTest {
                                 "");
                 var trx2 = new TransactionDto(null, user.getId(), LocalDateTime.of(2022, 1, 21, 0, 0, 0),
                                 TransactionType.EXPENSE,
-                                AccountDto.from(bankRUB, user.getId(), null), 30000., null, 30000., education, null,
+                                AccountDto.from(bankRUB, user.getId(), null, null), 30000., null, 30000., education, null,
                                 "",
                                 "");
                 var trx3 = new TransactionDto(null, user.getId(), LocalDateTime.of(2022, 1, 25, 0, 0, 0),
                                 TransactionType.INCOME,
-                                null, 10000., AccountDto.from(bankRUB, user.getId(), null), 10000., salary, null, "",
+                                null, 10000., AccountDto.from(bankRUB, user.getId(), null, null), 10000., salary, null, "",
                                 "");
                 // create expense 10000
                 var actual = transactionService.createTransaction(trx1, user.getId());
