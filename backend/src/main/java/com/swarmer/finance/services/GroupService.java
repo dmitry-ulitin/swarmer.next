@@ -95,7 +95,7 @@ public class GroupService {
         entity.setUpdated(LocalDateTime.now());
         // save accounts
         for (var account : dto.accounts()) {
-            if (account.id() == null) {
+            if (account.id() == null || account.id() == 0) {
                 if ((account.deleted() == null || !account.deleted())) {
                     var accountEntity = new Account(null, entity, account.name(), account.currency(),
                             account.startBalance() == null ? .0 : account.startBalance(), false,
