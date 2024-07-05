@@ -24,6 +24,7 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests((authz) -> authz
                 .requestMatchers("/api/register/**").permitAll()
                 .requestMatchers("/api/login/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated())
                 .cors(withDefaults())
                 .csrf(t -> t.disable())
